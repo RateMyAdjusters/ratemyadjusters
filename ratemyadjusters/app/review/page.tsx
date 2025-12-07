@@ -67,7 +67,6 @@ function ReviewContent() {
     { value: 'pending', label: 'Still Pending' },
   ]
 
-  // Pre-fill from URL params
   useEffect(() => {
     const name = searchParams.get('name')
     const adjusterId = searchParams.get('adjuster')
@@ -144,21 +143,31 @@ function ReviewContent() {
   }
 
   async function handleSubmit() {
-    if (!selectedAdjuster || overallRating === 0 || !reviewText.trim()) {
-      setError('Please fill in all required fields')
+    // Validate required fields
+    if (!selectedAdjuster) {
+      setError('Please select an adjuster')
+      return
+    }
+    
+    if (overallRating === 0) {
+      setError('Please select a rating (1-5 stars)')
+      return
+    }
+    
+    if (!reviewText.trim()) {
+      setError('Please write a review')
+      return
+    }
+
+    if (reviewText.trim().length < 20) {
+      setError('Please write at least 20 characters in your review')
       return
     }
 
     // Check honeypot (if filled, it's a bot)
     if (honeypot) {
-      // Silently fail for bots
+      // Silently pretend success for bots
       setSuccess(true)
-      return
-    }
-
-    // Check minimum review length
-    if (reviewText.trim().length < 20) {
-      setError('Please write at least 20 characters in your review')
       return
     }
     
@@ -169,29 +178,30 @@ function ReviewContent() {
     const recaptchaToken = await executeRecaptcha()
     
     if (!recaptchaToken) {
-      setError('Security verification failed. Please refresh and try again.')
-      setLoading(false)
-      return
-    }
+      // If reCAPTCHA fails to load, still allow submission
+      console.warn('reCAPTCHA token not available, proceeding anyway')
+    } else {
+      // Verify reCAPTCHA on server
+      try {
+        const verifyResponse = await fetch('/api/verify-recaptcha', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: recaptchaToken }),
+        })
 
-    // Verify reCAPTCHA on server
-    try {
-      const verifyResponse = await fetch('/api/verify-recaptcha', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: recaptchaToken }),
-      })
+        const verifyData = await verifyResponse.json()
 
-      const verifyData = await verifyResponse.json()
-
-      if (!verifyData.success || verifyData.score < 0.5) {
-        setError('Security verification failed. Please try again.')
-        setLoading(false)
-        return
+        // Only block if score is very low (likely a bot)
+        // 0.3 is very lenient - only blocks obvious bots
+        if (verifyData.success && verifyData.score < 0.3) {
+          setError('Unable to verify submission. Please try again.')
+          setLoading(false)
+          return
+        }
+      } catch (err) {
+        // If verification endpoint fails, still allow submission
+        console.error('reCAPTCHA verification error:', err)
       }
-    } catch (err) {
-      // If verification endpoint fails, still allow submission but log it
-      console.error('reCAPTCHA verification error:', err)
     }
     
     // Submit review
@@ -360,7 +370,7 @@ function ReviewContent() {
 
             {error && (
               <div className="mb-6 rounded-lg bg-red-50 text-red-700 px-4 py-3 text-sm flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4" />
+                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                 {error}
               </div>
             )}
@@ -508,8 +518,8 @@ function ReviewContent() {
                     rows={5}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                   />
-                  <p className="text-sm text-gray-500 mt-1">
-                    {reviewText.length}/1000 characters (minimum 20)
+                  <p className={`text-sm mt-1 ${reviewText.trim().length < 20 ? 'text-amber-600' : 'text-gray-500'}`}>
+                    {reviewText.length}/1000 characters {reviewText.trim().length < 20 && '(minimum 20)'}
                   </p>
                 </div>
 
@@ -631,7 +641,7 @@ function ReviewContent() {
                 {/* Submit */}
                 <button
                   onClick={handleSubmit}
-                  disabled={loading || overallRating === 0 || !reviewText.trim()}
+                  disabled={loading || overallRating === 0 || reviewText.trim().length < 20}
                   className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-lg transition-colors"
                 >
                   {loading ? 'Submitting...' : 'Submit Review'}
