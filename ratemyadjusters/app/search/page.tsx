@@ -14,6 +14,7 @@ function SearchContent() {
   const [companies, setCompanies] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [error, setError] = useState<string | null>(null)
 
   const states = [
     'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
@@ -23,33 +24,41 @@ function SearchContent() {
     'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
   ]
 
+  // Read URL params on load
   useEffect(() => {
     fetchCompanies()
-    
     const q = searchParams.get('q')
     if (q) {
       setSearchTerm(q)
-      searchWithQuery(q)
     } else {
       fetchAdjusters()
     }
   }, [searchParams])
 
+  // Run search when searchTerm or filters change
   useEffect(() => {
-    applyFilters()
-  }, [selectedCompany, selectedState])
+    if (searchTerm || selectedCompany || selectedState) {
+      applyFilters()
+    }
+  }, [searchTerm, selectedCompany, selectedState])
 
   async function fetchCompanies() {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('companies')
       .select('id, name, slug')
       .order('name')
+    if (error) {
+      console.error('Error fetching companies:', error)
+      return
+    }
     if (data) setCompanies(data)
   }
 
   async function fetchAdjusters() {
     setLoading(true)
-    const { data } = await supabase
+    setError(null)
+    
+    const { data, error } = await supabase
       .from('adjusters')
       .select(`
         id,
@@ -65,50 +74,20 @@ function SearchContent() {
       .order('total_reviews', { ascending: false })
       .limit(50)
     
-    if (data) setAdjusters(data)
-    setLoading(false)
-  }
-
-  async function searchWithQuery(query: string) {
-    setLoading(true)
-    
-    const words = query.trim().split(/\s+/)
-    
-    let dbQuery = supabase
-      .from('adjusters')
-      .select(`
-        id,
-        first_name,
-        last_name,
-        slug,
-        title,
-        state,
-        avg_rating,
-        total_reviews,
-        companies(name, slug)
-      `)
-    
-    if (words.length >= 2) {
-      dbQuery = dbQuery
-        .ilike('first_name', `%${words[0]}%`)
-        .ilike('last_name', `%${words[1]}%`)
-    } else {
-      dbQuery = dbQuery.or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%`)
+    if (error) {
+      setError('Something went wrong. Please try again.')
+      setLoading(false)
+      return
     }
-
-    const { data } = await dbQuery.order('total_reviews', { ascending: false }).limit(50)
-
+    
     if (data) setAdjusters(data)
     setLoading(false)
   }
 
   async function applyFilters() {
-    if (!selectedCompany && !selectedState && !searchTerm) {
-      fetchAdjusters()
-      return
-    }
-
     setLoading(true)
+    setError(null)
+    
     let query = supabase
       .from('adjusters')
       .select(`
@@ -127,8 +106,8 @@ function SearchContent() {
       const words = searchTerm.trim().split(/\s+/)
       if (words.length >= 2) {
         query = query
-          .ilike('first_name', `%${words[0]}%`)
-          .ilike('last_name', `%${words[1]}%`)
+          .filter('first_name', 'ilike', `%${words[0]}%`)
+          .filter('last_name', 'ilike', `%${words[1]}%`)
       } else {
         query = query.or(`first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%`)
       }
@@ -142,7 +121,13 @@ function SearchContent() {
       query = query.eq('state', selectedState)
     }
 
-    const { data } = await query.order('total_reviews', { ascending: false }).limit(50)
+    const { data, error } = await query.order('total_reviews', { ascending: false }).limit(50)
+
+    if (error) {
+      setError('Something went wrong. Please try again.')
+      setLoading(false)
+      return
+    }
 
     if (data) setAdjusters(data)
     setLoading(false)
@@ -157,6 +142,20 @@ function SearchContent() {
     return 'Unknown Company'
   }
 
+  // Skeleton loader component
+  const SkeletonCard = () => (
+    <div className="bg-white rounded-xl p-6 shadow-sm animate-pulse">
+      <div className="flex items-center gap-4">
+        <div className="w-14 h-14 bg-gray-200 rounded-full"></div>
+        <div className="flex-1">
+          <div className="h-5 bg-gray-200 rounded w-48 mb-2"></div>
+          <div className="h-4 bg-gray-200 rounded w-64 mb-2"></div>
+          <div className="h-4 bg-gray-200 rounded w-32"></div>
+        </div>
+      </div>
+    </div>
+  )
+
   return (
     <main className="min-h-screen bg-gray-50">
       <div className="bg-white border-b">
@@ -166,7 +165,7 @@ function SearchContent() {
               <h1 className="text-2xl font-bold text-gray-900">
                 {searchTerm ? `Results for "${searchTerm}"` : 'All Adjusters'}
               </h1>
-              {!loading && (
+              {!loading && !error && (
                 <p className="text-gray-600 mt-1">
                   {adjusters.length} adjuster{adjusters.length !== 1 ? 's' : ''} found
                 </p>
@@ -201,14 +200,36 @@ function SearchContent() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* Error State */}
+        {error && (
+          <div className="mb-6 rounded-lg bg-red-50 text-red-700 px-4 py-3 text-sm">
+            {error}
+          </div>
+        )}
+
+        {/* Loading State - Skeleton */}
         {loading ? (
-          <p className="text-gray-500">Loading...</p>
+          <div className="space-y-4">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
         ) : adjusters.length === 0 ? (
+          /* Empty State */
           <div className="text-center py-12">
             <p className="text-gray-500 text-lg">No adjusters found</p>
             <p className="text-gray-400 mt-2">Try a different search or adjust filters</p>
+            <Link 
+              href={`/review${searchTerm ? `?name=${encodeURIComponent(searchTerm)}` : ''}`}
+              className="inline-block mt-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+            >
+              Can't find your adjuster? Add them now
+            </Link>
           </div>
         ) : (
+          /* Results */
           <div className="space-y-4">
             {adjusters.map((adjuster) => (
               <Link
