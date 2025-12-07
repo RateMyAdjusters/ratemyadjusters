@@ -163,7 +163,6 @@ export default function ReviewPage() {
             </div>
           </div>
         </main>
-        <Footer />
       </>
     )
   }
@@ -443,7 +442,6 @@ export default function ReviewPage() {
           </div>
         </div>
       </main>
-      <Footer />
     </>
   )
 }
