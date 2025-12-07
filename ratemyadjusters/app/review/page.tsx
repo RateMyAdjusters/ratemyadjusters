@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import Header from '@/components/Header'
-import Footer from '@/components/Footer'
 import { Star } from 'lucide-react'
 
 interface Company {
