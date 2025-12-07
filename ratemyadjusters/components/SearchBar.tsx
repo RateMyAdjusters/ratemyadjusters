@@ -91,8 +91,8 @@ export default function SearchBar({
     if (words.length >= 2) {
       // Two words: first + last name
       dbQuery = dbQuery
-        .ilike('first_name', `%${words[0]}%`)
-        .ilike('last_name', `%${words[1]}%`)
+        .filter('first_name', 'ilike', `%${words[0]}%`)
+        .filter('last_name', 'ilike', `%${words[1]}%`)
     } else {
       // One word: search both fields
       dbQuery = dbQuery.or(`first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%`)
@@ -114,7 +114,7 @@ export default function SearchBar({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (query.trim()) {
-      let url = `/search?q=${encodeURIComponent(query)}`
+      let url = `/search?q=${encodeURIComponent(query.trim())}`
       if (selectedState) url += `&state=${selectedState}`
       if (selectedCompany) url += `&company=${selectedCompany}`
       router.push(url)
@@ -155,7 +155,7 @@ export default function SearchBar({
             placeholder="Search adjuster name, company, or state..."
             autoFocus={autoFocus}
             className={`
-              flex-1 bg-transparent outline-none
+              flex-1 bg-transparent outline-none text-gray-900
               ${isLarge ? 'py-5 px-4 text-lg' : 'py-3 px-3 text-base'}
               placeholder-gray-400
             `}
