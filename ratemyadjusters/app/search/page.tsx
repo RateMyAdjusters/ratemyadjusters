@@ -1,6 +1,3 @@
-Got it. TypeScript issue with company type. Here's the fixed code:
-
-```tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -211,6 +208,3 @@ export default function SearchPage() {
     </main>
   )
 }
-```
-
-Go to GitHub, edit the search page, **delete all**, paste this, commit.
