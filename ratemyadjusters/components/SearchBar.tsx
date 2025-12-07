@@ -12,7 +12,7 @@ interface Adjuster {
   last_name: string
   slug: string
   state: string
-  companies: { name: string } | null
+  companies: { name: string }[] | null
 }
 
 interface SearchBarProps {
@@ -105,7 +105,7 @@ export default function SearchBar({
     const { data, error } = await dbQuery.limit(8)
 
     if (data && !error) {
-      setResults(data)
+      setResults(data as Adjuster[])
       setIsOpen(true)
     }
     setLoading(false)
@@ -223,7 +223,7 @@ export default function SearchBar({
                     {adjuster.first_name} {adjuster.last_name}
                   </p>
                   <p className="text-sm text-gray-500 truncate">
-                    {adjuster.companies?.name || 'Unknown Company'} • {adjuster.state}
+                    {adjuster.companies?.[0]?.name || 'Unknown Company'} • {adjuster.state}
                   </p>
                 </div>
               </Link>
