@@ -1,3 +1,6 @@
+Got it. TypeScript issue with company type. Here's the fixed code:
+
+```tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -6,31 +9,12 @@ import { Search } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import StarRating from '@/components/StarRating'
 
-interface Adjuster {
-  id: string
-  first_name: string
-  last_name: string
-  full_name: string
-  slug: string
-  company: { name: string; slug: string } | null
-  title: string | null
-  state: string | null
-  avg_rating: number
-  total_reviews: number
-}
-
-interface Company {
-  id: string
-  name: string
-  slug: string
-}
-
 export default function SearchPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCompany, setSelectedCompany] = useState('')
   const [selectedState, setSelectedState] = useState('')
-  const [adjusters, setAdjusters] = useState<Adjuster[]>([])
-  const [companies, setCompanies] = useState<Company[]>([])
+  const [adjusters, setAdjusters] = useState<any[]>([])
+  const [companies, setCompanies] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   const states = [
@@ -68,14 +52,12 @@ export default function SearchPage() {
         state,
         avg_rating,
         total_reviews,
-        company:companies(name, slug)
+        companies(name, slug)
       `)
       .order('total_reviews', { ascending: false })
       .limit(50)
     
-    if (data) {
-      setAdjusters(data as Adjuster[])
-    }
+    if (data) setAdjusters(data)
     setLoading(false)
   }
 
@@ -93,7 +75,7 @@ export default function SearchPage() {
         state,
         avg_rating,
         total_reviews,
-        company:companies(name, slug)
+        companies(name, slug)
       `)
 
     if (searchQuery) {
@@ -108,18 +90,24 @@ export default function SearchPage() {
       query = query.eq('state', selectedState)
     }
 
-    query = query.order('total_reviews', { ascending: false }).limit(50)
+    const { data } = await query.order('total_reviews', { ascending: false }).limit(50)
 
-    const { data } = await query
-
-    if (data) {
-      setAdjusters(data as Adjuster[])
-    }
+    if (data) setAdjusters(data)
     setLoading(false)
   }
 
   const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
+    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase()
+  }
+
+  const getCompanyName = (adj: any) => {
+    if (adj.companies) return adj.companies.name
+    return 'Unknown Company'
+  }
+
+  const getCompanySlug = (adj: any) => {
+    if (adj.companies) return adj.companies.slug
+    return 'unknown'
   }
 
   return (
@@ -191,7 +179,7 @@ export default function SearchPage() {
               {adjusters.map((adjuster) => (
                 <Link
                   key={adjuster.id}
-                  href={`/adjuster/${adjuster.company?.slug || 'unknown'}/${adjuster.slug}`}
+                  href={`/adjuster/${getCompanySlug(adjuster)}/${adjuster.slug}`}
                   className="block bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-center gap-4">
@@ -203,7 +191,7 @@ export default function SearchPage() {
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold text-gray-900">{adjuster.full_name}</h3>
                       <p className="text-gray-600">
-                        {adjuster.company?.name || 'Unknown Company'}
+                        {getCompanyName(adjuster)}
                         {adjuster.title && ` • ${adjuster.title}`}
                         {adjuster.state && ` • ${adjuster.state}`}
                       </p>
@@ -223,3 +211,6 @@ export default function SearchPage() {
     </main>
   )
 }
+```
+
+Go to GitHub, edit the search page, **delete all**, paste this, commit.
