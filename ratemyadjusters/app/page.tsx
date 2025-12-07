@@ -18,7 +18,7 @@ export default function Home() {
   const trustPoints = [
     'Adjusters can\'t hide bad behavior',
     'Homeowners get transparency',
-    'Contractors get leverage',
+    'Contractors gain clarity and documentation',
     'Good adjusters get rewarded',
     'Bad adjusters get exposed',
   ]
