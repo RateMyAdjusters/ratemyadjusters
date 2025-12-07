@@ -7,25 +7,20 @@ import Footer from '@/components/Footer'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: {
-    default: 'RateMyAdjusters - Insurance Adjuster Reviews & Ratings',
-    template: '%s | RateMyAdjusters',
-  },
-  description: 'Read reviews and ratings of insurance adjusters from State Farm, Allstate, USAA, and more. Know your adjuster before your claim.',
-  keywords: ['insurance adjuster', 'adjuster reviews', 'claim adjuster rating', 'State Farm adjuster', 'Allstate adjuster'],
-  authors: [{ name: 'RateMyAdjusters' }],
+  title: 'RateMyAdjusters – Find & Review Insurance Adjusters',
+  description: 'Check real reviews for insurance adjusters. Know who\'s handling your claim before they show up. Search by company, name, or state.',
+  keywords: 'insurance adjuster, adjuster reviews, claim adjuster rating, insurance claim, State Farm adjuster, Allstate adjuster',
   openGraph: {
+    title: 'RateMyAdjusters – Find & Review Insurance Adjusters',
+    description: 'Check real reviews for insurance adjusters. Know who\'s handling your claim before they show up.',
     type: 'website',
     locale: 'en_US',
-    url: 'https://ratemyadjusters.com',
     siteName: 'RateMyAdjusters',
-    title: 'RateMyAdjusters - Insurance Adjuster Reviews & Ratings',
-    description: 'Read reviews and ratings of insurance adjusters from State Farm, Allstate, USAA, and more.',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'RateMyAdjusters - Insurance Adjuster Reviews & Ratings',
-    description: 'Read reviews and ratings of insurance adjusters from State Farm, Allstate, USAA, and more.',
+    title: 'RateMyAdjusters – Find & Review Insurance Adjusters',
+    description: 'Check real reviews for insurance adjusters. Know who\'s handling your claim before they show up.',
   },
   robots: {
     index: true,
@@ -40,11 +35,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} min-h-screen flex flex-col`}>
+      <head>
+        <link rel="icon" href="/favicon.ico" />
+        <meta name="theme-color" content="#1e293b" />
+      </head>
+      <body className={inter.className}>
         <Header />
-        <main className="flex-grow">
-          {children}
-        </main>
+        {children}
         <Footer />
       </body>
     </html>
