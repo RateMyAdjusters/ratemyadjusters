@@ -147,7 +147,6 @@ export default function ReviewPage() {
   if (success) {
     return (
       <>
-        <Header />
         <main className="min-h-screen bg-gray-50 py-12">
           <div className="max-w-2xl mx-auto px-4">
             <div className="bg-white rounded-xl shadow-sm p-8 text-center">
@@ -171,7 +170,6 @@ export default function ReviewPage() {
 
   return (
     <>
-      <Header />
       <main className="min-h-screen bg-gray-50 py-12">
         <div className="max-w-2xl mx-auto px-4">
           <div className="bg-white rounded-xl shadow-sm p-8">
