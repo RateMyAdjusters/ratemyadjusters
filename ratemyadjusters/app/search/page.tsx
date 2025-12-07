@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Search } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import StarRating from '@/components/StarRating'
 
 export default function SearchPage() {
+  const searchParams = useSearchParams()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCompany, setSelectedCompany] = useState('')
   const [selectedState, setSelectedState] = useState('')
@@ -24,8 +26,16 @@ export default function SearchPage() {
 
   useEffect(() => {
     fetchCompanies()
-    fetchAdjusters()
-  }, [])
+    
+    // Read query param from URL on load
+    const q = searchParams.get('q')
+    if (q) {
+      setSearchQuery(q)
+      searchWithQuery(q)
+    } else {
+      fetchAdjusters()
+    }
+  }, [searchParams])
 
   async function fetchCompanies() {
     const { data } = await supabase
@@ -43,7 +53,6 @@ export default function SearchPage() {
         id,
         first_name,
         last_name,
-        full_name,
         slug,
         title,
         state,
@@ -58,6 +67,29 @@ export default function SearchPage() {
     setLoading(false)
   }
 
+  async function searchWithQuery(query: string) {
+    setLoading(true)
+    const { data } = await supabase
+      .from('adjusters')
+      .select(`
+        id,
+        first_name,
+        last_name,
+        slug,
+        title,
+        state,
+        avg_rating,
+        total_reviews,
+        companies(name, slug)
+      `)
+      .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%`)
+      .order('total_reviews', { ascending: false })
+      .limit(50)
+
+    if (data) setAdjusters(data)
+    setLoading(false)
+  }
+
   async function handleSearch() {
     setLoading(true)
     let query = supabase
@@ -66,7 +98,6 @@ export default function SearchPage() {
         id,
         first_name,
         last_name,
-        full_name,
         slug,
         title,
         state,
@@ -100,11 +131,6 @@ export default function SearchPage() {
   const getCompanyName = (adj: any) => {
     if (adj.companies) return adj.companies.name
     return 'Unknown Company'
-  }
-
-  const getCompanySlug = (adj: any) => {
-    if (adj.companies) return adj.companies.slug
-    return 'unknown'
   }
 
   return (
@@ -176,7 +202,7 @@ export default function SearchPage() {
               {adjusters.map((adjuster) => (
                 <Link
                   key={adjuster.id}
-                  href={`/adjuster/${getCompanySlug(adjuster)}/${adjuster.slug}`}
+                  href={`/adjuster/${adjuster.slug}`}
                   className="block bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-center gap-4">
@@ -186,7 +212,9 @@ export default function SearchPage() {
                       </span>
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900">{adjuster.full_name}</h3>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {adjuster.first_name} {adjuster.last_name}
+                      </h3>
                       <p className="text-gray-600">
                         {getCompanyName(adjuster)}
                         {adjuster.title && ` • ${adjuster.title}`}
