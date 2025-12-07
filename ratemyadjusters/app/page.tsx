@@ -1,353 +1,243 @@
-'use client'
-
-import { useState, useEffect, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
-import StarRating from '@/components/StarRating'
+import { Search, Users, Shield, Star, ArrowRight, CheckCircle } from 'lucide-react'
+import SearchBar from '@/components/SearchBar'
 
-function SearchContent() {
-  const searchParams = useSearchParams()
-  const [selectedCompany, setSelectedCompany] = useState('')
-  const [selectedState, setSelectedState] = useState('')
-  const [adjusters, setAdjusters] = useState<any[]>([])
-  const [companies, setCompanies] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [error, setError] = useState<string | null>(null)
+export default function Home() {
+  const companies = [
+    'State Farm', 'Allstate', 'USAA', 'Liberty Mutual', 
+    'Farmers', 'Nationwide', 'Progressive', 'Travelers'
+  ]
 
-  const stateNames: { [key: string]: string } = {
-    'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas',
-    'CA': 'California', 'CO': 'Colorado', 'CT': 'Connecticut', 'DE': 'Delaware',
-    'FL': 'Florida', 'GA': 'Georgia', 'HI': 'Hawaii', 'ID': 'Idaho',
-    'IL': 'Illinois', 'IN': 'Indiana', 'IA': 'Iowa', 'KS': 'Kansas',
-    'KY': 'Kentucky', 'LA': 'Louisiana', 'ME': 'Maine', 'MD': 'Maryland',
-    'MA': 'Massachusetts', 'MI': 'Michigan', 'MN': 'Minnesota', 'MS': 'Mississippi',
-    'MO': 'Missouri', 'MT': 'Montana', 'NE': 'Nebraska', 'NV': 'Nevada',
-    'NH': 'New Hampshire', 'NJ': 'New Jersey', 'NM': 'New Mexico', 'NY': 'New York',
-    'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio', 'OK': 'Oklahoma',
-    'OR': 'Oregon', 'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina',
-    'SD': 'South Dakota', 'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah',
-    'VT': 'Vermont', 'VA': 'Virginia', 'WA': 'Washington', 'WV': 'West Virginia',
-    'WI': 'Wisconsin', 'WY': 'Wyoming'
-  }
+  const trendingSearches = [
+    { label: 'State Farm – Texas', query: 'State Farm', state: 'TX' },
+    { label: 'Allstate – Florida', query: 'Allstate', state: 'FL' },
+    { label: 'USAA – California', query: 'USAA', state: 'CA' },
+    { label: 'Liberty Mutual – Michigan', query: 'Liberty Mutual', state: 'MI' },
+  ]
 
-  const states = Object.keys(stateNames)
-
-  useEffect(() => {
-    fetchCompanies()
-    const q = searchParams.get('q')?.trim() || ''
-    const stateParam = searchParams.get('state')?.trim().toUpperCase() || ''
-    
-    if (stateParam && states.includes(stateParam)) {
-      setSelectedState(stateParam)
-    }
-    
-    if (q) {
-      setSearchTerm(q)
-    } else if (!stateParam) {
-      fetchAdjusters()
-    }
-  }, [searchParams])
-
-  useEffect(() => {
-    if (searchTerm || selectedCompany || selectedState) {
-      applyFilters()
-    }
-  }, [searchTerm, selectedCompany, selectedState])
-
-  async function fetchCompanies() {
-    const { data, error } = await supabase
-      .from('companies')
-      .select('id, name, slug')
-      .order('name')
-    if (error) {
-      console.error('Error fetching companies:', error)
-      return
-    }
-    if (data) setCompanies(data)
-  }
-
-  async function fetchAdjusters() {
-    setLoading(true)
-    setError(null)
-    
-    const { data, error } = await supabase
-      .from('adjusters')
-      .select(`
-        id,
-        first_name,
-        last_name,
-        slug,
-        title,
-        state,
-        avg_rating,
-        total_reviews,
-        companies(name, slug)
-      `)
-      .order('total_reviews', { ascending: false })
-      .limit(50)
-    
-    if (error) {
-      setError('Something went wrong. Please try again.')
-      setLoading(false)
-      return
-    }
-    
-    if (data) setAdjusters(data)
-    setLoading(false)
-  }
-
-  function parseSearchTerm(term: string) {
-    const normalized = term.trim().toLowerCase()
-    
-    // Check if it's a state abbreviation (e.g., "TX", "tx")
-    const upperTerm = term.trim().toUpperCase()
-    if (states.includes(upperTerm)) {
-      return { type: 'state', value: upperTerm }
-    }
-    
-    // Check if it's a full state name (e.g., "Texas", "texas")
-    for (const [abbrev, name] of Object.entries(stateNames)) {
-      if (name.toLowerCase() === normalized) {
-        return { type: 'state', value: abbrev }
-      }
-    }
-    
-    // Check if it's a company name
-    const matchedCompany = companies.find(c => 
-      c.name.toLowerCase().includes(normalized) || 
-      c.slug.toLowerCase().includes(normalized)
-    )
-    if (matchedCompany) {
-      return { type: 'company', value: matchedCompany.id, name: matchedCompany.name }
-    }
-    
-    // Otherwise treat as name search
-    const words = term.trim().split(/\s+/)
-    if (words.length >= 2) {
-      return { type: 'fullname', firstName: words[0], lastName: words.slice(1).join(' ') }
-    }
-    
-    return { type: 'name', value: term.trim() }
-  }
-
-  async function applyFilters() {
-    setLoading(true)
-    setError(null)
-    
-    let query = supabase
-      .from('adjusters')
-      .select(`
-        id,
-        first_name,
-        last_name,
-        slug,
-        title,
-        state,
-        avg_rating,
-        total_reviews,
-        companies(name, slug)
-      `)
-
-    if (searchTerm) {
-      const parsed = parseSearchTerm(searchTerm)
-      
-      if (parsed.type === 'state') {
-        query = query.eq('state', parsed.value)
-      } else if (parsed.type === 'company') {
-        query = query.eq('company_id', parsed.value)
-      } else if (parsed.type === 'fullname') {
-        query = query
-          .filter('first_name', 'ilike', `%${parsed.firstName}%`)
-          .filter('last_name', 'ilike', `%${parsed.lastName}%`)
-      } else {
-        query = query.or(`first_name.ilike.%${parsed.value}%,last_name.ilike.%${parsed.value}%`)
-      }
-    }
-
-    if (selectedCompany) {
-      query = query.eq('company_id', selectedCompany)
-    }
-
-    if (selectedState) {
-      query = query.eq('state', selectedState)
-    }
-
-    const { data, error } = await query.order('total_reviews', { ascending: false }).limit(50)
-
-    if (error) {
-      setError('Something went wrong. Please try again.')
-      setLoading(false)
-      return
-    }
-
-    if (data) setAdjusters(data)
-    setLoading(false)
-  }
-
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase()
-  }
-
-  const getCompanyName = (adj: any) => {
-    if (adj.companies) return adj.companies.name
-    return 'Unknown Company'
-  }
-
-  const getSearchDescription = () => {
-    if (!searchTerm && !selectedState && !selectedCompany) return 'Browse Adjusters'
-    
-    if (searchTerm) {
-      const parsed = parseSearchTerm(searchTerm)
-      if (parsed.type === 'state') {
-        return `Adjusters in ${stateNames[parsed.value] || parsed.value}`
-      }
-      if (parsed.type === 'company') {
-        return `${parsed.name} Adjusters`
-      }
-      return `Results for "${searchTerm}"`
-    }
-    
-    if (selectedState) {
-      return `Adjusters in ${stateNames[selectedState] || selectedState}`
-    }
-    
-    return 'Browse Adjusters'
-  }
-
-  const getResultsText = () => {
-    if (!searchTerm && !selectedState && !selectedCompany) {
-      return 'Showing top reviewed adjusters'
-    }
-    return `${adjusters.length} result${adjusters.length !== 1 ? 's' : ''} found`
-  }
-
-  const SkeletonCard = () => (
-    <div className="bg-white rounded-xl p-6 shadow-sm animate-pulse">
-      <div className="flex items-center gap-4">
-        <div className="w-14 h-14 bg-gray-200 rounded-full"></div>
-        <div className="flex-1">
-          <div className="h-5 bg-gray-200 rounded w-48 mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-64 mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-32"></div>
-        </div>
-      </div>
-    </div>
-  )
+  const trustPoints = [
+    'Adjusters can\'t hide bad behavior',
+    'Homeowners get transparency',
+    'Contractors gain clarity and documentation',
+    'Good adjusters get rewarded',
+    'Bad adjusters get exposed',
+  ]
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b">
-        <div className="max-w-6xl mx-auto px-4 py-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                {getSearchDescription()}
-              </h1>
-              {!loading && !error && (
-                <p className="text-gray-600 mt-1">
-                  {getResultsText()}
-                </p>
-              )}
+    <div className="bg-white">
+      {/* Hero Section */}
+      <section className="relative bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
+            backgroundSize: '32px 32px'
+          }}></div>
+        </div>
+
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
+          <div className="text-center">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-sm mb-8">
+              <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+              <span className="text-white/90">Trusted by thousands of homeowners</span>
             </div>
-            
-            <div className="flex gap-3">
-              <select
-                value={selectedCompany}
-                onChange={(e) => setSelectedCompany(e.target.value)}
-                className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
-              >
-                <option value="">All Companies</option>
-                {companies.map((company) => (
-                  <option key={company.id} value={company.id}>{company.name}</option>
-                ))}
-              </select>
-              
-              <select
-                value={selectedState}
-                onChange={(e) => setSelectedState(e.target.value)}
-                className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
-              >
-                <option value="">All States</option>
-                {states.map((state) => (
-                  <option key={state} value={state}>{state} - {stateNames[state]}</option>
-                ))}
-              </select>
+
+            {/* H1 */}
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+              Know Your Adjuster
+              <span className="block text-blue-400">Before They Touch Your Claim</span>
+            </h1>
+
+            {/* Subtext */}
+            <p className="text-xl text-slate-300 mb-10 max-w-2xl mx-auto">
+              Real reviews from homeowners, contractors, and public adjusters. 
+              Check their reputation instantly.
+            </p>
+
+            {/* Search Bar */}
+            <div className="max-w-2xl mx-auto mb-8">
+              <SearchBar size="large" showFilters={true} autoFocus={false} />
             </div>
+
+            {/* Trending Searches */}
+            <div className="flex flex-wrap justify-center gap-2 mb-12">
+              <span className="text-slate-400 text-sm">Trending:</span>
+              {trendingSearches.map((item) => (
+                <Link
+                  key={item.label}
+                  href={`/search?q=${encodeURIComponent(item.query)}&state=${item.state}`}
+                  className="text-sm text-slate-300 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full transition-colors"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+
+            {/* Stats */}
+            <div className="flex justify-center items-center gap-8 md:gap-12 text-center">
+              <div>
+                <div className="text-3xl md:text-4xl font-bold text-white">12,847</div>
+                <div className="text-slate-400 text-sm">Adjusters</div>
+              </div>
+              <div className="w-px h-12 bg-slate-700"></div>
+              <div>
+                <div className="text-3xl md:text-4xl font-bold text-white">4,291</div>
+                <div className="text-slate-400 text-sm">Reviews</div>
+              </div>
+              <div className="w-px h-12 bg-slate-700"></div>
+              <div>
+                <div className="text-3xl md:text-4xl font-bold text-white">156</div>
+                <div className="text-slate-400 text-sm">Companies</div>
+              </div>
+            </div>
+            <p className="text-slate-500 text-sm mt-4">Updated daily from verified submissions</p>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {error && (
-          <div className="mb-6 rounded-lg bg-red-50 text-red-700 px-4 py-3 text-sm">
-            {error}
-          </div>
-        )}
-
-        {loading ? (
-          <div className="space-y-4">
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-          </div>
-        ) : adjusters.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No adjusters found</p>
-            <p className="text-gray-400 mt-2">Try a different search or adjust filters</p>
-            <Link 
-              href={`/review${searchTerm ? `?name=${encodeURIComponent(searchTerm)}` : ''}`}
-              className="inline-block mt-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
-            >
-              Can't find your adjuster? Add them now
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {adjusters.map((adjuster) => (
+      {/* Company Logos */}
+      <section className="py-8 border-b border-gray-100">
+        <div className="max-w-5xl mx-auto px-4">
+          <p className="text-center text-sm text-gray-500 mb-6">
+            Find adjusters from major insurance carriers
+          </p>
+          <div className="flex flex-wrap justify-center items-center gap-6 md:gap-10">
+            {companies.map((company) => (
               <Link
-                key={adjuster.id}
-                href={`/adjuster/${adjuster.slug}`}
-                className="block bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow"
+                key={company}
+                href={`/search?q=${encodeURIComponent(company)}`}
+                className="text-gray-400 hover:text-gray-600 font-medium text-sm transition-colors"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-blue-600 font-semibold">
-                      {getInitials(adjuster.first_name, adjuster.last_name)}
-                    </span>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {adjuster.first_name} {adjuster.last_name}
-                    </h3>
-                    <p className="text-gray-600">
-                      {getCompanyName(adjuster)}
-                      {adjuster.title && ` • ${adjuster.title}`}
-                      {adjuster.state && ` • ${adjuster.state}`}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <StarRating rating={adjuster.avg_rating || 0} />
-                      <span className="text-gray-700 font-medium">{adjuster.avg_rating?.toFixed(1) || '0.0'}</span>
-                      <span className="text-gray-500">({adjuster.total_reviews || 0} reviews)</span>
-                    </div>
-                  </div>
-                </div>
+                {company}
               </Link>
             ))}
           </div>
-        )}
-      </div>
-    </main>
-  )
-}
+        </div>
+      </section>
 
-export default function SearchPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>}>
-      <SearchContent />
-    </Suspense>
+      {/* How It Works */}
+      <section className="py-20">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-center text-gray-900 mb-4">
+            How It Works
+          </h2>
+          <p className="text-center text-gray-600 mb-12 max-w-xl mx-auto">
+            Three simple steps to know exactly who you're dealing with
+          </p>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="text-center p-6">
+              <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                <Search className="w-7 h-7 text-blue-600" />
+              </div>
+              <div className="text-5xl font-bold text-gray-200 mb-2">①</div>
+              <h3 className="text-xl font-semibold mb-2 text-gray-900">Search</h3>
+              <p className="text-gray-600">
+                Find any adjuster in seconds by name, company, or location.
+              </p>
+            </div>
+            
+            <div className="text-center p-6">
+              <div className="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                <Users className="w-7 h-7 text-green-600" />
+              </div>
+              <div className="text-5xl font-bold text-gray-200 mb-2">②</div>
+              <h3 className="text-xl font-semibold mb-2 text-gray-900">Read Reviews</h3>
+              <p className="text-gray-600">
+                See transparent ratings from real claimants and contractors.
+              </p>
+            </div>
+            
+            <div className="text-center p-6">
+              <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                <Shield className="w-7 h-7 text-purple-600" />
+              </div>
+              <div className="text-5xl font-bold text-gray-200 mb-2">③</div>
+              <h3 className="text-xl font-semibold mb-2 text-gray-900">Be Prepared</h3>
+              <p className="text-gray-600">
+                Know exactly how to deal with that adjuster before they show up.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Panel */}
+      <section className="py-20 bg-slate-50">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-6">
+                Why RateMyAdjusters Works
+              </h2>
+              <p className="text-gray-600 mb-8">
+                We're building the first accountability platform for insurance adjusters. 
+                No more guessing. No more surprises. Just transparency.
+              </p>
+              <ul className="space-y-4">
+                {trustPoints.map((point) => (
+                  <li key={point} className="flex items-center gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                    <span className="text-gray-700">{point}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+              <div className="flex items-center gap-2 mb-4">
+                {[1,2,3,4,5].map((star) => (
+                  <Star key={star} className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                ))}
+              </div>
+              <blockquote className="text-lg text-gray-700 mb-6">
+                "I looked up my adjuster before our meeting and knew exactly what to expect. 
+                The reviews were spot on — he tried to lowball me but I was prepared."
+              </blockquote>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <span className="text-blue-600 font-semibold text-sm">MR</span>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900">Mike R.</p>
+                  <p className="text-sm text-gray-500">Homeowner, Texas</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 bg-gradient-to-br from-blue-600 to-blue-800 text-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            Had a Recent Claim?
+          </h2>
+          <p className="text-blue-100 mb-8 text-lg max-w-2xl mx-auto">
+            Help other homeowners by sharing your experience. Your review builds 
+            transparency and helps the next person know what to expect.
+          </p>
+          <Link 
+            href="/review" 
+            className="inline-flex items-center gap-2 bg-white text-blue-700 font-semibold py-4 px-8 rounded-full hover:bg-blue-50 transition-colors text-lg"
+          >
+            Write a Review
+            <ArrowRight className="w-5 h-5" />
+          </Link>
+        </div>
+      </section>
+
+      {/* Final Search CTA */}
+      <section className="py-16">
+        <div className="max-w-2xl mx-auto px-4 text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            Ready to look up your adjuster?
+          </h2>
+          <SearchBar size="default" showFilters={false} />
+        </div>
+      </section>
+    </div>
   )
 }
