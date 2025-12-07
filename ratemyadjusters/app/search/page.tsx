@@ -16,26 +16,40 @@ function SearchContent() {
   const [searchTerm, setSearchTerm] = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  const states = [
-    'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
-    'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
-    'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
-    'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
-    'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
-  ]
+  const stateNames: { [key: string]: string } = {
+    'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas',
+    'CA': 'California', 'CO': 'Colorado', 'CT': 'Connecticut', 'DE': 'Delaware',
+    'FL': 'Florida', 'GA': 'Georgia', 'HI': 'Hawaii', 'ID': 'Idaho',
+    'IL': 'Illinois', 'IN': 'Indiana', 'IA': 'Iowa', 'KS': 'Kansas',
+    'KY': 'Kentucky', 'LA': 'Louisiana', 'ME': 'Maine', 'MD': 'Maryland',
+    'MA': 'Massachusetts', 'MI': 'Michigan', 'MN': 'Minnesota', 'MS': 'Mississippi',
+    'MO': 'Missouri', 'MT': 'Montana', 'NE': 'Nebraska', 'NV': 'Nevada',
+    'NH': 'New Hampshire', 'NJ': 'New Jersey', 'NM': 'New Mexico', 'NY': 'New York',
+    'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio', 'OK': 'Oklahoma',
+    'OR': 'Oregon', 'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina',
+    'SD': 'South Dakota', 'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah',
+    'VT': 'Vermont', 'VA': 'Virginia', 'WA': 'Washington', 'WV': 'West Virginia',
+    'WI': 'Wisconsin', 'WY': 'Wyoming'
+  }
 
-  // Read URL params on load
+  const states = Object.keys(stateNames)
+
   useEffect(() => {
     fetchCompanies()
-    const q = searchParams.get('q')
+    const q = searchParams.get('q')?.trim() || ''
+    const stateParam = searchParams.get('state')?.trim().toUpperCase() || ''
+    
+    if (stateParam && states.includes(stateParam)) {
+      setSelectedState(stateParam)
+    }
+    
     if (q) {
       setSearchTerm(q)
-    } else {
+    } else if (!stateParam) {
       fetchAdjusters()
     }
   }, [searchParams])
 
-  // Run search when searchTerm or filters change
   useEffect(() => {
     if (searchTerm || selectedCompany || selectedState) {
       applyFilters()
@@ -84,6 +98,40 @@ function SearchContent() {
     setLoading(false)
   }
 
+  function parseSearchTerm(term: string) {
+    const normalized = term.trim().toLowerCase()
+    
+    // Check if it's a state abbreviation (e.g., "TX", "tx")
+    const upperTerm = term.trim().toUpperCase()
+    if (states.includes(upperTerm)) {
+      return { type: 'state', value: upperTerm }
+    }
+    
+    // Check if it's a full state name (e.g., "Texas", "texas")
+    for (const [abbrev, name] of Object.entries(stateNames)) {
+      if (name.toLowerCase() === normalized) {
+        return { type: 'state', value: abbrev }
+      }
+    }
+    
+    // Check if it's a company name
+    const matchedCompany = companies.find(c => 
+      c.name.toLowerCase().includes(normalized) || 
+      c.slug.toLowerCase().includes(normalized)
+    )
+    if (matchedCompany) {
+      return { type: 'company', value: matchedCompany.id, name: matchedCompany.name }
+    }
+    
+    // Otherwise treat as name search
+    const words = term.trim().split(/\s+/)
+    if (words.length >= 2) {
+      return { type: 'fullname', firstName: words[0], lastName: words.slice(1).join(' ') }
+    }
+    
+    return { type: 'name', value: term.trim() }
+  }
+
   async function applyFilters() {
     setLoading(true)
     setError(null)
@@ -103,13 +151,18 @@ function SearchContent() {
       `)
 
     if (searchTerm) {
-      const words = searchTerm.trim().split(/\s+/)
-      if (words.length >= 2) {
+      const parsed = parseSearchTerm(searchTerm)
+      
+      if (parsed.type === 'state') {
+        query = query.eq('state', parsed.value)
+      } else if (parsed.type === 'company') {
+        query = query.eq('company_id', parsed.value)
+      } else if (parsed.type === 'fullname') {
         query = query
-          .filter('first_name', 'ilike', `%${words[0]}%`)
-          .filter('last_name', 'ilike', `%${words[1]}%`)
+          .filter('first_name', 'ilike', `%${parsed.firstName}%`)
+          .filter('last_name', 'ilike', `%${parsed.lastName}%`)
       } else {
-        query = query.or(`first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%`)
+        query = query.or(`first_name.ilike.%${parsed.value}%,last_name.ilike.%${parsed.value}%`)
       }
     }
 
@@ -142,7 +195,19 @@ function SearchContent() {
     return 'Unknown Company'
   }
 
-  // Skeleton loader component
+  const getSearchDescription = () => {
+    if (!searchTerm) return 'All Adjusters'
+    
+    const parsed = parseSearchTerm(searchTerm)
+    if (parsed.type === 'state') {
+      return `Adjusters in ${stateNames[parsed.value] || parsed.value}`
+    }
+    if (parsed.type === 'company') {
+      return `${parsed.name} Adjusters`
+    }
+    return `Results for "${searchTerm}"`
+  }
+
   const SkeletonCard = () => (
     <div className="bg-white rounded-xl p-6 shadow-sm animate-pulse">
       <div className="flex items-center gap-4">
@@ -163,7 +228,7 @@ function SearchContent() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                {searchTerm ? `Results for "${searchTerm}"` : 'All Adjusters'}
+                {getSearchDescription()}
               </h1>
               {!loading && !error && (
                 <p className="text-gray-600 mt-1">
@@ -191,7 +256,7 @@ function SearchContent() {
               >
                 <option value="">All States</option>
                 {states.map((state) => (
-                  <option key={state} value={state}>{state}</option>
+                  <option key={state} value={state}>{state} - {stateNames[state]}</option>
                 ))}
               </select>
             </div>
@@ -200,14 +265,12 @@ function SearchContent() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Error State */}
         {error && (
           <div className="mb-6 rounded-lg bg-red-50 text-red-700 px-4 py-3 text-sm">
             {error}
           </div>
         )}
 
-        {/* Loading State - Skeleton */}
         {loading ? (
           <div className="space-y-4">
             <SkeletonCard />
@@ -217,7 +280,6 @@ function SearchContent() {
             <SkeletonCard />
           </div>
         ) : adjusters.length === 0 ? (
-          /* Empty State */
           <div className="text-center py-12">
             <p className="text-gray-500 text-lg">No adjusters found</p>
             <p className="text-gray-400 mt-2">Try a different search or adjust filters</p>
@@ -229,7 +291,6 @@ function SearchContent() {
             </Link>
           </div>
         ) : (
-          /* Results */
           <div className="space-y-4">
             {adjusters.map((adjuster) => (
               <Link
