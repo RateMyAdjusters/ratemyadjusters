@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Search, Users, Shield, Star, ArrowRight, CheckCircle } from 'lucide-react'
+import { Search, Users, Shield, Star, ArrowRight, CheckCircle, Sparkles, Clock } from 'lucide-react'
 import SearchBar from '@/components/SearchBar'
 
 export default function Home() {
@@ -23,6 +23,13 @@ export default function Home() {
     'Bad adjusters get exposed',
   ]
 
+  const roadmapItems = [
+    { title: 'Trending Adjusters', description: 'See who\'s getting reviewed the most' },
+    { title: 'AI Fraud Scoring', description: 'Detect suspicious claim patterns' },
+    { title: 'Adjuster Response Portal', description: 'Let adjusters tell their side' },
+    { title: 'Verified Contractor Program', description: 'Trusted reviews from licensed pros' },
+  ]
+
   return (
     <div className="bg-white">
       {/* Hero Section */}
@@ -37,10 +44,11 @@ export default function Home() {
 
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
           <div className="text-center">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-sm mb-8">
-              <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-              <span className="text-white/90">Trusted by thousands of homeowners</span>
+            {/* Beta Badge */}
+            <div className="inline-flex items-center gap-2 bg-blue-500/20 backdrop-blur-sm px-4 py-2 rounded-full text-sm mb-8 border border-blue-400/30">
+              <Sparkles className="w-4 h-4 text-blue-400" />
+              <span className="text-blue-300 font-medium">Beta</span>
+              <span className="text-white/70">— Now open to the public</span>
             </div>
 
             {/* H1 */}
@@ -205,6 +213,46 @@ export default function Home() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Roadmap Section */}
+      <section className="py-20">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 bg-amber-100 text-amber-800 px-4 py-2 rounded-full text-sm font-medium mb-4">
+              <Clock className="w-4 h-4" />
+              Coming Soon
+            </div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              What We're Building Next
+            </h2>
+            <p className="text-gray-600 max-w-xl mx-auto">
+              RateMyAdjusters is actively evolving. Here's what's on our roadmap.
+            </p>
+          </div>
+          
+          <div className="grid sm:grid-cols-2 gap-6">
+            {roadmapItems.map((item) => (
+              <div 
+                key={item.title}
+                className="bg-white border border-gray-200 rounded-xl p-6 hover:border-blue-300 hover:shadow-md transition-all"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Sparkles className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-1">{item.title}</h3>
+                    <p className="text-gray-600 text-sm">{item.description}</p>
+                    <span className="inline-block mt-2 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
+                      Coming Soon
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
