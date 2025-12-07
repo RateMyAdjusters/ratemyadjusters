@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Search } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import StarRating from '@/components/StarRating'
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCompany, setSelectedCompany] = useState('')
@@ -27,7 +27,6 @@ export default function SearchPage() {
   useEffect(() => {
     fetchCompanies()
     
-    // Read query param from URL on load
     const q = searchParams.get('q')
     if (q) {
       setSearchQuery(q)
@@ -234,5 +233,13 @@ export default function SearchPage() {
         )}
       </div>
     </main>
+  )
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>}>
+      <SearchContent />
+    </Suspense>
   )
 }
