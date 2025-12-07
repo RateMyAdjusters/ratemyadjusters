@@ -40,7 +40,6 @@ export async function POST(request: NextRequest) {
 
     // reCAPTCHA v3 returns a score from 0.0 to 1.0
     // 1.0 = very likely a good interaction, 0.0 = very likely a bot
-    // We'll accept scores >= 0.5
     return NextResponse.json({
       success: true,
       score: data.score,
@@ -55,3 +54,20 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+```
+
+**Create this in GitHub:**
+
+1. Go to `app/` folder
+2. Create folder: `api`
+3. Inside `api`, create folder: `verify-recaptcha`
+4. Inside `verify-recaptcha`, create file: `route.ts`
+5. Paste the code above
+6. Commit
+
+**Final structure:**
+```
+app/
+  api/
+    verify-recaptcha/
+      route.ts  ← this file
