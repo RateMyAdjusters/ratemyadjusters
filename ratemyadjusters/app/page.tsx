@@ -2,6 +2,11 @@ import Link from 'next/link'
 import { Search, Users, Shield, Star, ArrowRight, CheckCircle, Sparkles, Clock } from 'lucide-react'
 import SearchBar from '@/components/SearchBar'
 
+export const metadata = {
+  title: 'RateMyAdjusters – Find & Review Insurance Adjusters',
+  description: 'Check real reviews for insurance adjusters. Know who\'s handling your claim before they show up. Search by company, name, or state.',
+}
+
 export default function Home() {
   const companies = [
     'State Farm', 'Allstate', 'USAA', 'Liberty Mutual', 
@@ -64,9 +69,14 @@ export default function Home() {
             </p>
 
             {/* Search Bar */}
-            <div className="max-w-2xl mx-auto mb-8">
+            <div className="max-w-2xl mx-auto mb-3">
               <SearchBar size="large" showFilters={true} autoFocus={false} />
             </div>
+            
+            {/* Microcopy under search */}
+            <p className="text-slate-400 text-sm mb-10">
+              Try: "State Farm Texas" or "John Smith Adjuster"
+            </p>
 
             {/* Trending Searches */}
             <div className="flex flex-wrap justify-center gap-2 mb-12">
@@ -99,13 +109,14 @@ export default function Home() {
                 <div className="text-slate-400 text-sm">Companies</div>
               </div>
             </div>
-            <p className="text-slate-500 text-sm mt-4">Updated daily from verified submissions</p>
+            <p className="text-slate-500 text-sm mt-4">Updated: Dec 2025</p>
+            <p className="text-slate-600 text-xs mt-1">Data is expanding daily as more adjusters and companies are added.</p>
           </div>
         </div>
       </section>
 
       {/* Company Logos */}
-      <section className="py-8 border-b border-gray-100">
+      <section className="py-8 border-b border-gray-100 bg-gradient-to-b from-slate-50 to-white">
         <div className="max-w-5xl mx-auto px-4">
           <p className="text-center text-sm text-gray-500 mb-6">
             Find adjusters from major insurance carriers
