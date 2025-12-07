@@ -56,7 +56,7 @@ export default function SearchPage() {
 
   async function fetchAdjusters() {
     setLoading(true)
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('adjusters')
       .select(`
         id,
@@ -124,7 +124,6 @@ export default function SearchPage() {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      {/* Search Section */}
       <div className="bg-white border-b">
         <div className="max-w-6xl mx-auto px-4 py-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-6">Find an Adjuster</h1>
@@ -174,7 +173,6 @@ export default function SearchPage() {
         </div>
       </div>
 
-      {/* Results Section */}
       <div className="max-w-6xl mx-auto px-4 py-8">
         {loading ? (
           <p className="text-gray-500">Loading...</p>
@@ -183,7 +181,7 @@ export default function SearchPage() {
             <p className="text-gray-500 text-lg">No adjusters found</p>
             <p className="text-gray-400 mt-2">Try a different search or add a new adjuster</p>
             <Link href="/review" className="inline-block mt-4 text-blue-600 hover:underline">
-              Add an adjuster →
+              Add an adjuster
             </Link>
           </div>
         ) : (
