@@ -101,20 +101,17 @@ function SearchContent() {
   function parseSearchTerm(term: string) {
     const normalized = term.trim().toLowerCase()
     
-    // Check if it's a state abbreviation (e.g., "TX", "tx")
     const upperTerm = term.trim().toUpperCase()
     if (states.includes(upperTerm)) {
       return { type: 'state', value: upperTerm }
     }
     
-    // Check if it's a full state name (e.g., "Texas", "texas")
     for (const [abbrev, name] of Object.entries(stateNames)) {
       if (name.toLowerCase() === normalized) {
         return { type: 'state', value: abbrev }
       }
     }
     
-    // Check if it's a company name
     const matchedCompany = companies.find(c => 
       c.name.toLowerCase().includes(normalized) || 
       c.slug.toLowerCase().includes(normalized)
@@ -123,7 +120,6 @@ function SearchContent() {
       return { type: 'company', value: matchedCompany.id, name: matchedCompany.name }
     }
     
-    // Otherwise treat as name search
     const words = term.trim().split(/\s+/)
     if (words.length >= 2) {
       return { type: 'fullname', firstName: words[0], lastName: words.slice(1).join(' ') }
@@ -196,16 +192,44 @@ function SearchContent() {
   }
 
   const getSearchDescription = () => {
-    if (!searchTerm) return 'All Adjusters'
+    if (!searchTerm && !selectedState && !selectedCompany) return 'Browse Adjusters'
     
-    const parsed = parseSearchTerm(searchTerm)
-    if (parsed.type === 'state') {
-      return `Adjusters in ${stateNames[parsed.value] || parsed.value}`
+    if (searchTerm) {
+      const parsed = parseSearchTerm(searchTerm)
+      if (parsed.type === 'state') {
+        return `Adjusters in ${stateNames[parsed.value] || parsed.value}`
+      }
+      if (parsed.type === 'company') {
+        return `${parsed.name} Adjusters`
+      }
+      return `Results for "${searchTerm}"`
     }
-    if (parsed.type === 'company') {
-      return `${parsed.name} Adjusters`
+    
+    if (selectedState) {
+      return `Adjusters in ${stateNames[selectedState] || selectedState}`
     }
-    return `Results for "${searchTerm}"`
+    
+    if (selectedCompany) {
+      const company = companies.find(c => c.id === selectedCompany)
+      return company ? `${company.name} Adjusters` : 'Browse Adjusters'
+    }
+    
+    return 'Browse Adjusters'
+  }
+
+  const getResultsText = () => {
+    // No search/filter = browsing all, show generic text
+    if (!searchTerm && !selectedState && !selectedCompany) {
+      return 'Showing top reviewed adjusters'
+    }
+    // Searching/filtering = show count
+    if (adjusters.length === 0) {
+      return 'No results found'
+    }
+    if (adjusters.length === 50) {
+      return 'Showing top 50 results'
+    }
+    return `${adjusters.length} result${adjusters.length !== 1 ? 's' : ''} found`
   }
 
   const SkeletonCard = () => (
@@ -232,7 +256,7 @@ function SearchContent() {
               </h1>
               {!loading && !error && (
                 <p className="text-gray-600 mt-1">
-                  {adjusters.length} adjuster{adjusters.length !== 1 ? 's' : ''} found
+                  {getResultsText()}
                 </p>
               )}
             </div>
