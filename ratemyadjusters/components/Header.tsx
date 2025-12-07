@@ -12,7 +12,6 @@ export default function Header() {
   const pathname = usePathname()
   const isHomepage = pathname === '/'
 
-  // Hide search bar on homepage until user scrolls past hero
   useEffect(() => {
     if (!isHomepage) {
       setShowSearch(true)
@@ -20,11 +19,9 @@ export default function Header() {
     }
 
     const handleScroll = () => {
-      // Show search after scrolling 300px (past hero search)
       setShowSearch(window.scrollY > 300)
     }
 
-    // Initially hide on homepage
     setShowSearch(false)
     
     window.addEventListener('scroll', handleScroll)
@@ -34,7 +31,7 @@ export default function Header() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
-      window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`
+      window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`
     }
   }
 
@@ -50,7 +47,7 @@ export default function Header() {
             <span className="font-bold text-xl text-gray-900">RateMyAdjusters</span>
           </Link>
 
-          {/* Desktop Search - Only show when appropriate */}
+          {/* Desktop Search */}
           <form 
             onSubmit={handleSearch} 
             className={`hidden md:flex flex-1 max-w-md mx-8 transition-opacity duration-200 ${
@@ -64,7 +61,7 @@ export default function Header() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search adjusters..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm text-gray-900 bg-white placeholder-gray-400"
               />
             </div>
           </form>
@@ -102,7 +99,7 @@ export default function Header() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search adjusters..."
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-full"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-full text-gray-900 bg-white placeholder-gray-400"
                 />
               </div>
             </form>
