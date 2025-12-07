@@ -1,42 +1,144 @@
 'use client'
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { Star, Search } from 'lucide-react'
-import { CLAIM_TYPES, CLAIM_OUTCOMES, REVIEWER_TYPES } from '@/lib/types'
+import { useState, useEffect } from 'react'
+import { supabase } from '@/lib/supabase'
+import Header from '@/components/Header'
+import Footer from '@/components/Footer'
+import { Star } from 'lucide-react'
+
+interface Company {
+  id: string
+  name: string
+  slug: string
+}
 
 export default function ReviewPage() {
   const [step, setStep] = useState(1)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedAdjuster, setSelectedAdjuster] = useState<any>(null)
+  const [companies, setCompanies] = useState<Company[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState(false)
   
-  // Form state
+  // Adjuster info
+  const [adjusterFirstName, setAdjusterFirstName] = useState('')
+  const [adjusterLastName, setAdjusterLastName] = useState('')
+  const [companyId, setCompanyId] = useState('')
+  const [adjusterState, setAdjusterState] = useState('')
+  
+  // Review info
   const [overallRating, setOverallRating] = useState(0)
   const [communicationRating, setCommunicationRating] = useState(0)
   const [fairnessRating, setFairnessRating] = useState(0)
   const [timelinessRating, setTimelinessRating] = useState(0)
   const [professionalismRating, setProfessionalismRating] = useState(0)
+  const [reviewTitle, setReviewTitle] = useState('')
+  const [reviewText, setReviewText] = useState('')
   const [claimType, setClaimType] = useState('')
   const [claimOutcome, setClaimOutcome] = useState('')
+  const [wouldRecommend, setWouldRecommend] = useState<boolean | null>(null)
+  
+  // Reviewer info
   const [reviewerType, setReviewerType] = useState('')
-  const [title, setTitle] = useState('')
-  const [reviewText, setReviewText] = useState('')
-  const [displayName, setDisplayName] = useState('')
-  const [email, setEmail] = useState('')
+  const [reviewerName, setReviewerName] = useState('')
 
-  const StarInput = ({ value, onChange, label }: { value: number, onChange: (v: number) => void, label: string }) => (
-    <div>
-      <label className="label">{label}</label>
+  useEffect(() => {
+    async function fetchCompanies() {
+      const { data } = await supabase
+        .from('companies')
+        .select('id, name, slug')
+        .order('name')
+      if (data) setCompanies(data)
+    }
+    fetchCompanies()
+  }, [])
+
+  const generateSlug = (firstName: string, lastName: string, companySlug: string) => {
+    const base = `${firstName}-${lastName}-${companySlug}`
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '')
+    const random = Math.random().toString(36).substring(2, 6)
+    return `${base}-${random}`
+  }
+
+  const handleSubmit = async () => {
+    setLoading(true)
+    setError('')
+    
+    try {
+      // Get company slug
+      const company = companies.find(c => c.id === companyId)
+      if (!company) throw new Error('Please select a company')
+      
+      // Create slug for adjuster
+      const slug = generateSlug(adjusterFirstName, adjusterLastName, company.slug)
+      
+      // First, create the adjuster
+      const { data: adjusterData, error: adjusterError } = await supabase
+        .from('adjusters')
+        .insert({
+          first_name: adjusterFirstName,
+          last_name: adjusterLastName,
+          slug: slug,
+          company_id: companyId,
+          state: adjusterState || null,
+        })
+        .select()
+        .single()
+      
+      if (adjusterError) {
+        console.error('Adjuster error:', adjusterError)
+        throw new Error('Failed to create adjuster profile')
+      }
+      
+      // Then create the review
+      const { error: reviewError } = await supabase
+        .from('reviews')
+        .insert({
+          adjuster_id: adjusterData.id,
+          overall_rating: overallRating,
+          communication_rating: communicationRating || null,
+          fairness_rating: fairnessRating || null,
+          timeliness_rating: timelinessRating || null,
+          professionalism_rating: professionalismRating || null,
+          title: reviewTitle || null,
+          review_text: reviewText,
+          claim_type: claimType || null,
+          claim_outcome: claimOutcome || null,
+          would_recommend: wouldRecommend,
+          reviewer_type: reviewerType,
+          reviewer_display_name: reviewerName || null,
+          status: 'approved', // Auto-approve for now
+        })
+      
+      if (reviewError) {
+        console.error('Review error:', reviewError)
+        throw new Error('Failed to submit review')
+      }
+      
+      setSuccess(true)
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const StarRating = ({ rating, setRating, label }: { rating: number, setRating: (r: number) => void, label: string }) => (
+    <div className="mb-4">
+      <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
       <div className="flex gap-1">
         {[1, 2, 3, 4, 5].map((star) => (
           <button
             key={star}
             type="button"
-            onClick={() => onChange(star)}
+            onClick={() => setRating(star)}
             className="focus:outline-none"
           >
-            <Star 
-              className={`w-8 h-8 ${star <= value ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+            <Star
+              size={28}
+              className={star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
             />
           </button>
         ))}
@@ -44,257 +146,308 @@ export default function ReviewPage() {
     </div>
   )
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    // TODO: Submit to Supabase
-    alert('Review submitted! (Demo mode - not actually saved)')
+  if (success) {
+    return (
+      <>
+        <Header />
+        <main className="min-h-screen bg-gray-50 py-12">
+          <div className="max-w-2xl mx-auto px-4">
+            <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">Review Submitted!</h1>
+              <p className="text-gray-600 mb-6">Thank you for sharing your experience. Your review helps other homeowners.</p>
+              <a href="/" className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700">
+                Back to Home
+              </a>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </>
+    )
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen py-8">
-      <div className="max-w-2xl mx-auto px-4">
-        <div className="card">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Write a Review</h1>
-          <p className="text-gray-600 mb-8">
-            Share your experience to help others know what to expect.
-          </p>
-
-          {/* Progress Steps */}
-          <div className="flex items-center justify-between mb-8">
-            {[1, 2, 3].map((s) => (
-              <div key={s} className="flex items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold ${
-                  step >= s ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-500'
-                }`}>
-                  {s}
-                </div>
-                <span className={`ml-2 hidden sm:inline ${step >= s ? 'text-gray-900' : 'text-gray-500'}`}>
-                  {s === 1 ? 'Find Adjuster' : s === 2 ? 'Your Experience' : 'Submit'}
-                </span>
-                {s < 3 && <div className={`w-12 sm:w-24 h-1 mx-2 ${step > s ? 'bg-primary-600' : 'bg-gray-200'}`} />}
-              </div>
-            ))}
-          </div>
-
-          {/* Step 1: Find Adjuster */}
-          {step === 1 && (
-            <div>
-              <h2 className="text-lg font-semibold mb-4">Who was your adjuster?</h2>
-              
-              <div className="mb-6">
-                <label className="label">Search by name</label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="e.g., John Smith"
-                    className="input pl-10"
-                  />
-                </div>
-              </div>
-
-              <div className="border-t pt-6">
-                <h3 className="font-medium mb-4">Can't find them? Add a new adjuster:</h3>
-                <div className="grid sm:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label className="label">First Name *</label>
-                    <input type="text" className="input" placeholder="John" />
+    <>
+      <Header />
+      <main className="min-h-screen bg-gray-50 py-12">
+        <div className="max-w-2xl mx-auto px-4">
+          <div className="bg-white rounded-xl shadow-sm p-8">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Write a Review</h1>
+            <p className="text-gray-600 mb-8">Share your experience with an insurance adjuster</p>
+            
+            {/* Progress Steps */}
+            <div className="flex items-center justify-between mb-8">
+              {[1, 2, 3].map((s) => (
+                <div key={s} className="flex items-center">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
+                    step >= s ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
+                  }`}>
+                    {s}
                   </div>
-                  <div>
-                    <label className="label">Last Name *</label>
-                    <input type="text" className="input" placeholder="Smith" />
-                  </div>
+                  {s < 3 && <div className={`w-24 h-1 mx-2 ${step > s ? 'bg-blue-600' : 'bg-gray-200'}`} />}
                 </div>
-                <div className="mb-4">
-                  <label className="label">Insurance Company *</label>
-                  <select className="input">
-                    <option value="">Select company...</option>
-                    <option value="state-farm">State Farm</option>
-                    <option value="allstate">Allstate</option>
-                    <option value="usaa">USAA</option>
-                    <option value="liberty-mutual">Liberty Mutual</option>
-                    <option value="farmers">Farmers</option>
-                    <option value="nationwide">Nationwide</option>
-                    <option value="progressive">Progressive</option>
-                    <option value="travelers">Travelers</option>
-                    <option value="auto-owners">Auto-Owners</option>
-                    <option value="aaa">AAA</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-                <div className="mb-4">
-                  <label className="label">State</label>
-                  <select className="input">
-                    <option value="">Select state...</option>
-                    <option value="MI">Michigan</option>
-                    <option value="TX">Texas</option>
-                    <option value="FL">Florida</option>
-                    <option value="CA">California</option>
-                    {/* Add more states */}
-                  </select>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setStep(2)}
-                className="btn-primary w-full mt-6"
-              >
-                Continue
-              </button>
+              ))}
             </div>
-          )}
+            
+            {error && (
+              <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-6">
+                {error}
+              </div>
+            )}
 
-          {/* Step 2: Rating & Details */}
-          {step === 2 && (
-            <div>
-              <h2 className="text-lg font-semibold mb-4">Rate your experience</h2>
-              
-              <div className="space-y-6">
-                <StarInput value={overallRating} onChange={setOverallRating} label="Overall Rating *" />
+            {/* Step 1: Adjuster Info */}
+            {step === 1 && (
+              <div>
+                <h2 className="text-lg font-semibold mb-4">Who are you reviewing?</h2>
                 
-                <div className="grid sm:grid-cols-2 gap-6">
-                  <StarInput value={communicationRating} onChange={setCommunicationRating} label="Communication" />
-                  <StarInput value={fairnessRating} onChange={setFairnessRating} label="Fairness" />
-                  <StarInput value={timelinessRating} onChange={setTimelinessRating} label="Timeliness" />
-                  <StarInput value={professionalismRating} onChange={setProfessionalismRating} label="Professionalism" />
-                </div>
-
-                <div className="grid sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
-                    <label className="label">Type of Claim</label>
-                    <select value={claimType} onChange={(e) => setClaimType(e.target.value)} className="input">
-                      <option value="">Select...</option>
-                      {CLAIM_TYPES.map((type) => (
-                        <option key={type.value} value={type.value}>{type.label}</option>
-                      ))}
-                    </select>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+                    <input
+                      type="text"
+                      value={adjusterFirstName}
+                      onChange={(e) => setAdjusterFirstName(e.target.value)}
+                      className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="John"
+                    />
                   </div>
                   <div>
-                    <label className="label">Claim Outcome</label>
-                    <select value={claimOutcome} onChange={(e) => setClaimOutcome(e.target.value)} className="input">
-                      <option value="">Select...</option>
-                      {CLAIM_OUTCOMES.map((outcome) => (
-                        <option key={outcome.value} value={outcome.value}>{outcome.label}</option>
-                      ))}
-                    </select>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+                    <input
+                      type="text"
+                      value={adjusterLastName}
+                      onChange={(e) => setAdjusterLastName(e.target.value)}
+                      className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Smith"
+                    />
                   </div>
                 </div>
-
-                <div>
-                  <label className="label">Review Title</label>
+                
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Insurance Company *</label>
+                  <select
+                    value={companyId}
+                    onChange={(e) => setCompanyId(e.target.value)}
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select company...</option>
+                    {companies.map((company) => (
+                      <option key={company.id} value={company.id}>{company.name}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">State (optional)</label>
                   <input
                     type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Summarize your experience"
-                    className="input"
+                    value={adjusterState}
+                    onChange={(e) => setAdjusterState(e.target.value.toUpperCase().slice(0, 2))}
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="TX"
+                    maxLength={2}
                   />
                 </div>
-
-                <div>
-                  <label className="label">Your Review *</label>
-                  <textarea
-                    value={reviewText}
-                    onChange={(e) => setReviewText(e.target.value)}
-                    placeholder="Share details about your experience with this adjuster..."
-                    rows={5}
-                    className="input"
-                  />
-                  <p className="text-sm text-gray-500 mt-1">Minimum 50 characters</p>
-                </div>
-              </div>
-
-              <div className="flex gap-4 mt-6">
+                
                 <button
-                  type="button"
-                  onClick={() => setStep(1)}
-                  className="btn-secondary flex-1"
-                >
-                  Back
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setStep(3)}
-                  className="btn-primary flex-1"
-                  disabled={!overallRating || reviewText.length < 50}
+                  onClick={() => {
+                    if (!adjusterFirstName || !adjusterLastName || !companyId) {
+                      setError('Please fill in the adjuster name and company')
+                      return
+                    }
+                    setError('')
+                    setStep(2)
+                  }}
+                  className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700"
                 >
                   Continue
                 </button>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Step 3: About You & Submit */}
-          {step === 3 && (
-            <form onSubmit={handleSubmit}>
-              <h2 className="text-lg font-semibold mb-4">About you</h2>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="label">I am a... *</label>
-                  <select value={reviewerType} onChange={(e) => setReviewerType(e.target.value)} className="input">
-                    <option value="">Select...</option>
-                    {REVIEWER_TYPES.map((type) => (
-                      <option key={type.value} value={type.value}>{type.label}</option>
-                    ))}
+            {/* Step 2: Rating */}
+            {step === 2 && (
+              <div>
+                <h2 className="text-lg font-semibold mb-4">Rate your experience</h2>
+                
+                <StarRating rating={overallRating} setRating={setOverallRating} label="Overall Rating *" />
+                <StarRating rating={communicationRating} setRating={setCommunicationRating} label="Communication" />
+                <StarRating rating={fairnessRating} setRating={setFairnessRating} label="Fairness" />
+                <StarRating rating={timelinessRating} setRating={setTimelinessRating} label="Timeliness" />
+                <StarRating rating={professionalismRating} setRating={setProfessionalismRating} label="Professionalism" />
+                
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Claim Type</label>
+                  <select
+                    value={claimType}
+                    onChange={(e) => setClaimType(e.target.value)}
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select type...</option>
+                    <option value="roof">Roof</option>
+                    <option value="water_damage">Water Damage</option>
+                    <option value="fire">Fire</option>
+                    <option value="wind">Wind</option>
+                    <option value="hail">Hail</option>
+                    <option value="theft">Theft</option>
+                    <option value="auto">Auto</option>
+                    <option value="other">Other</option>
                   </select>
                 </div>
+                
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Claim Outcome</label>
+                  <select
+                    value={claimOutcome}
+                    onChange={(e) => setClaimOutcome(e.target.value)}
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select outcome...</option>
+                    <option value="approved">Approved</option>
+                    <option value="partial">Partially Approved</option>
+                    <option value="denied">Denied</option>
+                    <option value="pending">Still Pending</option>
+                  </select>
+                </div>
+                
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => setStep(1)}
+                    className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (!overallRating) {
+                        setError('Please provide an overall rating')
+                        return
+                      }
+                      setError('')
+                      setStep(3)
+                    }}
+                    className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700"
+                  >
+                    Continue
+                  </button>
+                </div>
+              </div>
+            )}
 
-                <div>
-                  <label className="label">Display Name *</label>
+            {/* Step 3: Review Text */}
+            {step === 3 && (
+              <div>
+                <h2 className="text-lg font-semibold mb-4">Tell us about your experience</h2>
+                
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Review Title</label>
                   <input
                     type="text"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="How your name will appear (e.g., John D. or ABC Roofing)"
-                    className="input"
+                    value={reviewTitle}
+                    onChange={(e) => setReviewTitle(e.target.value)}
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Summarize your experience"
                   />
                 </div>
-
-                <div>
-                  <label className="label">Email *</label>
+                
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Your Review *</label>
+                  <textarea
+                    value={reviewText}
+                    onChange={(e) => setReviewText(e.target.value)}
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    rows={5}
+                    placeholder="Share details about your experience with this adjuster..."
+                  />
+                </div>
+                
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Would you recommend this adjuster?</label>
+                  <div className="flex gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setWouldRecommend(true)}
+                      className={`flex-1 py-2 rounded-lg border-2 ${
+                        wouldRecommend === true ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200'
+                      }`}
+                    >
+                      Yes
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setWouldRecommend(false)}
+                      className={`flex-1 py-2 rounded-lg border-2 ${
+                        wouldRecommend === false ? 'border-red-500 bg-red-50 text-red-700' : 'border-gray-200'
+                      }`}
+                    >
+                      No
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">I am a... *</label>
+                  <select
+                    value={reviewerType}
+                    onChange={(e) => setReviewerType(e.target.value)}
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select...</option>
+                    <option value="homeowner">Homeowner</option>
+                    <option value="contractor">Contractor</option>
+                    <option value="public_adjuster">Public Adjuster</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Display Name (optional)</label>
                   <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="your@email.com"
-                    className="input"
+                    type="text"
+                    value={reviewerName}
+                    onChange={(e) => setReviewerName(e.target.value)}
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="How should we display your name?"
                   />
-                  <p className="text-sm text-gray-500 mt-1">Never shown publicly. Used for verification only.</p>
+                </div>
+                
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => setStep(2)}
+                    className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (!reviewText) {
+                        setError('Please write a review')
+                        return
+                      }
+                      if (!reviewerType) {
+                        setError('Please select your role')
+                        return
+                      }
+                      setError('')
+                      handleSubmit()
+                    }}
+                    disabled={loading}
+                    className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {loading ? 'Submitting...' : 'Submit Review'}
+                  </button>
                 </div>
               </div>
-
-              <div className="bg-gray-50 rounded-lg p-4 mt-6">
-                <p className="text-sm text-gray-600">
-                  By submitting, you confirm this review is based on your genuine experience and 
-                  agree to our <Link href="/review-guidelines" className="text-primary-600 hover:underline">Review Guidelines</Link> and {' '}
-                  <Link href="/terms" className="text-primary-600 hover:underline">Terms of Service</Link>.
-                </p>
-              </div>
-
-              <div className="flex gap-4 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setStep(2)}
-                  className="btn-secondary flex-1"
-                >
-                  Back
-                </button>
-                <button
-                  type="submit"
-                  className="btn-primary flex-1"
-                  disabled={!reviewerType || !displayName || !email}
-                >
-                  Submit Review
-                </button>
-              </div>
-            </form>
-          )}
+            )}
+          </div>
         </div>
-      </div>
-    </div>
+      </main>
+      <Footer />
+    </>
   )
 }
