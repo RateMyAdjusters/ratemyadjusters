@@ -9,7 +9,7 @@ interface PageProps {
   params: { state: string }
 }
 
-export const revalidate = 3600 // Revalidate every hour
+export const revalidate = 3600
 
 interface Adjuster {
   id: string
@@ -242,7 +242,7 @@ export default async function StatePage({ params }: PageProps) {
             </div>
 
             <div className="max-w-xl">
-              <SearchBar defaultState={stateData.abbr} />
+              <SearchBar />
             </div>
           </div>
         </div>
