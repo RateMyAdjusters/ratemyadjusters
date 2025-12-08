@@ -17,11 +17,14 @@ const stateMap: Record<string, string> = {
   'va': 'VA', 'wa': 'WA', 'wv': 'WV', 'wi': 'WI', 'wy': 'WY'
 };
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: { state: string } }
+  context: { params: Promise<{ state: string }> }
 ) {
-  const stateCode = params.state.toLowerCase();
+  const { state } = await context.params;
+  const stateCode = state.toLowerCase();
   const stateUpper = stateMap[stateCode];
 
   if (!stateUpper) {
