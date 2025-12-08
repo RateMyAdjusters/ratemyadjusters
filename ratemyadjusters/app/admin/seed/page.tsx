@@ -60,10 +60,37 @@ const STATES = [
 ]
 
 export default function AdminSeedPage() {
+  // ALL HOOKS MUST BE DECLARED FIRST - before any conditional returns
+  
   // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [passwordInput, setPasswordInput] = useState('')
   const [passwordError, setPasswordError] = useState(false)
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchState, setSearchState] = useState('')
+  const [searchResults, setSearchResults] = useState<Adjuster[]>([])
+  const [isSearching, setIsSearching] = useState(false)
+  const [selectedAdjuster, setSelectedAdjuster] = useState<Adjuster | null>(null)
+
+  // Review form state
+  const [overallRating, setOverallRating] = useState(3)
+  const [communicationRating, setCommunicationRating] = useState(3)
+  const [fairnessRating, setFairnessRating] = useState(3)
+  const [speedRating, setSpeedRating] = useState(3)
+  const [claimType, setClaimType] = useState('roof')
+  const [claimOutcome, setClaimOutcome] = useState('approved')
+  const [reviewerType, setReviewerType] = useState('homeowner')
+  const [reviewTitle, setReviewTitle] = useState('')
+  const [reviewText, setReviewText] = useState('')
+  const [displayName, setDisplayName] = useState('')
+
+  // UI state
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [submitMessage, setSubmitMessage] = useState('')
+  const [reviewCount, setReviewCount] = useState(0)
 
   // Check for saved session on mount
   useEffect(() => {
@@ -73,6 +100,7 @@ export default function AdminSeedPage() {
     }
   }, [])
 
+  // Login handler
   const handleLogin = () => {
     if (passwordInput === ADMIN_PASSWORD) {
       setIsAuthenticated(true)
@@ -84,7 +112,180 @@ export default function AdminSeedPage() {
     }
   }
 
-  // Password gate
+  // Search for adjusters
+  const handleSearch = async () => {
+    if (!searchQuery.trim() && !searchState) return
+    
+    setIsSearching(true)
+    setSearchResults([])
+
+    try {
+      let query = supabase
+        .from('adjusters')
+        .select('id, first_name, last_name, state, slug')
+        .limit(20)
+
+      if (searchQuery.trim()) {
+        const searchTerm = searchQuery.trim().toLowerCase()
+        query = query.or(`first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%`)
+      }
+
+      if (searchState) {
+        query = query.eq('state', searchState)
+      }
+
+      const { data, error } = await query
+
+      if (error) throw error
+      setSearchResults(data || [])
+    } catch (error) {
+      console.error('Search error:', error)
+      setSearchResults([])
+    } finally {
+      setIsSearching(false)
+    }
+  }
+
+  // Get random adjuster
+  const getRandomAdjuster = async () => {
+    setIsSearching(true)
+    try {
+      const { count } = await supabase
+        .from('adjusters')
+        .select('*', { count: 'exact', head: true })
+
+      if (count) {
+        const randomOffset = Math.floor(Math.random() * Math.min(count, 10000))
+        
+        let query = supabase
+          .from('adjusters')
+          .select('id, first_name, last_name, state, slug')
+          .range(randomOffset, randomOffset)
+          .limit(1)
+
+        if (searchState) {
+          query = query.eq('state', searchState)
+        }
+
+        const { data, error } = await query
+
+        if (error) throw error
+        if (data && data.length > 0) {
+          setSelectedAdjuster(data[0])
+          setSearchResults([])
+        }
+      }
+    } catch (error) {
+      console.error('Random adjuster error:', error)
+    } finally {
+      setIsSearching(false)
+    }
+  }
+
+  // Reset form
+  const resetForm = () => {
+    setSelectedAdjuster(null)
+    setOverallRating(3)
+    setCommunicationRating(3)
+    setFairnessRating(3)
+    setSpeedRating(3)
+    setClaimType('roof')
+    setClaimOutcome('approved')
+    setReviewerType('homeowner')
+    setReviewTitle('')
+    setReviewText('')
+    setDisplayName('')
+    setSearchQuery('')
+    setSearchResults([])
+  }
+
+  // Submit review
+  const handleSubmit = async () => {
+    if (!selectedAdjuster) {
+      setSubmitStatus('error')
+      setSubmitMessage('Please select an adjuster first')
+      return
+    }
+
+    if (!reviewText.trim() || reviewText.length < 20) {
+      setSubmitStatus('error')
+      setSubmitMessage('Review text must be at least 20 characters')
+      return
+    }
+
+    setIsSubmitting(true)
+    setSubmitStatus('idle')
+
+    try {
+      const { error } = await supabase.from('reviews').insert({
+        adjuster_id: selectedAdjuster.id,
+        overall_rating: overallRating,
+        communication_rating: communicationRating,
+        fairness_rating: fairnessRating,
+        speed_rating: speedRating,
+        claim_type: claimType,
+        claim_outcome: claimOutcome,
+        reviewer_type: reviewerType,
+        title: reviewTitle || null,
+        review_text: reviewText,
+        reviewer_display_name: displayName || null,
+        status: 'approved',
+        reviewer_verified: false,
+      })
+
+      if (error) throw error
+
+      setSubmitStatus('success')
+      setSubmitMessage(`Review added for ${selectedAdjuster.first_name} ${selectedAdjuster.last_name}`)
+      setReviewCount(prev => prev + 1)
+      resetForm()
+
+    } catch (error: any) {
+      console.error('Submit error:', error)
+      setSubmitStatus('error')
+      setSubmitMessage(error.message || 'Failed to submit review')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // Star rating component
+  const StarRating = ({ 
+    value, 
+    onChange, 
+    label 
+  }: { 
+    value: number
+    onChange: (v: number) => void
+    label: string 
+  }) => (
+    <div className="flex items-center gap-3">
+      <span className="text-sm text-gray-600 w-32">{label}</span>
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            onClick={() => onChange(star)}
+            className="focus:outline-none"
+          >
+            <Star
+              className={`w-6 h-6 transition-colors ${
+                star <= value
+                  ? 'text-yellow-400 fill-yellow-400'
+                  : 'text-gray-300 hover:text-yellow-200'
+              }`}
+            />
+          </button>
+        ))}
+      </div>
+      <span className="text-sm text-gray-500 w-8">{value}/5</span>
+    </div>
+  )
+
+  // ============================================
+  // RENDER: Password Gate
+  // ============================================
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4">
@@ -133,205 +334,9 @@ export default function AdminSeedPage() {
     )
   }
 
-  // Search state
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchState, setSearchState] = useState('')
-  const [searchResults, setSearchResults] = useState<Adjuster[]>([])
-  const [isSearching, setIsSearching] = useState(false)
-  const [selectedAdjuster, setSelectedAdjuster] = useState<Adjuster | null>(null)
-
-  // Review form state
-  const [overallRating, setOverallRating] = useState(3)
-  const [communicationRating, setCommunicationRating] = useState(3)
-  const [fairnessRating, setFairnessRating] = useState(3)
-  const [speedRating, setSpeedRating] = useState(3)
-  const [claimType, setClaimType] = useState('roof')
-  const [claimOutcome, setClaimOutcome] = useState('approved')
-  const [reviewerType, setReviewerType] = useState('homeowner')
-  const [reviewTitle, setReviewTitle] = useState('')
-  const [reviewText, setReviewText] = useState('')
-  const [displayName, setDisplayName] = useState('')
-
-  // UI state
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
-  const [submitMessage, setSubmitMessage] = useState('')
-  const [reviewCount, setReviewCount] = useState(0)
-
-  // Search for adjusters
-  const handleSearch = async () => {
-    if (!searchQuery.trim() && !searchState) return
-    
-    setIsSearching(true)
-    setSearchResults([])
-
-    try {
-      let query = supabase
-        .from('adjusters')
-        .select('id, first_name, last_name, state, slug')
-        .limit(20)
-
-      if (searchQuery.trim()) {
-        // Search by name
-        const searchTerm = searchQuery.trim().toLowerCase()
-        query = query.or(`first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%`)
-      }
-
-      if (searchState) {
-        query = query.eq('state', searchState)
-      }
-
-      const { data, error } = await query
-
-      if (error) throw error
-      setSearchResults(data || [])
-    } catch (error) {
-      console.error('Search error:', error)
-      setSearchResults([])
-    } finally {
-      setIsSearching(false)
-    }
-  }
-
-  // Get random adjuster
-  const getRandomAdjuster = async () => {
-    setIsSearching(true)
-    try {
-      // Get a random offset
-      const { count } = await supabase
-        .from('adjusters')
-        .select('*', { count: 'exact', head: true })
-
-      if (count) {
-        const randomOffset = Math.floor(Math.random() * Math.min(count, 10000))
-        
-        let query = supabase
-          .from('adjusters')
-          .select('id, first_name, last_name, state, slug')
-          .range(randomOffset, randomOffset)
-          .limit(1)
-
-        if (searchState) {
-          query = query.eq('state', searchState)
-        }
-
-        const { data, error } = await query
-
-        if (error) throw error
-        if (data && data.length > 0) {
-          setSelectedAdjuster(data[0])
-          setSearchResults([])
-        }
-      }
-    } catch (error) {
-      console.error('Random adjuster error:', error)
-    } finally {
-      setIsSearching(false)
-    }
-  }
-
-  // Submit review
-  const handleSubmit = async () => {
-    if (!selectedAdjuster) {
-      setSubmitStatus('error')
-      setSubmitMessage('Please select an adjuster first')
-      return
-    }
-
-    if (!reviewText.trim() || reviewText.length < 20) {
-      setSubmitStatus('error')
-      setSubmitMessage('Review text must be at least 20 characters')
-      return
-    }
-
-    setIsSubmitting(true)
-    setSubmitStatus('idle')
-
-    try {
-      const { error } = await supabase.from('reviews').insert({
-        adjuster_id: selectedAdjuster.id,
-        overall_rating: overallRating,
-        communication_rating: communicationRating,
-        fairness_rating: fairnessRating,
-        speed_rating: speedRating,
-        claim_type: claimType,
-        claim_outcome: claimOutcome,
-        reviewer_type: reviewerType,
-        title: reviewTitle || null,
-        review_text: reviewText,
-        reviewer_display_name: displayName || null,
-        status: 'approved', // Auto-approve seeded reviews
-        reviewer_verified: false,
-      })
-
-      if (error) throw error
-
-      setSubmitStatus('success')
-      setSubmitMessage(`Review added for ${selectedAdjuster.first_name} ${selectedAdjuster.last_name}`)
-      setReviewCount(prev => prev + 1)
-
-      // Reset form for next review
-      resetForm()
-
-    } catch (error: any) {
-      console.error('Submit error:', error)
-      setSubmitStatus('error')
-      setSubmitMessage(error.message || 'Failed to submit review')
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  const resetForm = () => {
-    setSelectedAdjuster(null)
-    setOverallRating(3)
-    setCommunicationRating(3)
-    setFairnessRating(3)
-    setSpeedRating(3)
-    setClaimType('roof')
-    setClaimOutcome('approved')
-    setReviewerType('homeowner')
-    setReviewTitle('')
-    setReviewText('')
-    setDisplayName('')
-    setSearchQuery('')
-    setSearchResults([])
-  }
-
-  // Star rating component
-  const StarRating = ({ 
-    value, 
-    onChange, 
-    label 
-  }: { 
-    value: number
-    onChange: (v: number) => void
-    label: string 
-  }) => (
-    <div className="flex items-center gap-3">
-      <span className="text-sm text-gray-600 w-32">{label}</span>
-      <div className="flex gap-1">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <button
-            key={star}
-            type="button"
-            onClick={() => onChange(star)}
-            className="focus:outline-none"
-          >
-            <Star
-              className={`w-6 h-6 transition-colors ${
-                star <= value
-                  ? 'text-yellow-400 fill-yellow-400'
-                  : 'text-gray-300 hover:text-yellow-200'
-              }`}
-            />
-          </button>
-        ))}
-      </div>
-      <span className="text-sm text-gray-500 w-8">{value}/5</span>
-    </div>
-  )
-
+  // ============================================
+  // RENDER: Main Admin Interface
+  // ============================================
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       {/* Header */}
@@ -358,7 +363,6 @@ export default function AdminSeedPage() {
                 1. Find Adjuster
               </h2>
 
-              {/* Search inputs */}
               <div className="space-y-3">
                 <input
                   type="text"
@@ -401,7 +405,6 @@ export default function AdminSeedPage() {
                 </div>
               </div>
 
-              {/* Search results */}
               {searchResults.length > 0 && (
                 <div className="mt-4 max-h-64 overflow-y-auto space-y-2">
                   {searchResults.map((adj) => (
@@ -420,7 +423,6 @@ export default function AdminSeedPage() {
                 </div>
               )}
 
-              {/* Selected adjuster */}
               {selectedAdjuster && (
                 <div className="mt-4 p-4 bg-green-900/30 border border-green-700 rounded-lg">
                   <div className="flex items-center justify-between">
@@ -441,7 +443,6 @@ export default function AdminSeedPage() {
               )}
             </div>
 
-            {/* Quick Tips */}
             <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
               <h3 className="font-semibold mb-3 text-yellow-400">💡 Tips for Realistic Reviews</h3>
               <ul className="text-sm text-gray-400 space-y-2">
@@ -463,7 +464,6 @@ export default function AdminSeedPage() {
             </h2>
 
             <div className="space-y-5">
-              {/* Ratings */}
               <div className="space-y-3 p-4 bg-gray-700/50 rounded-lg">
                 <StarRating value={overallRating} onChange={setOverallRating} label="Overall" />
                 <StarRating value={communicationRating} onChange={setCommunicationRating} label="Communication" />
@@ -471,7 +471,6 @@ export default function AdminSeedPage() {
                 <StarRating value={speedRating} onChange={setSpeedRating} label="Speed" />
               </div>
 
-              {/* Dropdowns */}
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs text-gray-400 mb-1">Claim Type</label>
@@ -511,7 +510,6 @@ export default function AdminSeedPage() {
                 </div>
               </div>
 
-              {/* Display name */}
               <div>
                 <label className="block text-xs text-gray-400 mb-1">Display Name (optional)</label>
                 <input
@@ -523,7 +521,6 @@ export default function AdminSeedPage() {
                 />
               </div>
 
-              {/* Title */}
               <div>
                 <label className="block text-xs text-gray-400 mb-1">Title (optional)</label>
                 <input
@@ -535,7 +532,6 @@ export default function AdminSeedPage() {
                 />
               </div>
 
-              {/* Review text */}
               <div>
                 <label className="block text-xs text-gray-400 mb-1">Review Text *</label>
                 <textarea
@@ -548,7 +544,6 @@ export default function AdminSeedPage() {
                 <div className="text-xs text-gray-500 mt-1">{reviewText.length} characters</div>
               </div>
 
-              {/* Submit */}
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting || !selectedAdjuster}
@@ -567,7 +562,6 @@ export default function AdminSeedPage() {
                 )}
               </button>
 
-              {/* Status message */}
               {submitStatus !== 'idle' && (
                 <div className={`p-4 rounded-lg flex items-center gap-3 ${
                   submitStatus === 'success' 
@@ -586,7 +580,6 @@ export default function AdminSeedPage() {
           </div>
         </div>
 
-        {/* Footer warning */}
         <div className="mt-8 p-4 bg-yellow-900/20 border border-yellow-700/50 rounded-lg text-center">
           <p className="text-yellow-400 text-sm">
             ⚠️ This page is for admin use only. Do not share this URL publicly.
