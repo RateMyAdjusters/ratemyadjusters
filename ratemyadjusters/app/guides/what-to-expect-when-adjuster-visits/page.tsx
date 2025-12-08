@@ -44,7 +44,7 @@ export default function AdjusterVisitGuide() {
             What to Expect When an Insurance Adjuster Visits Your Home
           </h1>
           <p className="text-xl text-gray-600">
-            Your step-by-step guide to understanding the insurance claim inspection process, preparing for the visit, and knowing what comes next.
+            Your clear, step-by-step overview of the insurance claim inspection process — including how to prepare, what typically happens during the visit, and what you can expect afterward.
           </p>
         </header>
 
@@ -53,87 +53,92 @@ export default function AdjusterVisitGuide() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mt-0 mb-4">Understanding the Role of an Insurance Adjuster</h2>
             <p className="text-gray-700 leading-relaxed">
-              An insurance adjuster is a trained professional who assesses property damage on behalf of an insurance company. Their primary responsibility is to inspect the damage, document their findings, and provide an estimate that helps determine your settlement amount based on your policy. Adjusters may work directly for your insurance company (staff adjusters) or operate as independent contractors assigned to handle specific claims.
+              An insurance adjuster is a trained professional responsible for evaluating property damage as part of your insurance claim. Their role is to inspect the affected areas, gather documentation, and prepare a report and estimate based on your policy coverage. Adjusters may be employees of your insurance company (staff adjusters) or independent professionals assigned to assist with claim volume.
             </p>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mt-0 mb-4">How to Prepare Before the Adjuster Arrives</h2>
             <p className="text-gray-700 leading-relaxed mb-4">
-              A little preparation goes a long way. Taking these steps before your adjuster's visit can help the inspection process run smoothly:
+              A little preparation can help the inspection move efficiently and ensure nothing is overlooked:
             </p>
             <p className="text-gray-700 leading-relaxed mb-4">
-              <strong>Review your insurance policy.</strong> Understand your coverage limits, deductible amounts, and what types of damage are included. This knowledge helps you set realistic expectations for your claim.
+              <strong>Review your policy.</strong> Take a moment to understand your coverage, deductible, and any relevant limits. This helps set expectations for the claim process.
             </p>
             <p className="text-gray-700 leading-relaxed mb-4">
-              <strong>Document all damage thoroughly.</strong> Before any cleanup or temporary repairs, photograph and video all affected areas. Capture both wide-angle shots for context and close-ups for detail. If possible, keep damaged materials for the adjuster to examine.
+              <strong>Document visible damage.</strong> Before repairs or cleanup, capture photos and videos of all affected areas. Include wide shots for context and close-ups for detail. If safe, retain damaged materials until the inspection is complete.
             </p>
             <p className="text-gray-700 leading-relaxed mb-4">
-              <strong>Create a written inventory.</strong> List every damaged item and area you want inspected. During the visit, it's easy to overlook something—a checklist ensures nothing gets missed.
+              <strong>Create a simple inventory list.</strong> Write down the rooms, items, and areas you want the adjuster to evaluate. This helps ensure all concerns are addressed during the visit.
             </p>
             <p className="text-gray-700 leading-relaxed">
-              <strong>Organize your paperwork.</strong> Have your policy number, claim number, and receipts for any emergency repairs or damaged items easily accessible.
+              <strong>Organize key documents.</strong> Keep your claim number, policy number, and any receipts for emergency repairs or damaged belongings easily accessible.
             </p>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mt-0 mb-4">What Happens During the Inspection</h2>
             <p className="text-gray-700 leading-relaxed mb-4">
-              During the visit, the adjuster will conduct a thorough assessment of your property. Here's what to expect:
+              During the visit, the adjuster will conduct a structured assessment of your property. While each claim is unique, most inspections include:
             </p>
             <p className="text-gray-700 leading-relaxed mb-4">
-              <strong>Complete property walkthrough.</strong> The adjuster will examine all areas affected by the damage—this may include your roof, interior spaces, foundation, or exterior structures depending on your claim.
+              <strong>Walkthrough of affected areas.</strong> This may include interior rooms, roofing, exterior structures, or other locations depending on the nature of the claim.
             </p>
             <p className="text-gray-700 leading-relaxed mb-4">
-              <strong>Detailed documentation.</strong> Expect the adjuster to take photographs, measurements, and written notes. Many adjusters use specialized estimating software to calculate repair costs during the visit.
+              <strong>Detailed documentation.</strong> Adjusters typically take photos, measurements, and notes. Many use digital estimating tools to assist in creating an accurate report.
             </p>
             <p className="text-gray-700 leading-relaxed mb-4">
-              <strong>Questions about the damage.</strong> Be prepared to explain when and how the damage occurred, describe any temporary repairs you've made, and provide other relevant details about your claim.
+              <strong>Clarifying questions.</strong> You may be asked when the damage occurred, what temporary measures you've taken, and any other details relevant to the inspection.
             </p>
             <p className="text-gray-700 leading-relaxed">
-              <strong>Time required.</strong> Inspection length varies based on damage extent. Simple claims may take 30–45 minutes, while significant damage could require several hours or multiple visits.
+              <strong>Inspection duration.</strong> Smaller claims may take 30–45 minutes. More complex claims or widespread damage can require additional time or follow-up visits.
             </p>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mt-0 mb-4">Communicating Effectively With Your Adjuster</h2>
             <p className="text-gray-700 leading-relaxed mb-4">
-              Good communication helps ensure a thorough and accurate assessment:
+              Clear communication can support a smooth inspection process:
             </p>
             <p className="text-gray-700 leading-relaxed mb-4">
-              <strong>Be present during the inspection.</strong> Whenever possible, accompany the adjuster so you can point out all damaged areas and provide context they might otherwise miss.
+              <strong>Be available during the visit.</strong> When possible, accompany the adjuster to point out areas you'd like reviewed.
             </p>
             <p className="text-gray-700 leading-relaxed mb-4">
-              <strong>Provide accurate information.</strong> Answer questions truthfully and completely. Accurate information supports a fair evaluation of your claim.
+              <strong>Share accurate information.</strong> Honest, complete answers help the adjuster understand the situation clearly.
             </p>
             <p className="text-gray-700 leading-relaxed mb-4">
-              <strong>Ask questions freely.</strong> If anything is unclear—whether about the inspection process or next steps—don't hesitate to ask. Adjusters can explain how they're evaluating damage and what to expect going forward.
+              <strong>Ask questions.</strong> If a part of the process is unclear, or if you're unsure what the next steps are, feel free to ask for clarification.
             </p>
             <p className="text-gray-700 leading-relaxed">
-              <strong>Document the visit.</strong> Write down the adjuster's name, contact information, and key points discussed. These notes can be helpful for future reference.
+              <strong>Take notes.</strong> Jot down the adjuster's name, contact information, and key points from your discussion for your own records.
             </p>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mt-0 mb-4">What to Expect After the Inspection</h2>
             <p className="text-gray-700 leading-relaxed mb-4">
-              Once the inspection is complete, the adjuster will compile their findings into a detailed report that typically includes:
+              Following the visit, the adjuster will compile their findings into a detailed report. This typically includes:
+            </p>
+            <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
+              <li>A description of the damage</li>
+              <li>An itemized estimate for repair or replacement</li>
+              <li>Supporting documentation such as photos or measurements</li>
+            </ul>
+            <p className="text-gray-700 leading-relaxed mb-4">
+              Your insurance company will review the report and determine the next steps based on your policy.
             </p>
             <p className="text-gray-700 leading-relaxed mb-4">
-              A comprehensive description of the damage, an itemized estimate of repair or replacement costs, and their recommendation regarding your claim. Your insurance company reviews this report before making a final coverage decision.
-            </p>
-            <p className="text-gray-700 leading-relaxed mb-4">
-              <strong>Expected timeline.</strong> Processing times vary based on claim complexity and your insurer's procedures. Your adjuster or insurance company can provide an estimated timeline for your specific situation.
+              <strong>Timeline.</strong> Processing times vary depending on claim complexity and company procedures. Your adjuster or insurer can provide general expectations.
             </p>
             <p className="text-gray-700 leading-relaxed">
-              <strong>Reviewing your estimate.</strong> When you receive the settlement offer or repair estimate, review it carefully. If you have questions or believe damage was overlooked, contact your adjuster or insurance company to discuss your concerns.
+              <strong>Reviewing your estimate.</strong> When you receive the estimate or settlement documents, review them carefully. If you have questions or believe something needs clarification, contact your adjuster or insurance company.
             </p>
           </div>
 
           <div className="bg-blue-50 rounded-xl p-8 border border-blue-100">
             <h2 className="text-2xl font-bold text-gray-900 mt-0 mb-4">Learn More About Your Adjuster</h2>
             <p className="text-gray-700 leading-relaxed mb-4">
-              Want to know more about the adjuster assigned to your claim? RateMyAdjusters helps homeowners and contractors share their experiences with insurance adjusters across the country.
+              If you'd like to read experiences shared by other homeowners and contractors, you can search for your adjuster on RateMyAdjusters or leave a review about your own experience.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
