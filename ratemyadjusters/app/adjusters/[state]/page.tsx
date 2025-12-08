@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { MapPin, Users, Star, ChevronRight, ArrowRight, Building } from 'lucide-react'
+import { MapPin, Users, Star, ChevronRight, ArrowRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import StarRating from '@/components/StarRating'
 
@@ -31,7 +31,7 @@ interface Review {
     first_name: string
     last_name: string
     slug: string
-  } | null
+  }[] | null
 }
 
 interface CityCount {
@@ -163,7 +163,7 @@ async function getRecentReviews(stateAbbr: string): Promise<Review[]> {
     .order('created_at', { ascending: false })
     .limit(5)
 
-  return (reviews || []) as Review[]
+  return (reviews || []) as unknown as Review[]
 }
 
 async function getTopCities(stateAbbr: string): Promise<CityCount[]> {
@@ -176,7 +176,6 @@ async function getTopCities(stateAbbr: string): Promise<CityCount[]> {
 
   if (!data) return []
 
-  // Count adjusters per city
   const cityCounts: Record<string, number> = {}
   data.forEach(row => {
     if (row.city) {
@@ -184,7 +183,6 @@ async function getTopCities(stateAbbr: string): Promise<CityCount[]> {
     }
   })
 
-  // Get top 20 cities with 50+ adjusters
   return Object.entries(cityCounts)
     .filter(([_, count]) => count >= 50)
     .sort((a, b) => b[1] - a[1])
@@ -219,7 +217,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const count = await getStateData(stateData.abbr)
 
   return {
-    title: `${stateData.name} Insurance Adjusters – Reviews & Ratings | RateMyAdjusters`,
+    title: `${stateData.name} Insurance Adjusters – Reviews & Ratings`,
     description: `Find ${count.toLocaleString()} insurance adjusters in ${stateData.name}. Read reviews from homeowners and contractors. See ratings, license details, and claim experiences.`,
     alternates: {
       canonical: `https://ratemyadjusters.com/adjusters/${params.state}`,
@@ -252,7 +250,6 @@ export default async function StatePage({ params }: PageProps) {
     getReviewCount(stateData.abbr),
   ])
 
-  // Schemas
   const breadcrumbSchema = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -444,12 +441,12 @@ export default async function StatePage({ params }: PageProps) {
                                 {new Date(review.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                               </span>
                             </div>
-                            {review.adjusters && (
+                            {review.adjusters && review.adjusters[0] && (
                               <Link
-                                href={`/adjuster/${review.adjusters.slug}`}
+                                href={`/adjuster/${review.adjusters[0].slug}`}
                                 className="text-sm text-blue-600 hover:text-blue-700 font-medium mb-2 inline-block"
                               >
-                                Review for {review.adjusters.first_name} {review.adjusters.last_name}
+                                Review for {review.adjusters[0].first_name} {review.adjusters[0].last_name}
                               </Link>
                             )}
                             <p className="text-gray-700 text-sm leading-relaxed line-clamp-3">
@@ -527,6 +524,15 @@ export default async function StatePage({ params }: PageProps) {
                 </Link>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Legal Disclaimer */}
+        <div className="border-t border-gray-200 bg-gray-50">
+          <div className="max-w-6xl mx-auto px-4 py-6">
+            <p className="text-xs text-gray-500 text-center">
+              RateMyAdjusters does not evaluate or rate insurance companies or adjusters. Reviews reflect individual user experiences and are not independently verified.
+            </p>
           </div>
         </div>
       </main>
