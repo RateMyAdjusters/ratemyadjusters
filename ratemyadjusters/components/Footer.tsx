@@ -1,4 +1,33 @@
 import Link from 'next/link'
+import { Lock } from 'lucide-react'
+
+function ShieldLogo({ className = "w-8 h-8" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+      <path 
+        d="M24 4L6 12V22C6 33.1 13.68 43.34 24 46C34.32 43.34 42 33.1 42 22V12L24 4Z" 
+        fill="url(#footer-shield-gradient)"
+        stroke="url(#footer-shield-stroke)"
+        strokeWidth="2"
+      />
+      <g fill="#FCD34D">
+        <path d="M14 22L15.09 25.26L18.5 25.26L15.71 27.24L16.8 30.5L14 28.52L11.2 30.5L12.29 27.24L9.5 25.26L12.91 25.26L14 22Z" />
+        <path d="M24 16L25.45 20.35L30 20.35L26.27 23.04L27.73 27.39L24 24.7L20.27 27.39L21.73 23.04L18 20.35L22.55 20.35L24 16Z" />
+        <path d="M34 22L35.09 25.26L38.5 25.26L35.71 27.24L36.8 30.5L34 28.52L31.2 30.5L32.29 27.24L29.5 25.26L32.91 25.26L34 22Z" />
+      </g>
+      <defs>
+        <linearGradient id="footer-shield-gradient" x1="6" y1="4" x2="42" y2="46" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#0F4C81"/>
+          <stop offset="1" stopColor="#0D9488"/>
+        </linearGradient>
+        <linearGradient id="footer-shield-stroke" x1="6" y1="4" x2="42" y2="46" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#1E6091"/>
+          <stop offset="1" stopColor="#14B8A6"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  )
+}
 
 export default function Footer() {
   const companies = [
@@ -28,9 +57,7 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-teal-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">R</span>
-              </div>
+              <ShieldLogo className="w-8 h-8" />
               <span className="font-bold text-xl">RateMyAdjusters</span>
               <span className="text-xs bg-blue-500/30 text-blue-300 px-2 py-0.5 rounded-full">Beta</span>
             </div>
@@ -57,13 +84,13 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/review-guidelines" className="text-slate-400 hover:text-white transition-colors">
-                  Review Guidelines
+                <Link href="/add-adjuster" className="text-slate-400 hover:text-white transition-colors">
+                  Add Missing Adjuster
                 </Link>
               </li>
               <li>
-                <Link href="/for-adjusters" className="text-slate-400 hover:text-white transition-colors">
-                  For Adjusters
+                <Link href="/review-guidelines" className="text-slate-400 hover:text-white transition-colors">
+                  Review Guidelines
                 </Link>
               </li>
             </ul>
@@ -76,7 +103,7 @@ export default function Footer() {
               {companies.map((company) => (
                 <li key={company.slug}>
                   <Link 
-                    href={`/company/${company.slug}`} 
+                    href={'/company/' + company.slug} 
                     className="text-slate-400 hover:text-white transition-colors"
                   >
                     {company.name}
@@ -86,14 +113,14 @@ export default function Footer() {
             </ul>
           </div>
           
-          {/* Top States */}
+          {/* Top States + Adjuster Login */}
           <div>
             <h4 className="font-semibold mb-4 text-white">Top States</h4>
-            <ul className="space-y-2 text-sm">
+            <ul className="space-y-2 text-sm mb-6">
               {states.map((state) => (
                 <li key={state.abbr}>
                   <Link 
-                    href={`/search?state=${state.abbr}`} 
+                    href={'/search?state=' + state.abbr} 
                     className="text-slate-400 hover:text-white transition-colors"
                   >
                     {state.name} Adjusters
@@ -101,6 +128,15 @@ export default function Footer() {
                 </li>
               ))}
             </ul>
+            
+            {/* Adjuster Login Coming Soon */}
+            <div className="bg-slate-800 rounded-lg p-3 border border-slate-700">
+              <div className="flex items-center gap-2 text-slate-400">
+                <Lock className="w-4 h-4" />
+                <span className="text-sm font-medium">Adjuster Login</span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">Coming Soon</p>
+            </div>
           </div>
         </div>
         
@@ -124,6 +160,9 @@ export default function Footer() {
               </Link>
               <Link href="/privacy" className="text-slate-400 hover:text-white transition-colors">
                 Privacy
+              </Link>
+              <Link href="/for-adjusters" className="text-slate-400 hover:text-white transition-colors">
+                For Adjusters
               </Link>
             </div>
           </div>
