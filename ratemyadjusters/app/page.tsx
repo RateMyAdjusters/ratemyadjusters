@@ -95,7 +95,7 @@ export default function Home() {
             {/* Stats */}
             <div className="flex justify-center items-center gap-8 md:gap-12 text-center">
               <div>
-                <div className="text-3xl md:text-4xl font-bold text-white">12,847</div>
+                <div className="text-3xl md:text-4xl font-bold text-white">152,847</div>
                 <div className="text-slate-400 text-sm">Adjusters</div>
               </div>
               <div className="w-px h-12 bg-slate-700"></div>
