@@ -135,17 +135,39 @@ function formatDate(dateStr: string | null): string {
   }
 }
 
-function getLicenseIntro(fullName: string, stateName: string, status: string | null): string {
+function getLicenseIntro(fullName: string, stateName: string, status: string | null, city: string | null, qualification: string | null): string {
+  let intro = ''
+  
   if (status === 'active') {
-    return `${fullName} is a licensed insurance adjuster in ${stateName}.`
+    intro = `${fullName} is a licensed insurance adjuster in ${stateName}.`
+  } else if (status === 'expired') {
+    intro = `${fullName} is listed as an insurance adjuster in ${stateName}. Their license status is currently marked as expired in our records.`
+  } else if (status === 'pending_verification') {
+    intro = `${fullName} is listed as an insurance adjuster in ${stateName}. This profile is pending license verification.`
+  } else {
+    intro = `${fullName} is listed as an insurance adjuster in ${stateName}. License details are shown below when available.`
   }
-  if (status === 'expired') {
-    return `${fullName} is listed as an insurance adjuster in ${stateName}. Their license status is currently marked as expired in our records.`
+  
+  // Build the second sentence with proper grammar
+  const parts: string[] = []
+  if (qualification) {
+    parts.push(`Licensed as a ${qualification}`)
   }
-  if (status === 'pending_verification') {
-    return `${fullName} is listed as an insurance adjuster in ${stateName}. This profile is pending license verification.`
+  if (city) {
+    if (parts.length > 0) {
+      parts.push(`and based in ${city}`)
+    } else {
+      parts.push(`Based in ${city}`)
+    }
   }
-  return `${fullName} is listed as an insurance adjuster in ${stateName}. License details are shown below when available.`
+  
+  if (parts.length > 0) {
+    intro += ` ${parts.join(' ')}, this adjuster evaluates property damage claims and prepares estimates for insurance companies and policyholders.`
+  } else {
+    intro += ` This adjuster evaluates property damage claims and prepares estimates for insurance companies and policyholders.`
+  }
+  
+  return intro
 }
 
 function getFAQs(fullName: string, state: string, city: string | null) {
@@ -292,18 +314,18 @@ export default async function AdjusterProfile({ params }: PageProps) {
                       <Clock className="w-3 h-3" />
                       Pending Verification
                     </span>
-                  ) : (
+                  ) : !adjuster.profile_claimed ? (
                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border border-gray-300 text-gray-600 bg-gray-50">
                       <Shield className="w-3 h-3" />
-                      Unverified
+                      Profile Unclaimed
                     </span>
-                  )}
+                  ) : null}
                 </div>
                 
                 <div className="flex flex-wrap items-center gap-4 text-gray-600 mb-4">
                   <span className="flex items-center gap-1">
                     <Building className="w-4 h-4" />
-                    Insurance Adjuster
+                    Property Claims Adjuster ({adjuster.state})
                   </span>
                   <span className="flex items-center gap-1">
                     <MapPin className="w-4 h-4" />
@@ -344,10 +366,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">About {fullName}</h2>
                 <p className="text-gray-700 leading-relaxed mb-4">
-                  {getLicenseIntro(fullName, stateName, adjuster.license_status)}{' '}
-                  {adjuster.qualification && `Licensed as a ${adjuster.qualification}, `}
-                  {adjuster.city && `based in ${adjuster.city}, `}
-                  this adjuster evaluates property damage claims and prepares estimates for insurance companies and policyholders.
+                  {getLicenseIntro(fullName, stateName, adjuster.license_status, adjuster.city, adjuster.qualification)}
                 </p>
                 <p className="text-gray-700 leading-relaxed">
                   Insurance adjusters play a key role in the claims process by inspecting damaged property, documenting findings, and helping determine coverage based on policy terms. 
@@ -566,6 +585,15 @@ export default async function AdjusterProfile({ params }: PageProps) {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* ========== Legal Disclaimer ========== */}
+        <div className="border-t border-gray-200 bg-gray-50">
+          <div className="max-w-6xl mx-auto px-4 py-6">
+            <p className="text-xs text-gray-500 text-center">
+              RateMyAdjusters does not evaluate or rate insurance companies or adjusters. Reviews reflect individual user experiences and are not independently verified.
+            </p>
           </div>
         </div>
       </main>
