@@ -7,6 +7,7 @@ import StarRating from '@/components/StarRating'
 import ShareButtons from '@/components/ShareButtons'
 import ConfirmAdjusterButton from '@/components/ConfirmAdjusterButton'
 import DisagreeButton from '@/components/DisagreeButton'
+import ClaimButton from '@/components/ClaimButton'
 
 interface PageProps {
   params: { slug: string }
@@ -268,6 +269,10 @@ export default async function AdjusterProfile({ params }: PageProps) {
                   <div className="flex justify-between"><dt className="text-gray-500">Issued</dt><dd className="text-gray-900 font-medium">{formatDate(adjuster.issued_on)}</dd></div>
                   <div className="flex justify-between"><dt className="text-gray-500">Expires</dt><dd className="text-gray-900 font-medium">{formatDate(adjuster.expires_on)}</dd></div>
                 </dl>
+              </div>
+
+              <div className="mb-6">
+                <ClaimButton slug={adjuster.slug} isClaimed={adjuster.profile_claimed || false} />
               </div>
 
               <div className="bg-blue-50 rounded-xl p-6 border border-blue-100">
