@@ -3,10 +3,10 @@ import { Home, Search, FileQuestion, ArrowRight } from 'lucide-react'
 
 export default function NotFound() {
   const reasons = [
-    "The link expired faster than an adjuster's voicemail inbox",
-    "Someone fat-fingered a button like a rookie IA on their first storm",
-    'The adjuster you\'re searching for vanished into the "We\'ll review and get back to you" dimension',
-    "Or… the universe just denied your claim for no reason",
+    "The link may be outdated or broken",
+    "The URL might have been typed incorrectly",
+    "The page may have been moved or removed",
+    "The adjuster profile you're looking for may not exist yet",
   ]
 
   return (
@@ -20,33 +20,33 @@ export default function NotFound() {
 
         {/* Title */}
         <h1 className="text-4xl md:text-5xl font-bold mb-4">
-          Oops… Looks Like This Claim Got Mishandled.
+          Page Not Found
         </h1>
 
         {/* Subhead */}
         <p className="text-xl text-slate-300 mb-8">
-          Don't worry — it happens in the insurance world way more often than it happens on our website.
+          Sorry, we couldn't find the page you're looking for.
         </p>
 
         {/* Main Body */}
         <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 mb-8 border border-white/10">
           <p className="text-slate-300 text-lg leading-relaxed">
-            The page you're looking for didn't load… kind of like a proper estimate the first time around.
+            The page you requested doesn't seem to exist. This could be due to an outdated link or a typo in the URL.
           </p>
           <p className="text-slate-300 text-lg leading-relaxed mt-4">
-            But you're still in the right place. Let's get you back to finding the adjuster you're dealing with — <span className="text-white font-semibold">BEFORE</span> the next surprise shows up.
+            Let's get you back on track. You can return to the homepage or search for the adjuster you're looking for.
           </p>
         </div>
 
-        {/* Humor Block */}
-        <div className="bg-amber-500/10 backdrop-blur-sm rounded-2xl p-6 mb-10 border border-amber-400/20 text-left">
-          <h3 className="text-amber-300 font-semibold mb-4 text-center">
-            Here are a few possibilities for what went wrong:
+        {/* Reasons Block */}
+        <div className="bg-slate-500/10 backdrop-blur-sm rounded-2xl p-6 mb-10 border border-slate-400/20 text-left">
+          <h3 className="text-slate-300 font-semibold mb-4 text-center">
+            This may have happened because:
           </h3>
           <ul className="space-y-3">
             {reasons.map((reason, index) => (
               <li key={index} className="flex items-start gap-3 text-slate-300">
-                <span className="text-amber-400 mt-1">•</span>
+                <span className="text-slate-400 mt-1">•</span>
                 <span>{reason}</span>
               </li>
             ))}
@@ -74,12 +74,7 @@ export default function NotFound() {
 
         {/* Footer Note */}
         <p className="text-slate-500 text-sm mt-12">
-          If you think this is an error on our end, let us know. Unlike some adjusters, we actually respond.
-        </p>
-
-        {/* Easter Egg */}
-        <p className="text-slate-600 text-xs mt-4 italic">
-          If this was an adjuster decision, we'd call it "within guidelines." 😉
+          If you believe this is an error, please contact us and we'll look into it.
         </p>
       </div>
     </main>
