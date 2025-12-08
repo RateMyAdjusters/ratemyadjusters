@@ -76,9 +76,6 @@ export default function AdminSeedPage() {
 
   // Review form state
   const [overallRating, setOverallRating] = useState(3)
-  const [communicationRating, setCommunicationRating] = useState(3)
-  const [fairnessRating, setFairnessRating] = useState(3)
-  const [speedRating, setSpeedRating] = useState(3)
   const [claimType, setClaimType] = useState('roof')
   const [claimOutcome, setClaimOutcome] = useState('approved')
   const [reviewerType, setReviewerType] = useState('homeowner')
@@ -186,9 +183,6 @@ export default function AdminSeedPage() {
   const resetForm = () => {
     setSelectedAdjuster(null)
     setOverallRating(3)
-    setCommunicationRating(3)
-    setFairnessRating(3)
-    setSpeedRating(3)
     setClaimType('roof')
     setClaimOutcome('approved')
     setReviewerType('homeowner')
@@ -220,9 +214,6 @@ export default function AdminSeedPage() {
       const { error } = await supabase.from('reviews').insert({
         adjuster_id: selectedAdjuster.id,
         overall_rating: overallRating,
-        communication_rating: communicationRating,
-        fairness_rating: fairnessRating,
-        speed_rating: speedRating,
         claim_type: claimType,
         claim_outcome: claimOutcome,
         reviewer_type: reviewerType,
@@ -464,11 +455,8 @@ export default function AdminSeedPage() {
             </h2>
 
             <div className="space-y-5">
-              <div className="space-y-3 p-4 bg-gray-700/50 rounded-lg">
-                <StarRating value={overallRating} onChange={setOverallRating} label="Overall" />
-                <StarRating value={communicationRating} onChange={setCommunicationRating} label="Communication" />
-                <StarRating value={fairnessRating} onChange={setFairnessRating} label="Fairness" />
-                <StarRating value={speedRating} onChange={setSpeedRating} label="Speed" />
+              <div className="p-4 bg-gray-700/50 rounded-lg">
+                <StarRating value={overallRating} onChange={setOverallRating} label="Overall Rating" />
               </div>
 
               <div className="grid grid-cols-3 gap-3">
