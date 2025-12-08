@@ -6,11 +6,14 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 const PAGE_SIZE = 50000;
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: { part: string } }
+  context: { params: Promise<{ part: string }> }
 ) {
-  const part = parseInt(params.part, 10);
+  const { part: partStr } = await context.params;
+  const part = parseInt(partStr, 10);
 
   if (isNaN(part) || part < 1 || part > 2) {
     return new NextResponse('Invalid part number', { status: 400 });
