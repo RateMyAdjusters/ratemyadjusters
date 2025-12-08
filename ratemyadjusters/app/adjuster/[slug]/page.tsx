@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { Star, MapPin, Building, Shield, AlertCircle, ChevronRight, Clock } from 'lucide-react'
+import { Star, MapPin, Building, Shield, AlertCircle, ChevronRight, Clock, Users, FileText, HelpCircle, ArrowRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import StarRating from '@/components/StarRating'
 import ShareButtons from '@/components/ShareButtons'
@@ -36,6 +36,23 @@ async function getReviews(adjusterId: string) {
   return data || []
 }
 
+async function getSimilarAdjusters(state: string, city: string | null, currentId: string) {
+  let query = supabase
+    .from('adjusters')
+    .select('id, first_name, last_name, slug, state, city, avg_rating, total_reviews')
+    .eq('state', state)
+    .neq('id', currentId)
+    .order('total_reviews', { ascending: false })
+    .limit(5)
+
+  if (city) {
+    query = query.eq('city', city)
+  }
+
+  const { data } = await query
+  return data || []
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const adjuster = await getAdjuster(params.slug)
   
@@ -45,12 +62,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const fullName = adjuster.first_name + ' ' + adjuster.last_name
   const stateFullName = getStateName(adjuster.state)
+  const cityText = adjuster.city ? adjuster.city + ', ' : ''
   
   return {
-    title: fullName + ' – Insurance Adjuster Reviews (' + adjuster.state + ') | RateMyAdjusters',
-    description: 'See real homeowner and contractor experiences with ' + fullName + ', an insurance adjuster licensed in ' + stateFullName + '. Ratings, reviews, license details, and more.',
+    title: `${fullName} – Insurance Adjuster Reviews (${adjuster.state}) | RateMyAdjusters`,
+    description: `Read reviews of ${fullName}, a licensed insurance adjuster in ${cityText}${stateFullName}. See ratings from homeowners and contractors, license details, and claim experiences.`,
     alternates: {
       canonical: 'https://ratemyadjusters.com/adjuster/' + adjuster.slug,
+    },
+    openGraph: {
+      title: `${fullName} – Insurance Adjuster Reviews`,
+      description: `See what homeowners and contractors say about ${fullName}, an insurance adjuster in ${stateFullName}.`,
+      type: 'profile',
     },
   }
 }
@@ -72,6 +95,37 @@ function getStateName(abbr: string): string {
   return states[abbr] || abbr
 }
 
+function getStateSlug(abbr: string): string {
+  const stateName = getStateName(abbr)
+  return stateName.toLowerCase().replace(/\s+/g, '-')
+}
+
+function getStateClaimInfo(abbr: string): string {
+  const stateInfo: Record<string, string> = {
+    TX: 'Texas experiences frequent weather-related claims including hail, wind, and hurricane damage. Homeowners in the state often file claims for roof damage, water intrusion, and storm-related property damage.',
+    FL: 'Florida homeowners commonly file claims for hurricane damage, water damage, and wind-related losses. The state sees high volumes of roof claims and flood-related incidents.',
+    CA: 'California property claims frequently involve wildfire damage, earthquake coverage, and water damage. Homeowners may also file claims for mudslides and structural damage.',
+    GA: 'Georgia residents often file claims for storm damage, including hail, wind, and tornado-related losses. Water damage and roof claims are also common in the state.',
+    OH: 'Ohio homeowners typically file claims for winter storm damage, wind damage, and water-related losses. Hail and tornado damage are also common in certain regions.',
+    AZ: 'Arizona property claims often involve monsoon damage, dust storm damage, and water intrusion. Roof damage from extreme heat and sun exposure is also common.',
+    NY: 'New York homeowners file claims for winter storm damage, water damage, and wind-related losses. Urban areas may see more theft and liability claims.',
+    PA: 'Pennsylvania residents commonly file claims for winter weather damage, water damage, and wind-related losses. Flooding claims are common in certain regions.',
+    IL: 'Illinois homeowners often file claims for severe storm damage, including hail, wind, and tornado damage. Winter weather and water damage claims are also frequent.',
+    NC: 'North Carolina sees frequent hurricane-related claims, wind damage, and water intrusion claims. Coastal areas have higher volumes of storm-related losses.',
+    LA: 'Louisiana homeowners frequently file claims for hurricane damage, flooding, and wind-related losses. The state experiences high claim volumes during hurricane season.',
+    CO: 'Colorado property claims often involve hail damage, wind damage, and wildfire-related losses. Winter storm damage is also common in mountainous regions.',
+    SC: 'South Carolina residents commonly file claims for hurricane damage, wind damage, and water intrusion. Coastal flooding and storm surge claims are frequent.',
+    TN: 'Tennessee homeowners file claims for tornado damage, severe storm damage, and flooding. Wind and hail claims are common throughout the state.',
+    AL: 'Alabama property claims frequently involve tornado damage, hurricane damage, and severe storm losses. Wind and hail claims are also common.',
+    OK: 'Oklahoma experiences frequent tornado-related claims, hail damage, and wind damage. Severe storm claims are common throughout the state.',
+    NV: 'Nevada homeowners file claims for water damage, fire damage, and wind-related losses. Flash flood damage is common in certain areas.',
+    MI: 'Michigan residents commonly file claims for winter storm damage, water damage, and wind-related losses. Basement flooding claims are also frequent.',
+    NJ: 'New Jersey homeowners file claims for hurricane damage, flooding, and winter storm damage. Coastal areas see higher volumes of storm-related claims.',
+    VA: 'Virginia property claims often involve hurricane damage, flooding, and wind-related losses. Severe storm and hail claims are also common.',
+  }
+  return stateInfo[abbr] || `Homeowners in ${getStateName(abbr)} file insurance claims for various types of property damage including weather-related losses, water damage, fire damage, and theft. The specific types of claims vary by region and local weather patterns.`
+}
+
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return 'Not listed'
   try {
@@ -81,26 +135,116 @@ function formatDate(dateStr: string | null): string {
   }
 }
 
+function getLicenseIntro(fullName: string, stateName: string, status: string | null): string {
+  if (status === 'active') {
+    return `${fullName} is a licensed insurance adjuster in ${stateName}.`
+  }
+  if (status === 'expired') {
+    return `${fullName} is listed as an insurance adjuster in ${stateName}. Their license status is currently marked as expired in our records.`
+  }
+  if (status === 'pending_verification') {
+    return `${fullName} is listed as an insurance adjuster in ${stateName}. This profile is pending license verification.`
+  }
+  return `${fullName} is listed as an insurance adjuster in ${stateName}. License details are shown below when available.`
+}
+
+function getFAQs(fullName: string, state: string, city: string | null) {
+  const stateName = getStateName(state)
+  
+  return [
+    {
+      question: `How can I leave a review for ${fullName}?`,
+      answer: `You can leave a review for ${fullName} by clicking the "Leave a Review" button on this page. Reviews are submitted by users and may be displayed with a chosen display name. Your feedback helps other homeowners and contractors understand what to expect.`,
+    },
+    {
+      question: `Is ${fullName} a licensed insurance adjuster?`,
+      answer: `${fullName} is listed as an insurance adjuster in ${stateName}. License details, including license number, type, and expiration date, are displayed in the License Information section of this page when available.`,
+    },
+    {
+      question: `What types of claims does ${fullName} handle?`,
+      answer: `Insurance adjusters in ${stateName} typically handle various property claims including roof damage, water damage, fire damage, wind and hail damage, and other covered losses. The specific types of claims an adjuster handles may depend on their employer and assignment.`,
+    },
+    {
+      question: `How do I contact ${fullName} about my insurance claim?`,
+      answer: `Insurance adjusters are typically assigned to claims by insurance companies. If ${fullName} is handling your claim, you should have received their contact information from your insurance company. You can also contact your insurance company directly to inquire about your assigned adjuster.`,
+    },
+    {
+      question: `Are the reviews on this page verified?`,
+      answer: `Reviews on RateMyAdjusters are submitted by homeowners, contractors, and other insurance professionals who have worked with adjusters. All reviews are moderated for content guidelines, but we cannot independently verify each claim experience.`,
+    },
+  ]
+}
+
 export default async function AdjusterProfile({ params }: PageProps) {
   const adjuster = await getAdjuster(params.slug)
   if (!adjuster) notFound()
 
   const reviews = await getReviews(adjuster.id)
+  const similarAdjusters = await getSimilarAdjusters(adjuster.state, adjuster.city, adjuster.id)
+  
   const fullName = adjuster.first_name + ' ' + adjuster.last_name
   const profileUrl = 'https://ratemyadjusters.com/adjuster/' + adjuster.slug
   const isPendingVerification = adjuster.license_status === 'pending_verification'
+  const stateName = getStateName(adjuster.state)
+  const stateSlug = getStateSlug(adjuster.state)
+  const location = adjuster.city ? `${adjuster.city}, ${stateName}` : stateName
+  const faqs = getFAQs(fullName, adjuster.state, adjuster.city)
 
-  const structuredData = {
+  // Person Schema
+  const personSchema = {
     '@context': 'https://schema.org',
     '@type': 'Person',
     name: fullName,
+    url: profileUrl,
     jobTitle: adjuster.qualification || 'Insurance Adjuster',
-    address: { '@type': 'PostalAddress', addressRegion: adjuster.state, addressCountry: 'US' },
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: adjuster.city || undefined,
+      addressRegion: adjuster.state,
+      addressCountry: 'US',
+    },
+    ...(adjuster.total_reviews > 0 && {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: adjuster.avg_rating?.toFixed(1) || '0',
+        reviewCount: adjuster.total_reviews || 0,
+        bestRating: '5',
+        worstRating: '1',
+      },
+    }),
+  }
+
+  // Breadcrumb Schema
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://ratemyadjusters.com/' },
+      { '@type': 'ListItem', position: 2, name: 'Adjusters', item: 'https://ratemyadjusters.com/adjusters' },
+      { '@type': 'ListItem', position: 3, name: stateName, item: `https://ratemyadjusters.com/adjusters/${stateSlug}` },
+      { '@type': 'ListItem', position: 4, name: fullName, item: profileUrl },
+    ],
+  }
+
+  // FAQ Schema
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer,
+      },
+    })),
   }
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
       <main className="min-h-screen bg-gray-50">
         {/* Pending Verification Banner */}
@@ -121,9 +265,9 @@ export default async function AdjusterProfile({ params }: PageProps) {
             <nav className="flex items-center gap-2 text-sm">
               <Link href="/" className="text-gray-500 hover:text-gray-700">Home</Link>
               <ChevronRight className="w-4 h-4 text-gray-400" />
-              <Link href="/search" className="text-gray-500 hover:text-gray-700">Adjusters</Link>
+              <Link href="/adjusters" className="text-gray-500 hover:text-gray-700">Adjusters</Link>
               <ChevronRight className="w-4 h-4 text-gray-400" />
-              <Link href={'/search?state=' + adjuster.state} className="text-gray-500 hover:text-gray-700">{adjuster.state}</Link>
+              <Link href={`/adjusters/${stateSlug}`} className="text-gray-500 hover:text-gray-700">{stateName}</Link>
               <ChevronRight className="w-4 h-4 text-gray-400" />
               <span className="text-gray-900 font-medium">{fullName}</span>
             </nav>
@@ -159,11 +303,11 @@ export default async function AdjusterProfile({ params }: PageProps) {
                 <div className="flex flex-wrap items-center gap-4 text-gray-600 mb-4">
                   <span className="flex items-center gap-1">
                     <Building className="w-4 h-4" />
-                    Unknown Company
+                    Insurance Adjuster
                   </span>
                   <span className="flex items-center gap-1">
                     <MapPin className="w-4 h-4" />
-                    {adjuster.city ? adjuster.city + ', ' : ''}{adjuster.state}
+                    {location}
                   </span>
                 </div>
 
@@ -193,7 +337,61 @@ export default async function AdjusterProfile({ params }: PageProps) {
 
         <div className="max-w-6xl mx-auto px-4 py-8">
           <div className="grid lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
+            {/* Main Content */}
+            <div className="lg:col-span-2 space-y-8">
+              
+              {/* ========== SEO BLOCK: About This Adjuster ========== */}
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">About {fullName}</h2>
+                <p className="text-gray-700 leading-relaxed mb-4">
+                  {getLicenseIntro(fullName, stateName, adjuster.license_status)}{' '}
+                  {adjuster.qualification && `Licensed as a ${adjuster.qualification}, `}
+                  {adjuster.city && `based in ${adjuster.city}, `}
+                  this adjuster evaluates property damage claims and prepares estimates for insurance companies and policyholders.
+                </p>
+                <p className="text-gray-700 leading-relaxed">
+                  Insurance adjusters play a key role in the claims process by inspecting damaged property, documenting findings, and helping determine coverage based on policy terms. 
+                  Homeowners and contractors can share their experiences working with {fullName} by leaving a review on this page.
+                </p>
+              </div>
+
+              {/* ========== SEO BLOCK: Service Area ========== */}
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <MapPin className="w-5 h-5 text-teal-600" />
+                  <h2 className="text-xl font-bold text-gray-900">Service Area</h2>
+                </div>
+                <p className="text-gray-700 leading-relaxed">
+                  {fullName} serves homeowners in <strong>{location}</strong> and surrounding areas. 
+                  Insurance adjusters may be assigned to claims throughout their licensed state or region, 
+                  depending on their employer and claim volume.
+                </p>
+                <div className="mt-4">
+                  <Link 
+                    href={`/adjusters/${stateSlug}`}
+                    className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium text-sm"
+                  >
+                    View all adjusters in {stateName}
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+              </div>
+
+              {/* ========== SEO BLOCK: Common Claims in State ========== */}
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <FileText className="w-5 h-5 text-blue-600" />
+                  <h2 className="text-xl font-bold text-gray-900">Common Insurance Claims in {stateName}</h2>
+                </div>
+                <p className="text-gray-700 leading-relaxed">
+                  {getStateClaimInfo(adjuster.state)}
+                </p>
+                <p className="text-gray-700 leading-relaxed mt-4">
+                  When filing a claim, homeowners work with adjusters like {fullName} who evaluate the damage and help process the claim according to policy coverage.
+                </p>
+              </div>
+
+              {/* ========== Reviews Section ========== */}
               <div className="bg-white rounded-xl shadow-sm">
                 <div className="p-6 border-b">
                   <h2 className="text-xl font-bold text-gray-900">Reviews ({adjuster.total_reviews || 0})</h2>
@@ -249,14 +447,32 @@ export default async function AdjusterProfile({ params }: PageProps) {
                   </div>
                 )}
               </div>
+
+              {/* ========== SEO BLOCK: FAQ Section ========== */}
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <div className="flex items-center gap-2 mb-6">
+                  <HelpCircle className="w-5 h-5 text-purple-600" />
+                  <h2 className="text-xl font-bold text-gray-900">Frequently Asked Questions</h2>
+                </div>
+                <div className="space-y-6">
+                  {faqs.map((faq, index) => (
+                    <div key={index} className="border-b border-gray-100 pb-6 last:border-0 last:pb-0">
+                      <h3 className="font-semibold text-gray-900 mb-2">{faq.question}</h3>
+                      <p className="text-gray-600 text-sm leading-relaxed">{faq.answer}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+            {/* Sidebar */}
+            <div className="lg:col-span-1 space-y-6">
+              {/* License Info */}
+              <div className="bg-white rounded-xl shadow-sm p-6">
                 <h3 className="font-semibold text-gray-900 mb-4">License Information</h3>
                 <dl className="space-y-3 text-sm">
                   <div className="flex justify-between"><dt className="text-gray-500">Name</dt><dd className="text-gray-900 font-medium">{fullName}</dd></div>
-                  <div className="flex justify-between"><dt className="text-gray-500">State</dt><dd className="text-gray-900 font-medium">{getStateName(adjuster.state)}</dd></div>
+                  <div className="flex justify-between"><dt className="text-gray-500">State</dt><dd className="text-gray-900 font-medium">{stateName}</dd></div>
                   {adjuster.city && <div className="flex justify-between"><dt className="text-gray-500">City</dt><dd className="text-gray-900 font-medium">{adjuster.city}</dd></div>}
                   {adjuster.license_number && <div className="flex justify-between"><dt className="text-gray-500">License #</dt><dd className="text-gray-900 font-medium">{adjuster.license_number}</dd></div>}
                   {adjuster.qualification && <div className="flex justify-between"><dt className="text-gray-500">License Type</dt><dd className="text-gray-900 font-medium text-right">{adjuster.qualification}</dd></div>}
@@ -271,10 +487,10 @@ export default async function AdjusterProfile({ params }: PageProps) {
                 </dl>
               </div>
 
-              <div className="mb-6">
-                <ClaimButton slug={adjuster.slug} isClaimed={adjuster.profile_claimed || false} />
-              </div>
+              {/* Claim Button */}
+              <ClaimButton slug={adjuster.slug} isClaimed={adjuster.profile_claimed || false} />
 
+              {/* Is This You */}
               <div className="bg-blue-50 rounded-xl p-6 border border-blue-100">
                 <div className="flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
@@ -283,6 +499,70 @@ export default async function AdjusterProfile({ params }: PageProps) {
                     <p className="text-sm text-gray-600 mb-3">Claim your profile to respond to reviews and update your information.</p>
                     <Link href="/for-adjusters" className="text-sm text-blue-600 hover:text-blue-700 font-medium">Learn more →</Link>
                   </div>
+                </div>
+              </div>
+
+              {/* ========== SEO BLOCK: Similar Adjusters ========== */}
+              {similarAdjusters.length > 0 && (
+                <div className="bg-white rounded-xl shadow-sm p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Users className="w-5 h-5 text-gray-600" />
+                    <h3 className="font-semibold text-gray-900">
+                      {adjuster.city ? `Other Adjusters in ${adjuster.city}` : `Other Adjusters in ${stateName}`}
+                    </h3>
+                  </div>
+                  <div className="space-y-3">
+                    {similarAdjusters.map((adj) => (
+                      <Link
+                        key={adj.id}
+                        href={`/adjuster/${adj.slug}`}
+                        className="flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                      >
+                        <div>
+                          <div className="font-medium text-gray-900 text-sm">{adj.first_name} {adj.last_name}</div>
+                          <div className="text-xs text-gray-500">{adj.city ? `${adj.city}, ` : ''}{adj.state}</div>
+                        </div>
+                        {adj.total_reviews > 0 && (
+                          <div className="text-right">
+                            <div className="flex items-center gap-1">
+                              <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                              <span className="text-sm font-medium text-gray-900">{adj.avg_rating?.toFixed(1)}</span>
+                            </div>
+                            <div className="text-xs text-gray-500">{adj.total_reviews} reviews</div>
+                          </div>
+                        )}
+                      </Link>
+                    ))}
+                  </div>
+                  <Link 
+                    href={`/adjusters/${stateSlug}`}
+                    className="mt-4 inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium text-sm"
+                  >
+                    View all in {stateName}
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+              )}
+
+              {/* ========== SEO BLOCK: Quick Links ========== */}
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <h3 className="font-semibold text-gray-900 mb-4">Explore More</h3>
+                <div className="space-y-2">
+                  <Link href={`/adjusters/${stateSlug}`} className="block text-sm text-gray-600 hover:text-blue-600 py-1">
+                    → All {stateName} Adjusters
+                  </Link>
+                  <Link href="/adjusters" className="block text-sm text-gray-600 hover:text-blue-600 py-1">
+                    → Browse by State
+                  </Link>
+                  <Link href="/companies" className="block text-sm text-gray-600 hover:text-blue-600 py-1">
+                    → Browse by Company
+                  </Link>
+                  <Link href="/guides" className="block text-sm text-gray-600 hover:text-blue-600 py-1">
+                    → Homeowner Guides
+                  </Link>
+                  <Link href="/review" className="block text-sm text-gray-600 hover:text-blue-600 py-1">
+                    → Leave a Review
+                  </Link>
                 </div>
               </div>
             </div>
