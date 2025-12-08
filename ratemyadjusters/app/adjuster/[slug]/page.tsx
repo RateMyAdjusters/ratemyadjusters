@@ -1,10 +1,12 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { Star, MapPin, Building, Shield, AlertCircle, ChevronRight, Share2, Copy, Mail } from 'lucide-react'
+import { Star, MapPin, Building, Shield, AlertCircle, ChevronRight, CheckCircle, HelpCircle, Flag } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import StarRating from '@/components/StarRating'
 import ShareButtons from '@/components/ShareButtons'
+import ConfirmAdjusterButton from '@/components/ConfirmAdjusterButton'
+import DisagreeButton from '@/components/DisagreeButton'
 
 interface PageProps {
   params: { slug: string }
@@ -45,25 +47,25 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     }
   }
 
-  const fullName = `${adjuster.first_name} ${adjuster.last_name}`
+  const fullName = adjuster.first_name + ' ' + adjuster.last_name
   const stateFullName = getStateName(adjuster.state)
   
   return {
-    title: `${fullName} – Insurance Adjuster Reviews (${adjuster.state}) | RateMyAdjusters`,
-    description: `See real homeowner and contractor experiences with ${fullName}, an insurance adjuster licensed in ${stateFullName}. Ratings, reviews, license details, and more.`,
+    title: fullName + ' – Insurance Adjuster Reviews (' + adjuster.state + ') | RateMyAdjusters',
+    description: 'See real homeowner and contractor experiences with ' + fullName + ', an insurance adjuster licensed in ' + stateFullName + '. Ratings, reviews, license details, and more.',
     openGraph: {
-      title: `${fullName} – Insurance Adjuster Reviews (${adjuster.state})`,
-      description: `See real homeowner and contractor experiences with ${fullName}, an insurance adjuster licensed in ${stateFullName}.`,
+      title: fullName + ' – Insurance Adjuster Reviews (' + adjuster.state + ')',
+      description: 'See real homeowner and contractor experiences with ' + fullName + ', an insurance adjuster licensed in ' + stateFullName + '.',
       type: 'profile',
-      url: `https://ratemyadjusters.com/adjuster/${adjuster.slug}`,
+      url: 'https://ratemyadjusters.com/adjuster/' + adjuster.slug,
     },
     twitter: {
       card: 'summary',
-      title: `${fullName} – Insurance Adjuster Reviews`,
-      description: `See reviews for ${fullName}, insurance adjuster in ${stateFullName}.`,
+      title: fullName + ' – Insurance Adjuster Reviews',
+      description: 'See reviews for ' + fullName + ', insurance adjuster in ' + stateFullName + '.',
     },
     alternates: {
-      canonical: `https://ratemyadjusters.com/adjuster/${adjuster.slug}`,
+      canonical: 'https://ratemyadjusters.com/adjuster/' + adjuster.slug,
     },
   }
 }
@@ -103,10 +105,9 @@ export default async function AdjusterProfile({ params }: PageProps) {
   }
 
   const reviews = await getReviews(adjuster.id)
-  const fullName = `${adjuster.first_name} ${adjuster.last_name}`
-  const profileUrl = `https://ratemyadjusters.com/adjuster/${adjuster.slug}`
+  const fullName = adjuster.first_name + ' ' + adjuster.last_name
+  const profileUrl = 'https://ratemyadjusters.com/adjuster/' + adjuster.slug
 
-  // Structured Data for SEO
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'Person',
@@ -131,7 +132,6 @@ export default async function AdjusterProfile({ params }: PageProps) {
 
   return (
     <>
-      {/* Structured Data */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
@@ -146,7 +146,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
               <ChevronRight className="w-4 h-4 text-gray-400" />
               <Link href="/search" className="text-gray-500 hover:text-gray-700">Adjusters</Link>
               <ChevronRight className="w-4 h-4 text-gray-400" />
-              <Link href={`/search?state=${adjuster.state}`} className="text-gray-500 hover:text-gray-700">{adjuster.state}</Link>
+              <Link href={'/search?state=' + adjuster.state} className="text-gray-500 hover:text-gray-700">{adjuster.state}</Link>
               <ChevronRight className="w-4 h-4 text-gray-400" />
               <span className="text-gray-900 font-medium">{fullName}</span>
             </nav>
@@ -183,7 +183,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
                   </span>
                   <span className="flex items-center gap-1">
                     <MapPin className="w-4 h-4" />
-                    {adjuster.city ? `${adjuster.city}, ` : ''}{adjuster.state}
+                    {adjuster.city ? adjuster.city + ', ' : ''}{adjuster.state}
                   </span>
                 </div>
 
@@ -204,14 +204,19 @@ export default async function AdjusterProfile({ params }: PageProps) {
               {/* Action Buttons */}
               <div className="flex flex-col gap-3">
                 <Link
-                  href={`/review?adjuster=${adjuster.id}`}
+                  href={'/review?adjuster=' + adjuster.id}
                   className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
                 >
                   <Star className="w-5 h-5" />
                   Leave a Review
                 </Link>
-                <ShareButtons url={profileUrl} title={`${fullName} - Insurance Adjuster Reviews`} />
+                <ShareButtons url={profileUrl} title={fullName + ' - Insurance Adjuster Reviews'} />
               </div>
+            </div>
+
+            {/* Is This Your Adjuster? */}
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <ConfirmAdjusterButton adjusterId={adjuster.id} adjusterName={fullName} />
             </div>
           </div>
         </div>
@@ -260,7 +265,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">No reviews yet</h3>
                     <p className="text-gray-500 mb-4">Be the first to share your experience with {fullName}.</p>
                     <Link
-                      href={`/review?adjuster=${adjuster.id}`}
+                      href={'/review?adjuster=' + adjuster.id}
                       className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
                     >
                       Leave a Review
@@ -303,18 +308,21 @@ export default async function AdjusterProfile({ params }: PageProps) {
                                   {review.claim_type.charAt(0).toUpperCase() + review.claim_type.slice(1)} Claim
                                 </span>
                                 {review.claim_outcome && (
-                                  <span className={`inline-block px-2 py-1 rounded text-xs ${
-                                    review.claim_outcome === 'approved' ? 'bg-green-100 text-green-700' :
+                                  <span className={'inline-block px-2 py-1 rounded text-xs ' + 
+                                    (review.claim_outcome === 'approved' ? 'bg-green-100 text-green-700' :
                                     review.claim_outcome === 'denied' ? 'bg-red-100 text-red-700' :
                                     review.claim_outcome === 'partial' ? 'bg-yellow-100 text-yellow-700' :
-                                    'bg-gray-100 text-gray-600'
-                                  }`}>
+                                    'bg-gray-100 text-gray-600')
+                                  }>
                                     {review.claim_outcome.charAt(0).toUpperCase() + review.claim_outcome.slice(1)}
                                   </span>
                                 )}
                               </div>
                             )}
-                            <p className="text-gray-700 leading-relaxed">{review.review_text}</p>
+                            <p className="text-gray-700 leading-relaxed mb-3">{review.review_text}</p>
+                            
+                            {/* Disagree Button */}
+                            <DisagreeButton reviewId={review.id} />
                           </div>
                         </div>
                       </div>
@@ -358,10 +366,10 @@ export default async function AdjusterProfile({ params }: PageProps) {
                   )}
                   <div className="flex justify-between">
                     <dt className="text-gray-500">Status</dt>
-                    <dd className={`font-medium ${
-                      adjuster.license_status === 'active' ? 'text-green-600' : 
-                      adjuster.license_status === 'expired' ? 'text-red-600' : 'text-gray-600'
-                    }`}>
+                    <dd className={'font-medium ' + 
+                      (adjuster.license_status === 'active' ? 'text-green-600' : 
+                      adjuster.license_status === 'expired' ? 'text-red-600' : 'text-gray-600')
+                    }>
                       {adjuster.license_status ? adjuster.license_status.charAt(0).toUpperCase() + adjuster.license_status.slice(1) : 'Unknown'}
                     </dd>
                   </div>
