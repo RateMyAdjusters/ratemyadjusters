@@ -1,10 +1,11 @@
 import Link from 'next/link'
 import { Search, Users, Shield, Star, ArrowRight, CheckCircle, Sparkles, TrendingUp, MessageSquare, BadgeCheck, BarChart3 } from 'lucide-react'
 import SearchBar from '@/components/SearchBar'
+import QuickLinks from '@/components/QuickLinks'
 
 export const metadata = {
-  title: 'RateMyAdjusters – Know Your Adjuster',
-  description: 'Search 168,824 licensed insurance adjusters by name, company, or state. Read reviews from homeowners and contractors. Free to use.',
+  title: 'RateMyAdjusters | Insurance Adjuster Reviews & Ratings',
+  description: 'Search 168,824 licensed insurance adjusters by name, company, or state. Read real reviews from homeowners and contractors before your claim. Know your adjuster.',
   keywords: 'insurance adjuster reviews, adjuster ratings, claim adjuster, State Farm adjuster, Allstate adjuster, insurance claim help',
 }
 
@@ -74,7 +75,6 @@ export default function Home() {
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-5">Know Your Adjuster.</h1>
             <p className="text-lg text-slate-300 mb-4 max-w-xl mx-auto">Search 168,824 licensed adjusters by name, company, or state. Read reviews from homeowners and contractors.</p>
             
-            {/* Mission Statement */}
             <p className="text-sm text-slate-400 mb-8 max-w-lg mx-auto">
               RateMyAdjusters helps homeowners, contractors, and insurance professionals share experiences and improve clarity in the claims process.
             </p>
@@ -116,6 +116,9 @@ export default function Home() {
               </Link>
             ))}
           </div>
+          <div className="text-center mt-4">
+            <Link href="/companies" className="text-blue-600 hover:text-blue-700 font-medium text-sm">View all companies →</Link>
+          </div>
         </div>
       </section>
 
@@ -125,14 +128,14 @@ export default function Home() {
           <h2 className="text-lg font-semibold text-center text-gray-900 mb-6">Browse by State</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {topStates.map((s) => (
-              <Link key={s.abbr} href={'/search?state=' + s.abbr} className="flex items-center justify-between p-3 bg-gray-50 hover:bg-teal-50 border border-gray-200 hover:border-teal-300 rounded-lg transition-all">
+              <Link key={s.abbr} href={'/adjusters/' + s.name.toLowerCase().replace(' ', '-')} className="flex items-center justify-between p-3 bg-gray-50 hover:bg-teal-50 border border-gray-200 hover:border-teal-300 rounded-lg transition-all">
                 <span className="text-gray-900 font-medium text-sm">{s.name}</span>
                 <span className="text-xs text-gray-500">{s.count}</span>
               </Link>
             ))}
           </div>
           <div className="text-center mt-4">
-            <Link href="/search" className="text-blue-600 hover:text-blue-700 font-medium text-sm">View all 50 states →</Link>
+            <Link href="/adjusters" className="text-blue-600 hover:text-blue-700 font-medium text-sm">View all 50 states →</Link>
           </div>
         </div>
       </section>
@@ -265,8 +268,23 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ========== FINAL SEARCH ========== */}
+      {/* ========== QUICK LINKS ========== */}
       <section className="py-10">
+        <div className="max-w-4xl mx-auto px-4">
+          <QuickLinks
+            title="Get Started"
+            links={[
+              { label: 'Browse Adjusters', href: '/adjusters', description: 'Search by state' },
+              { label: 'Leave a Review', href: '/review', description: 'Share your experience' },
+              { label: 'Insurance Companies', href: '/companies', description: 'Browse by carrier' },
+              { label: 'Guides & Resources', href: '/guides', description: 'Helpful articles' },
+            ]}
+          />
+        </div>
+      </section>
+
+      {/* ========== FINAL SEARCH ========== */}
+      <section className="py-10 bg-slate-50">
         <div className="max-w-2xl mx-auto px-4">
           <div className="text-center mb-4">
             <h2 className="text-lg font-semibold text-gray-900">Search Again</h2>
