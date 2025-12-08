@@ -76,6 +76,11 @@ export default function NotFound() {
         <p className="text-slate-500 text-sm mt-12">
           If you think this is an error on our end, let us know. Unlike some adjusters, we actually respond.
         </p>
+
+        {/* Easter Egg */}
+        <p className="text-slate-600 text-xs mt-4 italic">
+          If this was an adjuster decision, we'd call it "within guidelines." 😉
+        </p>
       </div>
     </main>
   )
