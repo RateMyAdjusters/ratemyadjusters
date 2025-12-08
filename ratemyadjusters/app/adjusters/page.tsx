@@ -2,16 +2,18 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { MapPin, ChevronRight, Users } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import Breadcrumb from '@/components/Breadcrumb'
+import QuickLinks from '@/components/QuickLinks'
 
 export const metadata: Metadata = {
   title: 'Browse Insurance Adjusters by State | RateMyAdjusters',
-  description: 'Find insurance adjuster ratings and reviews in all 50 US states. Search by state to find adjusters near you.',
+  description: 'Find and compare insurance adjusters across all 50 states. See ratings, reviews, and license details from real claim experiences.',
   alternates: {
     canonical: 'https://ratemyadjusters.com/adjusters',
   },
 }
 
-export const revalidate = 3600 // Revalidate every hour
+export const revalidate = 3600
 
 const STATES = [
   { slug: 'alabama', name: 'Alabama', abbr: 'AL' },
@@ -68,8 +70,6 @@ const STATES = [
 ]
 
 async function getStateCounts(): Promise<Record<string, number>> {
-  // Use RPC or raw count - Supabase JS doesn't support GROUP BY directly
-  // So we'll do individual counts for each state (cached via revalidate)
   const counts: Record<string, number> = {}
   
   const promises = STATES.map(async (state) => {
@@ -89,63 +89,75 @@ export default async function AdjustersIndexPage() {
   const stateCounts = await getStateCounts()
   const totalAdjusters = Object.values(stateCounts).reduce((a, b) => a + b, 0)
 
+  const breadcrumbData = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://ratemyadjusters.com/' },
+      { '@type': 'ListItem', position: 2, name: 'Adjusters', item: 'https://ratemyadjusters.com/adjusters' },
+    ],
+  }
+
   return (
-    <main className="min-h-screen bg-gray-50">
-      {/* Breadcrumb */}
-      <div className="bg-white border-b">
-        <div className="max-w-6xl mx-auto px-4 py-3">
-          <nav className="flex items-center gap-2 text-sm">
-            <Link href="/" className="text-gray-500 hover:text-gray-700">Home</Link>
-            <ChevronRight className="w-4 h-4 text-gray-400" />
-            <span className="text-gray-900 font-medium">Adjusters by State</span>
-          </nav>
-        </div>
-      </div>
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }} />
 
-      {/* Hero */}
-      <div className="bg-gradient-to-b from-slate-900 to-slate-800 text-white">
-        <div className="max-w-6xl mx-auto px-4 py-12">
-          <div className="flex items-center gap-3 mb-4">
-            <Users className="w-8 h-8 text-teal-400" />
-            <h1 className="text-3xl md:text-4xl font-bold">Browse Adjusters by State</h1>
-          </div>
-          <p className="text-slate-300 text-lg mb-6 max-w-2xl">
-            Find insurance adjuster ratings and reviews across all 50 US states. 
-            Select your state to see local adjusters.
-          </p>
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg px-6 py-4 inline-block">
-            <div className="text-3xl font-bold">{totalAdjusters.toLocaleString()}</div>
-            <div className="text-slate-400 text-sm">Total Adjusters</div>
+      <main className="min-h-screen bg-gray-50">
+        <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Adjusters' }]} />
+
+        {/* Hero */}
+        <div className="bg-gradient-to-b from-slate-900 to-slate-800 text-white">
+          <div className="max-w-6xl mx-auto px-4 py-12">
+            <div className="flex items-center gap-3 mb-4">
+              <Users className="w-8 h-8 text-teal-400" />
+              <h1 className="text-3xl md:text-4xl font-bold">Browse Adjusters by State</h1>
+            </div>
+            <p className="text-slate-300 text-lg mb-6 max-w-2xl">
+              Find insurance adjuster ratings and reviews across all 50 US states. 
+              Select your state to see local adjusters.
+            </p>
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg px-6 py-4 inline-block">
+              <div className="text-3xl font-bold">{totalAdjusters.toLocaleString()}</div>
+              <div className="text-slate-400 text-sm">Total Adjusters</div>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* States Grid */}
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {STATES.map((state) => (
-            <Link
-              key={state.slug}
-              href={`/adjusters/${state.slug}`}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:border-blue-300 hover:shadow-md transition-all group"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-                    {state.name}
+        {/* States Grid */}
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {STATES.map((state) => (
+              <Link
+                key={state.slug}
+                href={`/adjusters/${state.slug}`}
+                className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:border-blue-300 hover:shadow-md transition-all group"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                      {state.name}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {(stateCounts[state.abbr] || 0).toLocaleString()} adjusters
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-500">
-                    {(stateCounts[state.abbr] || 0).toLocaleString()} adjusters
+                  <div className="w-10 h-10 bg-gray-100 group-hover:bg-blue-100 rounded-full flex items-center justify-center transition-colors">
+                    <MapPin className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
                   </div>
                 </div>
-                <div className="w-10 h-10 bg-gray-100 group-hover:bg-blue-100 rounded-full flex items-center justify-center transition-colors">
-                  <MapPin className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
-                </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            ))}
+          </div>
+
+          <QuickLinks
+            links={[
+              { label: 'Leave a Review', href: '/review', description: 'Share your experience' },
+              { label: 'Insurance Companies', href: '/companies', description: 'Browse by carrier' },
+              { label: 'Guides & Resources', href: '/guides', description: 'Helpful articles' },
+            ]}
+          />
         </div>
-      </div>
-    </main>
+      </main>
+    </>
   )
 }
