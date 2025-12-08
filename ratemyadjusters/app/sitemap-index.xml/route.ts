@@ -34,18 +34,18 @@ export async function GET() {
 
   for (const state of stateCodes) {
     xml += `  <sitemap>
-    <loc>${baseUrl}/sitemap-adjusters-${state}.xml</loc>
+    <loc>${baseUrl}/api/sitemap-adjusters/${state}.xml</loc>
     <lastmod>${today}</lastmod>
   </sitemap>
 `;
   }
 
   xml += `  <sitemap>
-    <loc>${baseUrl}/sitemap-adjusters-tx-1.xml</loc>
+    <loc>${baseUrl}/api/sitemap-adjusters-tx/1.xml</loc>
     <lastmod>${today}</lastmod>
   </sitemap>
   <sitemap>
-    <loc>${baseUrl}/sitemap-adjusters-tx-2.xml</loc>
+    <loc>${baseUrl}/api/sitemap-adjusters-tx/2.xml</loc>
     <lastmod>${today}</lastmod>
   </sitemap>
 `;
