@@ -4,7 +4,7 @@ import SearchBar from '@/components/SearchBar'
 
 export const metadata = {
   title: 'RateMyAdjusters – Know Your Adjuster',
-  description: 'Real reviews of insurance adjusters from homeowners and contractors. Search 168,824 licensed adjusters by name, company, or state. Know who\'s handling your claim.',
+  description: 'Search 168,824 licensed insurance adjusters by name, company, or state. Read reviews from homeowners and contractors. Free to use.',
   keywords: 'insurance adjuster reviews, adjuster ratings, claim adjuster, State Farm adjuster, Allstate adjuster, insurance claim help',
 }
 
@@ -72,7 +72,12 @@ export default function Home() {
             </div>
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-5">Know Your Adjuster.</h1>
-            <p className="text-lg text-slate-300 mb-8 max-w-xl mx-auto">Real reviews from homeowners and contractors. Search 168,824 licensed adjusters before your claim.</p>
+            <p className="text-lg text-slate-300 mb-4 max-w-xl mx-auto">Search 168,824 licensed adjusters by name, company, or state. Read reviews from homeowners and contractors.</p>
+            
+            {/* Mission Statement */}
+            <p className="text-sm text-slate-400 mb-8 max-w-lg mx-auto">
+              RateMyAdjusters helps homeowners, contractors, and insurance professionals share experiences and improve clarity in the claims process.
+            </p>
 
             <div className="max-w-2xl mx-auto mb-3">
               <SearchBar size="large" showFilters={true} autoFocus={false} />
@@ -88,6 +93,15 @@ export default function Home() {
             </div>
             <p className="text-slate-500 text-xs mt-3">Updated: Dec 2025</p>
           </div>
+        </div>
+      </section>
+
+      {/* ========== EARLY ACCESS BANNER ========== */}
+      <section className="py-4 bg-teal-600">
+        <div className="max-w-5xl mx-auto px-4 text-center">
+          <p className="text-white text-sm font-medium">
+            For a limited time, adjusters and contractors can claim their profile for free during early access.
+          </p>
         </div>
       </section>
 
@@ -140,75 +154,75 @@ export default function Home() {
                 <Users className="w-6 h-6 text-green-600" />
               </div>
               <h3 className="font-semibold mb-1 text-gray-900">2. Read Reviews</h3>
-              <p className="text-gray-600 text-sm">See real experiences from homeowners and contractors.</p>
+              <p className="text-gray-600 text-sm">See experiences shared by homeowners and contractors.</p>
             </div>
             <div className="text-center p-5 bg-white rounded-xl shadow-sm">
               <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-4">
                 <Shield className="w-6 h-6 text-purple-600" />
               </div>
-              <h3 className="font-semibold mb-1 text-gray-900">3. Be Prepared</h3>
-              <p className="text-gray-600 text-sm">Know what to expect before your adjuster arrives.</p>
+              <h3 className="font-semibold mb-1 text-gray-900">3. Be Informed</h3>
+              <p className="text-gray-600 text-sm">Make informed decisions about your claims process.</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ========== ROAST (SHORTENED) ========== */}
+      {/* ========== ABOUT (NEUTRAL) ========== */}
       <section className="py-12">
         <div className="max-w-3xl mx-auto px-4">
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
-            <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-4 text-center">The Truth About Insurance Companies</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-4 text-center">About RateMyAdjusters</h2>
             
             <p className="text-slate-700 leading-relaxed mb-4">
-              Insurance companies spend <span className="font-semibold">billions</span> on friendly mascots and catchy slogans. But when your claim hits their system, that "friendly neighbor" stops answering, those "good hands" drop your estimate, and the company "on your side" suddenly isn't.
+              Insurance claims can be complex. Understanding who handles your claim matters. RateMyAdjusters provides a platform where homeowners, contractors, and professionals can share their experiences working with insurance adjusters.
             </p>
             
             <p className="text-slate-700 leading-relaxed">
-              That's why <span className="font-bold text-blue-700">RateMyAdjusters</span> exists. No jingles. No mascots. Just real experiences from homeowners rebuilding their lives and contractors who've seen it all.
+              Our goal is simple: bring more information and clarity to the claims process for everyone involved.
             </p>
           </div>
         </div>
       </section>
 
-      {/* ========== TRANSPARENCY (COMPRESSED) ========== */}
+      {/* ========== FEATURES (NEUTRAL) ========== */}
       <section className="py-10 bg-slate-50">
         <div className="max-w-4xl mx-auto px-4">
-          <h2 className="text-xl font-bold text-center text-gray-900 mb-6">The First Accountability Platform for Adjusters</h2>
+          <h2 className="text-xl font-bold text-center text-gray-900 mb-6">What You Can Do</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="flex items-center gap-2 text-sm text-gray-700">
               <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
-              <span>Lowballers exposed</span>
+              <span>Search adjusters</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-gray-700">
               <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
-              <span>Fair adjusters praised</span>
+              <span>Read reviews</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-gray-700">
               <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
-              <span>Delay tactics called out</span>
+              <span>Share experiences</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-gray-700">
               <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
-              <span>Your voice matters</span>
+              <span>Stay informed</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ========== TESTIMONIAL (SHORT) ========== */}
+      {/* ========== REVIEW HIGHLIGHT (NEUTRAL) ========== */}
       <section className="py-10">
         <div className="max-w-2xl mx-auto px-4">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
             <div className="flex justify-center gap-1 mb-3">
               {[1,2,3,4,5].map((i) => <Star key={i} className="w-5 h-5 text-yellow-400 fill-yellow-400" />)}
             </div>
-            <p className="text-gray-700 italic mb-3">"Finally found out my adjuster had a pattern of lowballing. Wish I knew before my claim."</p>
-            <p className="text-sm text-gray-500">— Texas Homeowner</p>
+            <p className="text-gray-700 italic mb-3">"It's helpful to read about others' experiences before starting the claims process."</p>
+            <p className="text-sm text-gray-500">— Homeowner</p>
           </div>
         </div>
       </section>
 
-      {/* ========== COMING SOON ========== */}
+      {/* ========== COMING SOON (NO SECRET SAUCE) ========== */}
       <section className="py-10 bg-slate-50">
         <div className="max-w-4xl mx-auto px-4">
           <h2 className="text-xl font-bold text-center text-gray-900 mb-6">Coming Soon</h2>
@@ -219,7 +233,7 @@ export default function Home() {
             </div>
             <div className="bg-white rounded-lg p-4 border border-gray-200 text-center">
               <BarChart3 className="w-6 h-6 text-teal-600 mx-auto mb-2" />
-              <p className="text-sm font-medium text-gray-900">AI Claim Pattern Analysis</p>
+              <p className="text-sm font-medium text-gray-900">Future Analytics Features</p>
             </div>
             <div className="bg-white rounded-lg p-4 border border-gray-200 text-center">
               <MessageSquare className="w-6 h-6 text-purple-600 mx-auto mb-2" />
@@ -227,7 +241,7 @@ export default function Home() {
             </div>
             <div className="bg-white rounded-lg p-4 border border-gray-200 text-center">
               <BadgeCheck className="w-6 h-6 text-green-600 mx-auto mb-2" />
-              <p className="text-sm font-medium text-gray-900">Verified Contractors</p>
+              <p className="text-sm font-medium text-gray-900">Verified Professionals</p>
             </div>
           </div>
         </div>
@@ -237,7 +251,7 @@ export default function Home() {
       <section className="py-12 bg-gradient-to-r from-blue-600 to-teal-600">
         <div className="max-w-2xl mx-auto px-4 text-center">
           <h2 className="text-2xl font-bold text-white mb-3">Had a Recent Claim?</h2>
-          <p className="text-blue-100 mb-6">Help other homeowners know what to expect.</p>
+          <p className="text-blue-100 mb-6">Share your experience to help others.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/review" className="inline-flex items-center justify-center gap-2 bg-white text-blue-700 font-semibold py-3 px-6 rounded-lg hover:bg-blue-50 transition-colors">
               <Star className="w-5 h-5" />
@@ -258,8 +272,8 @@ export default function Home() {
             <h2 className="text-lg font-semibold text-gray-900">Search Again</h2>
           </div>
           <SearchBar size="default" showFilters={true} />
-          <p className="text-xs text-gray-500 text-center mt-4">
-            All reviews are user-submitted and moderated for accuracy and civility.
+          <p className="text-xs text-gray-500 text-center mt-6">
+            Reviews reflect individual user experiences. Information may be updated by users or by the professionals themselves.
           </p>
         </div>
       </section>
