@@ -50,21 +50,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-```
-
-**In GitHub, make sure it's at:**
-```
-app/api/verify-recaptcha/route.ts
-```
-
-**Steps:**
-1. Go to your repo on GitHub
-2. Navigate to `app` folder
-3. Click "Add file" → "Create new file"
-4. Type the path: `api/verify-recaptcha/route.ts`
-5. Paste the code above
-6. Commit
-
-**After commit, wait for Vercel to deploy, then test:**
-```
-https://ratemyadjusters.com/api/verify-recaptcha
