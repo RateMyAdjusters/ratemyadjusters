@@ -1,0 +1,70 @@
+import { NextRequest, NextResponse } from 'next/server'
+
+export async function POST(request: NextRequest) {
+  try {
+    const { token } = await request.json()
+
+    if (!token) {
+      return NextResponse.json(
+        { success: false, error: 'No token provided' },
+        { status: 400 }
+      )
+    }
+
+    const secretKey = process.env.RECAPTCHA_SECRET_KEY
+
+    if (!secretKey) {
+      console.error('RECAPTCHA_SECRET_KEY not configured')
+      return NextResponse.json({ success: true, score: 1 })
+    }
+
+    const verifyUrl = 'https://www.google.com/recaptcha/api/siteverify'
+    const response = await fetch(verifyUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: `secret=${secretKey}&response=${token}`,
+    })
+
+    const data = await response.json()
+
+    if (!data.success) {
+      return NextResponse.json(
+        { success: false, error: 'Verification failed', details: data['error-codes'] },
+        { status: 400 }
+      )
+    }
+
+    return NextResponse.json({
+      success: true,
+      score: data.score,
+      action: data.action,
+    })
+
+  } catch (error) {
+    console.error('reCAPTCHA verification error:', error)
+    return NextResponse.json(
+      { success: false, error: 'Server error' },
+      { status: 500 }
+    )
+  }
+}
+```
+
+**In GitHub, make sure it's at:**
+```
+app/api/verify-recaptcha/route.ts
+```
+
+**Steps:**
+1. Go to your repo on GitHub
+2. Navigate to `app` folder
+3. Click "Add file" → "Create new file"
+4. Type the path: `api/verify-recaptcha/route.ts`
+5. Paste the code above
+6. Commit
+
+**After commit, wait for Vercel to deploy, then test:**
+```
+https://ratemyadjusters.com/api/verify-recaptcha
