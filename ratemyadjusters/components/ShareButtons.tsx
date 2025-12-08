@@ -16,22 +16,20 @@ export default function ShareButtons({ url, title }: ShareButtonsProps) {
     try {
       await navigator.clipboard.writeText(url)
       setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      setTimeout(function() { setCopied(false) }, 2000)
     } catch (err) {
       console.error('Failed to copy:', err)
     }
   }
 
-  const shareLinks = {
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
-    twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`,
-    email: `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent('Check out this adjuster profile: ' + url)}`,
-  }
+  const facebookUrl = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(url)
+  const twitterUrl = 'https://twitter.com/intent/tweet?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(title)
+  const emailUrl = 'mailto:?subject=' + encodeURIComponent(title) + '&body=' + encodeURIComponent('Check out this adjuster: ' + url)
 
   return (
     <div className="relative">
       <button
-        onClick={() => setShowDropdown(!showDropdown)}
+        onClick={function() { setShowDropdown(!showDropdown) }}
         className="inline-flex items-center justify-center gap-2 border border-gray-300 hover:border-gray-400 text-gray-700 font-medium py-3 px-6 rounded-lg transition-colors w-full"
       >
         <Share2 className="w-5 h-5" />
@@ -50,31 +48,29 @@ export default function ShareButtons({ url, title }: ShareButtonsProps) {
             </button>
 
             
-              href={shareLinks.facebook}
+              href={facebookUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
             >
-              <span className="w-4 h-4 text-blue-600">f</span>
-              Share on Facebook
+              Facebook
             </a>
 
             
-              href={shareLinks.twitter}
+              href={twitterUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
             >
-              <span className="w-4 h-4">X</span>
-              Share on X
+              X / Twitter
             </a>
 
             
-              href={shareLinks.email}
+              href={emailUrl}
               className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
             >
               <Mail className="w-4 h-4" />
-              Send via Email
+              Email
             </a>
           </div>
         </div>
