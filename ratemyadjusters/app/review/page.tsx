@@ -24,29 +24,24 @@ function ReviewContent() {
   const [showOptionalRatings, setShowOptionalRatings] = useState(false)
   const [showGuidelines, setShowGuidelines] = useState(true)
   
-  // Adjuster search
   const [adjusterSearch, setAdjusterSearch] = useState('')
   const [adjusterResults, setAdjusterResults] = useState<any[]>([])
   const [selectedAdjuster, setSelectedAdjuster] = useState<any>(null)
   const [searchLoading, setSearchLoading] = useState(false)
   
-  // Review data
   const [overallRating, setOverallRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
   const [reviewText, setReviewText] = useState('')
   
-  // Optional ratings (tags)
   const [communicationRating, setCommunicationRating] = useState(0)
   const [fairnessRating, setFairnessRating] = useState(0)
   const [speedRating, setSpeedRating] = useState(0)
   const [professionalismRating, setProfessionalismRating] = useState(0)
   
-  // Claim details
   const [claimType, setClaimType] = useState('')
   const [claimOutcome, setClaimOutcome] = useState('')
   const [reviewerType, setReviewerType] = useState('homeowner')
   
-  // Honeypot field (hidden from users, bots will fill it)
   const [honeypot, setHoneypot] = useState('')
   
   const claimTypes = [
@@ -124,7 +119,6 @@ function ReviewContent() {
   async function executeRecaptcha(): Promise<string | null> {
     return new Promise((resolve) => {
       if (!window.grecaptcha) {
-        console.error('reCAPTCHA not loaded')
         resolve(null)
         return
       }
@@ -143,7 +137,6 @@ function ReviewContent() {
   }
 
   async function handleSubmit() {
-    // Validate required fields
     if (!selectedAdjuster) {
       setError('Please select an adjuster')
       return
@@ -164,9 +157,7 @@ function ReviewContent() {
       return
     }
 
-    // Check honeypot (if filled, it's a bot)
     if (honeypot) {
-      // Silently pretend success for bots
       setSuccess(true)
       return
     }
@@ -174,14 +165,9 @@ function ReviewContent() {
     setLoading(true)
     setError(null)
 
-    // Get reCAPTCHA token
     const recaptchaToken = await executeRecaptcha()
     
-    if (!recaptchaToken) {
-      // If reCAPTCHA fails to load, still allow submission
-      console.warn('reCAPTCHA token not available, proceeding anyway')
-    } else {
-      // Verify reCAPTCHA on server
+    if (recaptchaToken) {
       try {
         const verifyResponse = await fetch('/api/verify-recaptcha', {
           method: 'POST',
@@ -191,20 +177,16 @@ function ReviewContent() {
 
         const verifyData = await verifyResponse.json()
 
-        // Only block if score is very low (likely a bot)
-        // 0.3 is very lenient - only blocks obvious bots
         if (verifyData.success && verifyData.score < 0.3) {
           setError('Unable to verify submission. Please try again.')
           setLoading(false)
           return
         }
       } catch (err) {
-        // If verification endpoint fails, still allow submission
         console.error('reCAPTCHA verification error:', err)
       }
     }
     
-    // Submit review
     const { error: submitError } = await supabase
       .from('reviews')
       .insert({
@@ -212,7 +194,8 @@ function ReviewContent() {
         overall_rating: overallRating,
         communication_rating: communicationRating || null,
         fairness_rating: fairnessRating || null,
-        speed_rating: speedRating || null,
+        timeliness_rating: speedRating || null,
+        professionalism_rating: professionalismRating || null,
         review_text: reviewText.trim(),
         claim_type: claimType || null,
         claim_outcome: claimOutcome || null,
@@ -221,6 +204,7 @@ function ReviewContent() {
       })
     
     if (submitError) {
+      console.error('Submit error:', submitError)
       setError('Failed to submit review. Please try again.')
       setLoading(false)
       return
@@ -330,7 +314,6 @@ function ReviewContent() {
 
   return (
     <>
-      {/* Load reCAPTCHA v3 */}
       <Script 
         src={`https://www.google.com/recaptcha/api.js?render=${process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}`}
         strategy="lazyOnload"
@@ -342,7 +325,6 @@ function ReviewContent() {
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Write a Review</h1>
             <p className="text-gray-600 mb-6">Help others by sharing your experience</p>
 
-            {/* Review Guidelines Reminder */}
             {showGuidelines && (
               <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-6">
                 <div className="flex items-start gap-3">
@@ -375,7 +357,6 @@ function ReviewContent() {
               </div>
             )}
 
-            {/* Honeypot field - hidden from users */}
             <div className="absolute left-[-9999px]" aria-hidden="true">
               <label htmlFor="website">Website</label>
               <input
@@ -389,7 +370,6 @@ function ReviewContent() {
               />
             </div>
 
-            {/* Step 1: Find Adjuster */}
             {step === 1 && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -452,10 +432,8 @@ function ReviewContent() {
               </div>
             )}
 
-            {/* Step 2: Write Review */}
             {step === 2 && selectedAdjuster && (
               <div className="space-y-6">
-                {/* Selected Adjuster */}
                 <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg">
                   <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                     <span className="text-blue-600 font-semibold">
@@ -481,7 +459,6 @@ function ReviewContent() {
                   </button>
                 </div>
 
-                {/* Main Rating */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
                     Overall Rating *
@@ -506,7 +483,6 @@ function ReviewContent() {
                   </div>
                 </div>
 
-                {/* Review Text */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Your Review *
@@ -523,7 +499,6 @@ function ReviewContent() {
                   </p>
                 </div>
 
-                {/* Optional Ratings (Expandable) */}
                 <div className="border border-gray-200 rounded-lg">
                   <button
                     type="button"
@@ -566,7 +541,6 @@ function ReviewContent() {
                   )}
                 </div>
 
-                {/* Claim Details */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -605,7 +579,6 @@ function ReviewContent() {
                   </div>
                 </div>
 
-                {/* Reviewer Type */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     I am a...
@@ -638,7 +611,6 @@ function ReviewContent() {
                   </div>
                 </div>
 
-                {/* Submit */}
                 <button
                   onClick={handleSubmit}
                   disabled={loading || overallRating === 0 || reviewText.trim().length < 20}
