@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Search, Users, Shield, Star, ArrowRight, CheckCircle, Sparkles, TrendingUp, MessageSquare, BadgeCheck, BarChart3 } from 'lucide-react'
 import SearchBar from '@/components/SearchBar'
 import QuickLinks from '@/components/QuickLinks'
@@ -16,27 +17,6 @@ export const metadata = {
     'find insurance adjuster',
     'adjuster lookup',
   ],
-}
-
-function Logo({ className = "w-10 h-10" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-      <path d="M24 4L6 12V22C6 33.1 13.68 43.34 24 46C34.32 43.34 42 33.1 42 22V12L24 4Z" fill="url(#shield-gradient)" stroke="url(#shield-stroke)" strokeWidth="2"/>
-      <g fill="#FCD34D">
-        <path d="M14 22L15.09 25.26L18.5 25.26L15.71 27.24L16.8 30.5L14 28.52L11.2 30.5L12.29 27.24L9.5 25.26L12.91 25.26L14 22Z"/>
-        <path d="M24 16L25.45 20.35L30 20.35L26.27 23.04L27.73 27.39L24 24.7L20.27 27.39L21.73 23.04L18 20.35L22.55 20.35L24 16Z"/>
-        <path d="M34 22L35.09 25.26L38.5 25.26L35.71 27.24L36.8 30.5L34 28.52L31.2 30.5L32.29 27.24L29.5 25.26L32.91 25.26L34 22Z"/>
-      </g>
-      <defs>
-        <linearGradient id="shield-gradient" x1="6" y1="4" x2="42" y2="46" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#0F4C81"/><stop offset="1" stopColor="#0D9488"/>
-        </linearGradient>
-        <linearGradient id="shield-stroke" x1="6" y1="4" x2="42" y2="46" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#1E6091"/><stop offset="1" stopColor="#14B8A6"/>
-        </linearGradient>
-      </defs>
-    </svg>
-  )
 }
 
 export default function Home() {
@@ -76,8 +56,14 @@ export default function Home() {
               <span className="text-white/70">— Now open to the public</span>
             </div>
 
-            <div className="flex items-center justify-center gap-3 mb-5">
-              <Logo className="w-12 h-12 md:w-14 md:h-14" />
+            <div className="flex items-center justify-center gap-4 mb-5">
+              <Image 
+                src="/logo.png" 
+                alt="RateMyAdjusters Logo" 
+                width={56} 
+                height={56} 
+                className="w-12 h-12 md:w-14 md:h-14"
+              />
               <span className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-white to-teal-300 bg-clip-text text-transparent">RateMyAdjusters</span>
             </div>
 
