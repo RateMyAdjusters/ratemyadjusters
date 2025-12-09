@@ -9,6 +9,8 @@ import ConfirmAdjusterButton from '@/components/ConfirmAdjusterButton'
 import DisagreeButton from '@/components/DisagreeButton'
 import ClaimButton from '@/components/ClaimButton'
 
+export const revalidate = 60
+
 interface PageProps {
   params: { slug: string }
 }
@@ -148,7 +150,6 @@ function getLicenseIntro(fullName: string, stateName: string, status: string | n
     intro = `${fullName} is listed as an insurance adjuster in ${stateName}. License details are shown below when available.`
   }
   
-  // Build the second sentence with proper grammar
   const parts: string[] = []
   if (qualification) {
     parts.push(`Licensed as a ${qualification}`)
@@ -212,7 +213,6 @@ export default async function AdjusterProfile({ params }: PageProps) {
   const location = adjuster.city ? `${adjuster.city}, ${stateName}` : stateName
   const faqs = getFAQs(fullName, adjuster.state, adjuster.city)
 
-  // Person Schema
   const personSchema = {
     '@context': 'https://schema.org',
     '@type': 'Person',
@@ -236,7 +236,6 @@ export default async function AdjusterProfile({ params }: PageProps) {
     }),
   }
 
-  // Breadcrumb Schema
   const breadcrumbSchema = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -248,7 +247,6 @@ export default async function AdjusterProfile({ params }: PageProps) {
     ],
   }
 
-  // FAQ Schema
   const faqSchema = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
@@ -269,7 +267,6 @@ export default async function AdjusterProfile({ params }: PageProps) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
       <main className="min-h-screen bg-gray-50">
-        {/* Pending Verification Banner */}
         {isPendingVerification && (
           <div className="bg-amber-50 border-b border-amber-200">
             <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
@@ -281,7 +278,6 @@ export default async function AdjusterProfile({ params }: PageProps) {
           </div>
         )}
 
-        {/* Breadcrumb */}
         <div className="bg-white border-b">
           <div className="max-w-6xl mx-auto px-4 py-3">
             <nav className="flex items-center gap-2 text-sm">
@@ -296,7 +292,6 @@ export default async function AdjusterProfile({ params }: PageProps) {
           </div>
         </div>
 
-        {/* Profile Header */}
         <div className="bg-white border-b">
           <div className="max-w-6xl mx-auto px-4 py-8">
             <div className="flex flex-col md:flex-row gap-6">
@@ -359,10 +354,8 @@ export default async function AdjusterProfile({ params }: PageProps) {
 
         <div className="max-w-6xl mx-auto px-4 py-8">
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* Main Content */}
             <div className="lg:col-span-2 space-y-8">
               
-              {/* ========== SEO BLOCK: About This Adjuster ========== */}
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">About {fullName}</h2>
                 <p className="text-gray-700 leading-relaxed mb-4">
@@ -374,7 +367,6 @@ export default async function AdjusterProfile({ params }: PageProps) {
                 </p>
               </div>
 
-              {/* ========== SEO BLOCK: Service Area ========== */}
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <MapPin className="w-5 h-5 text-teal-600" />
@@ -396,7 +388,6 @@ export default async function AdjusterProfile({ params }: PageProps) {
                 </div>
               </div>
 
-              {/* ========== SEO BLOCK: Common Claims in State ========== */}
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <FileText className="w-5 h-5 text-blue-600" />
@@ -410,10 +401,9 @@ export default async function AdjusterProfile({ params }: PageProps) {
                 </p>
               </div>
 
-              {/* ========== Reviews Section ========== */}
               <div className="bg-white rounded-xl shadow-sm">
                 <div className="p-6 border-b">
-                  <h2 className="text-xl font-bold text-gray-900">Reviews ({adjuster.total_reviews || 0})</h2>
+                  <h2 className="text-xl font-bold text-gray-900">Reviews ({reviews.length})</h2>
                 </div>
 
                 {reviews.length === 0 ? (
@@ -467,7 +457,6 @@ export default async function AdjusterProfile({ params }: PageProps) {
                 )}
               </div>
 
-              {/* ========== SEO BLOCK: FAQ Section ========== */}
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <div className="flex items-center gap-2 mb-6">
                   <HelpCircle className="w-5 h-5 text-purple-600" />
@@ -484,9 +473,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
               </div>
             </div>
 
-            {/* Sidebar */}
             <div className="lg:col-span-1 space-y-6">
-              {/* License Info */}
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <h3 className="font-semibold text-gray-900 mb-4">License Information</h3>
                 <dl className="space-y-3 text-sm">
@@ -506,10 +493,8 @@ export default async function AdjusterProfile({ params }: PageProps) {
                 </dl>
               </div>
 
-              {/* Claim Button */}
               <ClaimButton slug={adjuster.slug} isClaimed={adjuster.profile_claimed || false} />
 
-              {/* Is This You */}
               <div className="bg-blue-50 rounded-xl p-6 border border-blue-100">
                 <div className="flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
@@ -521,7 +506,6 @@ export default async function AdjusterProfile({ params }: PageProps) {
                 </div>
               </div>
 
-              {/* ========== SEO BLOCK: Similar Adjusters ========== */}
               {similarAdjusters.length > 0 && (
                 <div className="bg-white rounded-xl shadow-sm p-6">
                   <div className="flex items-center gap-2 mb-4">
@@ -563,7 +547,6 @@ export default async function AdjusterProfile({ params }: PageProps) {
                 </div>
               )}
 
-              {/* ========== SEO BLOCK: Quick Links ========== */}
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <h3 className="font-semibold text-gray-900 mb-4">Explore More</h3>
                 <div className="space-y-2">
@@ -588,7 +571,6 @@ export default async function AdjusterProfile({ params }: PageProps) {
           </div>
         </div>
 
-        {/* ========== Legal Disclaimer ========== */}
         <div className="border-t border-gray-200 bg-gray-50">
           <div className="max-w-6xl mx-auto px-4 py-6">
             <p className="text-xs text-gray-500 text-center">
