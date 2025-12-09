@@ -1,8 +1,9 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
-import { ChevronRight, BookOpen, Clock, ArrowRight, MapPin, Building2, FileWarning } from 'lucide-react'
+import { ChevronRight, BookOpen, Clock, ArrowRight, MapPin, Building2, FileWarning, Sparkles, TrendingUp } from 'lucide-react'
 import { statesData } from '@/lib/states-data'
 import { companiesData } from '@/lib/companies-data'
+import { guidesData } from '@/lib/guides-data'
 
 export const metadata: Metadata = {
   title: 'Homeowner Guides & Resources | RateMyAdjusters',
@@ -11,58 +12,6 @@ export const metadata: Metadata = {
     canonical: 'https://ratemyadjusters.com/guides',
   },
 }
-
-const coreGuides = [
-  {
-    slug: 'what-to-expect-when-adjuster-visits',
-    title: 'What to Expect When an Insurance Adjuster Visits Your Home',
-    description: 'Your complete guide to the insurance claim inspection process—from preparation to what happens after the adjuster leaves.',
-    readTime: '5 min read',
-    category: 'Claims Process',
-  },
-  {
-    slug: 'what-is-an-insurance-adjuster',
-    title: 'What Is an Insurance Adjuster?',
-    description: 'Learn about the role of insurance adjusters, what they do during the claims process, and how they evaluate property damage.',
-    readTime: '6 min read',
-    category: 'Basics',
-  },
-  {
-    slug: 'staff-vs-independent-adjuster',
-    title: 'Staff vs. Independent Adjusters',
-    description: 'Understand the differences between staff adjusters, independent adjusters, and public adjusters, and how each type works.',
-    readTime: '5 min read',
-    category: 'Adjuster Types',
-  },
-  {
-    slug: 'what-is-a-public-adjuster',
-    title: 'What Is a Public Adjuster?',
-    description: 'Learn what public adjusters do, how they differ from company adjusters, and when homeowners may consider hiring one.',
-    readTime: '6 min read',
-    category: 'Adjuster Types',
-  },
-  {
-    slug: 'how-to-file-insurance-claim',
-    title: 'How to File an Insurance Claim',
-    description: 'A step-by-step overview of the insurance claim process, from documenting damage to working with your adjuster.',
-    readTime: '7 min read',
-    category: 'Claims Process',
-  },
-  {
-    slug: 'claim-denied-what-to-do',
-    title: 'What to Do If Your Claim Is Denied',
-    description: 'Understand your options if your insurance claim is denied, including the appeals process and when to seek professional help.',
-    readTime: '7 min read',
-    category: 'Claims Process',
-  },
-  {
-    slug: 'how-to-negotiate-with-adjuster',
-    title: 'How to Communicate with Your Adjuster',
-    description: 'Tips for effective communication with your insurance adjuster to help ensure a smooth claims process.',
-    readTime: '6 min read',
-    category: 'Claims Process',
-  },
-]
 
 export default function GuidesPage() {
   const breadcrumbData = {
@@ -74,7 +23,7 @@ export default function GuidesPage() {
     ],
   }
 
-  const totalGuides = coreGuides.length + (statesData.length * 2) + companiesData.length
+  const totalGuides = guidesData.length + (statesData.length * 2) + companiesData.length
 
   const collectionSchema = {
     '@context': 'https://schema.org',
@@ -84,6 +33,15 @@ export default function GuidesPage() {
     url: 'https://ratemyadjusters.com/guides',
     numberOfItems: totalGuides,
   }
+
+  // Auto-separate guides by category
+  const coreGuides = guidesData.filter(g => 
+    ['Claims Process', 'Basics', 'Adjuster Types'].includes(g.category)
+  )
+  const industryGuides = guidesData.filter(g => 
+    ['Industry Analysis', 'Industry History', 'Technology'].includes(g.category)
+  )
+  const newGuides = guidesData.filter(g => g.new)
 
   return (
     <>
@@ -116,6 +74,36 @@ export default function GuidesPage() {
         </div>
 
         <div className="max-w-4xl mx-auto px-4 py-8">
+
+          {/* Recently Added - only shows if there are new guides */}
+          {newGuides.length > 0 && (
+            <section className="mb-12">
+              <div className="flex items-center gap-3 mb-6">
+                <Sparkles className="w-6 h-6 text-purple-500" />
+                <h2 className="text-2xl font-bold text-gray-900">Recently Added</h2>
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                {newGuides.map((guide) => (
+                  <Link
+                    key={guide.slug}
+                    href={`/guides/${guide.slug}`}
+                    className="block bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl border border-purple-200 p-5 hover:border-purple-400 hover:shadow-md transition-all"
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xs font-bold text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full">NEW</span>
+                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">{guide.category}</span>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{guide.title}</h3>
+                    <p className="text-gray-600 text-sm mb-3">{guide.description}</p>
+                    <span className="inline-flex items-center gap-1 text-sm text-gray-500">
+                      <Clock className="w-4 h-4" />
+                      {guide.readTime}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
           
           {/* Core Guides */}
           <section className="mb-12">
@@ -131,6 +119,9 @@ export default function GuidesPage() {
                     <div>
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-xs font-medium text-blue-600 uppercase tracking-wide">{guide.category}</span>
+                        {guide.featured && (
+                          <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Popular</span>
+                        )}
                       </div>
                       <h3 className="text-xl font-semibold text-gray-900 mb-2">{guide.title}</h3>
                       <p className="text-gray-600 mb-3">{guide.description}</p>
@@ -145,6 +136,46 @@ export default function GuidesPage() {
               ))}
             </div>
           </section>
+
+          {/* Industry Deep Dives - only shows if there are industry guides */}
+          {industryGuides.length > 0 && (
+            <section className="mb-12">
+              <div className="flex items-center gap-3 mb-6">
+                <TrendingUp className="w-6 h-6 text-indigo-500" />
+                <h2 className="text-2xl font-bold text-gray-900">Industry Deep Dives</h2>
+              </div>
+              <p className="text-gray-600 mb-6">
+                In-depth analysis of how the insurance industry works behind the scenes — from Wall Street to vendor networks.
+              </p>
+              <div className="space-y-4">
+                {industryGuides.map((guide) => (
+                  <Link
+                    key={guide.slug}
+                    href={`/guides/${guide.slug}`}
+                    className="block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:border-indigo-300 hover:shadow-md transition-all"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-xs font-medium text-indigo-600 uppercase tracking-wide">{guide.category}</span>
+                          {guide.new && (
+                            <span className="text-xs font-bold text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full">NEW</span>
+                          )}
+                        </div>
+                        <h3 className="text-xl font-semibold text-gray-900 mb-2">{guide.title}</h3>
+                        <p className="text-gray-600 mb-3">{guide.description}</p>
+                        <span className="inline-flex items-center gap-1 text-sm text-gray-500">
+                          <Clock className="w-4 h-4" />
+                          {guide.readTime}
+                        </span>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0 mt-1" />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* File a Complaint by State */}
           <section className="mb-12">
