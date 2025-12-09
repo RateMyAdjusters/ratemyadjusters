@@ -3,8 +3,9 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Star, ChevronDown, ChevronUp, Shield, AlertTriangle, UserPlus, ChevronRight } from 'lucide-react'
+import { Star, ChevronDown, ChevronUp, Shield, AlertTriangle, UserPlus, ChevronRight, XCircle, AlertCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { validateReviewContent } from '@/lib/review-validation'
 
 function ReviewContent() {
   const searchParams = useSearchParams()
@@ -13,6 +14,7 @@ function ReviewContent() {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [validationError, setValidationError] = useState<{ message: string; type: string } | null>(null)
   const [success, setSuccess] = useState(false)
   const [showOptionalRatings, setShowOptionalRatings] = useState(false)
   const [showGuidelines, setShowGuidelines] = useState(true)
@@ -55,6 +57,60 @@ function ReviewContent() {
     { value: 'pending', label: 'Still Pending' },
   ]
 
+  // Get helpful tips based on validation error type
+  const getValidationTips = (type: string): string[] => {
+    switch (type) {
+      case 'profanity':
+        return [
+          'Remove any curse words or inappropriate language',
+          'Express frustration without using profanity',
+          'Focus on describing what happened factually'
+        ]
+      case 'attack':
+        return [
+          'Focus on your experience, not the person',
+          'Describe actions and outcomes instead of character',
+          'Avoid threats or wishes of harm',
+          'Keep criticism constructive and professional'
+        ]
+      case 'phone':
+        return [
+          'Remove any phone numbers from your review',
+          'You can mention "I called them" without including the number'
+        ]
+      case 'email':
+        return [
+          'Remove any email addresses from your review',
+          'You can mention "I emailed them" without including the address'
+        ]
+      case 'address':
+        return [
+          'Remove any street addresses or zip codes',
+          'You can mention the city or general area instead'
+        ]
+      case 'ssn':
+        return [
+          'Never share Social Security Numbers online',
+          'Remove any SSN references from your review'
+        ]
+      case 'financial':
+        return [
+          'Remove any credit card or bank account numbers',
+          'Never share financial account details in reviews'
+        ]
+      case 'policy':
+        return [
+          'Remove policy or claim numbers for privacy',
+          'You can describe the claim without including the number'
+        ]
+      default:
+        return [
+          'Review our guidelines and update your text',
+          'Focus on describing your experience professionally'
+        ]
+    }
+  }
+
   useEffect(() => {
     const name = searchParams.get('name')
     const adjusterId = searchParams.get('adjuster')
@@ -76,6 +132,13 @@ function ReviewContent() {
       }
     }
   }, [searchParams])
+
+  // Clear validation error when user edits the review text
+  useEffect(() => {
+    if (validationError) {
+      setValidationError(null)
+    }
+  }, [reviewText])
 
   async function fetchAdjusterById(id: string) {
     const { data } = await supabase
@@ -118,6 +181,10 @@ function ReviewContent() {
   }
 
   async function handleSubmit() {
+    // Clear previous errors
+    setError(null)
+    setValidationError(null)
+
     if (!selectedAdjuster) {
       setError('Please select an adjuster')
       return
@@ -138,13 +205,24 @@ function ReviewContent() {
       return
     }
 
+    // Validate content for profanity, attacks, and personal info
+    const validation = validateReviewContent(reviewText)
+    if (!validation.isValid) {
+      setValidationError({
+        message: validation.error || 'Your review could not be submitted.',
+        type: validation.failedCheck || 'unknown'
+      })
+      // Scroll to error
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+
     if (honeypot) {
       setSuccess(true)
       return
     }
     
     setLoading(true)
-    setError(null)
     
     const { error: submitError } = await supabase
       .from('reviews')
@@ -270,7 +348,39 @@ function ReviewContent() {
               </div>
             )}
 
-            {error && (
+            {/* Validation Error - Styled to clearly show it's a content issue, not a website error */}
+            {validationError && (
+              <div className="mb-6 rounded-xl border-2 border-amber-300 bg-amber-50 overflow-hidden">
+                <div className="bg-amber-100 px-4 py-3 border-b border-amber-200">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5 text-amber-600" />
+                    <h3 className="font-semibold text-amber-800">Please Update Your Review</h3>
+                  </div>
+                </div>
+                <div className="px-4 py-4">
+                  <p className="text-amber-900 mb-3">{validationError.message}</p>
+                  
+                  <div className="bg-white rounded-lg p-3 border border-amber-200">
+                    <p className="text-sm font-medium text-gray-700 mb-2">How to fix this:</p>
+                    <ul className="space-y-1">
+                      {getValidationTips(validationError.type).map((tip, index) => (
+                        <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
+                          <span className="text-amber-500 mt-0.5">•</span>
+                          {tip}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  <p className="text-xs text-amber-700 mt-3">
+                    Your review has not been lost — just edit the text below and try again.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* General Error (non-validation) */}
+            {error && !validationError && (
               <div className="mb-6 rounded-lg bg-red-50 text-red-700 px-4 py-3 text-sm flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4" />
                 {error}
@@ -363,11 +473,19 @@ function ReviewContent() {
                     onChange={(e) => setReviewText(e.target.value)}
                     placeholder="Share your experience with this adjuster. How was their communication? Were they fair? How long did the process take?"
                     rows={5}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 ${
+                      validationError ? 'border-amber-400 bg-amber-50' : 'border-gray-300'
+                    }`}
                   />
                   <p className={'text-sm mt-1 ' + (reviewText.trim().length < 20 ? 'text-amber-600' : 'text-gray-500')}>
                     {reviewText.length}/1000 {reviewText.trim().length < 20 && '(minimum 20 characters)'}
                   </p>
+                  {validationError && (
+                    <p className="text-sm text-amber-600 mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" />
+                      Please edit your review above to fix the issue
+                    </p>
+                  )}
                 </div>
 
                 <div className="border border-gray-200 rounded-lg">
@@ -419,7 +537,7 @@ function ReviewContent() {
                   disabled={loading || overallRating === 0 || reviewText.trim().length < 20}
                   className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-lg transition-colors"
                 >
-                  {loading ? 'Submitting...' : 'Submit Review'}
+                  {loading ? 'Submitting...' : validationError ? 'Try Again' : 'Submit Review'}
                 </button>
                 
                 <p className="text-xs text-gray-500 text-center">
