@@ -58,6 +58,7 @@ function ReviewContent() {
   useEffect(() => {
     const name = searchParams.get('name')
     const adjusterId = searchParams.get('adjuster')
+    const ratingParam = searchParams.get('rating')
     
     if (name) {
       setAdjusterSearch(name)
@@ -66,6 +67,13 @@ function ReviewContent() {
     
     if (adjusterId) {
       fetchAdjusterById(adjusterId)
+    }
+    
+    if (ratingParam) {
+      const rating = parseInt(ratingParam)
+      if (rating >= 1 && rating <= 5) {
+        setOverallRating(rating)
+      }
     }
   }, [searchParams])
 
@@ -151,7 +159,7 @@ function ReviewContent() {
         claim_type: claimType || null,
         claim_outcome: claimOutcome || null,
         reviewer_type: reviewerType,
-        status: 'pending',
+        status: 'approved',
       })
     
     if (submitError) {
@@ -206,7 +214,7 @@ function ReviewContent() {
               <Star className="w-8 h-8 text-green-600 fill-green-600" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Thank You!</h1>
-            <p className="text-gray-600 mb-6">Your review has been submitted and is pending approval.</p>
+            <p className="text-gray-600 mb-6">Your review has been submitted successfully.</p>
             <div className="flex gap-4 justify-center">
               <button onClick={() => router.push('/adjuster/' + selectedAdjuster.slug)} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg">View Profile</button>
               <button onClick={() => router.push('/')} className="border border-gray-300 text-gray-700 font-semibold py-2 px-6 rounded-lg">Home</button>
@@ -230,7 +238,6 @@ function ReviewContent() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }} />
 
-      {/* Breadcrumb */}
       <div className="bg-white border-b">
         <div className="max-w-6xl mx-auto px-4 py-3">
           <nav className="flex items-center gap-2 text-sm">
@@ -422,7 +429,6 @@ function ReviewContent() {
             )}
           </div>
 
-          {/* Quick Links */}
           <div className="bg-gray-50 rounded-xl p-6 mt-8">
             <h3 className="font-semibold text-gray-900 mb-4">Explore More</h3>
             <div className="grid sm:grid-cols-2 gap-4">
