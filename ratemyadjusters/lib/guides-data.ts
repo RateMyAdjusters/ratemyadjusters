@@ -1,6 +1,3 @@
-// lib/guides-data.ts
-// Add new guides here - they'll automatically appear on the /guides page
-
 export interface Guide {
   slug: string
   title: string
@@ -99,19 +96,5 @@ export const guidesData: Guide[] = [
     new: true,
   },
 
-  // ===== ADD NEW GUIDES HERE =====
-  // {
-  //   slug: 'your-new-guide-slug',
-  //   title: 'Your New Guide Title',
-  //   description: 'Description of the guide.',
-  //   readTime: 'X min read',
-  //   category: 'Category Name',
-  //   new: true,  // Shows "NEW" badge
-  // },
+  // ===== ADD NEW GUIDES BELOW THIS LINE =====
 ]
-
-// Helper functions
-export const getFeaturedGuides = () => guidesData.filter(g => g.featured)
-export const getNewGuides = () => guidesData.filter(g => g.new)
-export const getGuidesByCategory = (category: string) => guidesData.filter(g => g.category === category)
-export const getAllCategories = () => [...new Set(guidesData.map(g => g.category))]
