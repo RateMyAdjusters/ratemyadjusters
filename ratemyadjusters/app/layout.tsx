@@ -14,7 +14,21 @@ export const metadata: Metadata = {
     template: '%s | RateMyAdjusters',
   },
   description: 'Search 168,824 licensed insurance adjusters by name, company, or state. Read real reviews from homeowners and contractors before your claim. Know your adjuster.',
-  keywords: ['insurance adjuster reviews', 'adjuster ratings', 'claim adjuster', 'insurance claim', 'State Farm adjuster', 'Allstate adjuster', 'adjuster lookup', 'insurance adjuster search', 'rate my adjuster', 'insurance claim help'],
+  keywords: [
+    'insurance adjuster reviews',
+    'adjuster ratings',
+    'claim adjuster',
+    'insurance claim',
+    'State Farm adjuster',
+    'Allstate adjuster',
+    'adjuster lookup',
+    'insurance adjuster search',
+    'rate my adjuster',
+    'rate adjusters',
+    'insurance claim help',
+    'adjuster reviews',
+    'claims adjuster rating',
+  ],
   authors: [{ name: 'RateMyAdjusters' }],
   creator: 'RateMyAdjusters',
   publisher: 'RateMyAdjusters',
@@ -65,12 +79,17 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  // WebSite Schema - enables sitelinks search box in Google
   const websiteSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'RateMyAdjusters',
-    alternateName: 'Rate My Adjusters',
+    alternateName: [
+      'Rate My Adjusters',
+      'RateMyAdjuster',
+      'Rate My Adjuster',
+      'Rate Adjusters',
+      'Adjuster Reviews',
+    ],
     url: 'https://ratemyadjusters.com',
     description: 'Search 168,824 licensed insurance adjusters by name, company, or state. Read real reviews from homeowners and contractors.',
     potentialAction: {
@@ -83,12 +102,19 @@ export default function RootLayout({
     },
   }
 
-  // Organization Schema - brand signals + rich results
   const organizationSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'RateMyAdjusters',
-    alternateName: 'Rate My Adjusters',
+    alternateName: [
+      'Rate My Adjusters',
+      'RateMyAdjuster',
+      'Rate My Adjuster',
+      'Rate Adjusters',
+      'Adjuster Ratings',
+      'Insurance Adjuster Reviews',
+      'Adjuster Review Site',
+    ],
     url: 'https://ratemyadjusters.com',
     logo: {
       '@type': 'ImageObject',
@@ -121,15 +147,19 @@ export default function RootLayout({
     serviceType: 'Insurance Adjuster Reviews',
   }
 
-  // Review Platform Schema - tells Google this is a review site
   const reviewPlatformSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
     name: 'RateMyAdjusters',
+    alternateName: [
+      'Rate My Adjusters',
+      'RateMyAdjuster',
+      'Rate My Adjuster',
+    ],
     url: 'https://ratemyadjusters.com',
     applicationCategory: 'ReviewApplication',
     operatingSystem: 'Web',
-    description: 'Platform for rating and reviewing insurance adjusters',
+    description: 'Platform for rating and reviewing insurance adjusters. Search 168,824 licensed adjusters across all 50 states.',
     offers: {
       '@type': 'Offer',
       price: '0',
@@ -154,7 +184,6 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#0F4C81" />
         
-        {/* Structured Data */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
