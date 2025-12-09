@@ -1,6 +1,8 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
-import { ChevronRight, BookOpen, Clock, ArrowRight } from 'lucide-react'
+import { ChevronRight, BookOpen, Clock, ArrowRight, MapPin, Building2, FileWarning } from 'lucide-react'
+import { statesData } from '@/lib/states-data'
+import { companiesData } from '@/lib/companies-data'
 
 export const metadata: Metadata = {
   title: 'Homeowner Guides & Resources | RateMyAdjusters',
@@ -10,7 +12,7 @@ export const metadata: Metadata = {
   },
 }
 
-const guides = [
+const coreGuides = [
   {
     slug: 'what-to-expect-when-adjuster-visits',
     title: 'What to Expect When an Insurance Adjuster Visits Your Home',
@@ -72,13 +74,15 @@ export default function GuidesPage() {
     ],
   }
 
+  const totalGuides = coreGuides.length + (statesData.length * 2) + companiesData.length
+
   const collectionSchema = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: 'Homeowner Guides & Resources',
     description: 'Educational guides about insurance adjusters and the claims process',
     url: 'https://ratemyadjusters.com/guides',
-    numberOfItems: guides.length,
+    numberOfItems: totalGuides,
   }
 
   return (
@@ -106,40 +110,117 @@ export default function GuidesPage() {
               <h1 className="text-3xl md:text-4xl font-bold">Homeowner Guides & Resources</h1>
             </div>
             <p className="text-slate-300 text-lg max-w-2xl">
-              Practical information to help you understand and navigate the insurance claims process with confidence.
+              {totalGuides}+ guides to help you understand and navigate the insurance claims process with confidence.
             </p>
           </div>
         </div>
 
-        {/* Guides List */}
         <div className="max-w-4xl mx-auto px-4 py-8">
-          <div className="space-y-4">
-            {guides.map((guide) => (
-              <Link
-                key={guide.slug}
-                href={`/guides/${guide.slug}`}
-                className="block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:border-blue-300 hover:shadow-md transition-all"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs font-medium text-blue-600 uppercase tracking-wide">{guide.category}</span>
+          
+          {/* Core Guides */}
+          <section className="mb-12">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Getting Started</h2>
+            <div className="space-y-4">
+              {coreGuides.map((guide) => (
+                <Link
+                  key={guide.slug}
+                  href={`/guides/${guide.slug}`}
+                  className="block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:border-blue-300 hover:shadow-md transition-all"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs font-medium text-blue-600 uppercase tracking-wide">{guide.category}</span>
+                      </div>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">{guide.title}</h3>
+                      <p className="text-gray-600 mb-3">{guide.description}</p>
+                      <span className="inline-flex items-center gap-1 text-sm text-gray-500">
+                        <Clock className="w-4 h-4" />
+                        {guide.readTime}
+                      </span>
                     </div>
-                    <h2 className="text-xl font-semibold text-gray-900 mb-2">{guide.title}</h2>
-                    <p className="text-gray-600 mb-3">{guide.description}</p>
-                    <span className="inline-flex items-center gap-1 text-sm text-gray-500">
-                      <Clock className="w-4 h-4" />
-                      {guide.readTime}
-                    </span>
+                    <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0 mt-1" />
                   </div>
-                  <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0 mt-1" />
-                </div>
-              </Link>
-            ))}
-          </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          {/* File a Complaint by State */}
+          <section className="mb-12">
+            <div className="flex items-center gap-3 mb-6">
+              <FileWarning className="w-6 h-6 text-orange-500" />
+              <h2 className="text-2xl font-bold text-gray-900">How to File a Complaint by State</h2>
+            </div>
+            <p className="text-gray-600 mb-6">
+              State-specific guides for filing complaints against insurance adjusters, including regulator contact information and step-by-step instructions.
+            </p>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                {statesData.map((state) => (
+                  <Link
+                    key={state.slug}
+                    href={`/guides/file-complaint-against-insurance-adjuster-${state.slug}`}
+                    className="px-3 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  >
+                    {state.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Best Public Adjusters by State */}
+          <section className="mb-12">
+            <div className="flex items-center gap-3 mb-6">
+              <MapPin className="w-6 h-6 text-green-500" />
+              <h2 className="text-2xl font-bold text-gray-900">Find Public Adjusters by State</h2>
+            </div>
+            <p className="text-gray-600 mb-6">
+              Learn how to evaluate and find qualified public adjusters in your state, including licensing verification and questions to ask before hiring.
+            </p>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                {statesData.map((state) => (
+                  <Link
+                    key={state.slug}
+                    href={`/guides/best-public-adjusters-in-${state.slug}`}
+                    className="px-3 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  >
+                    {state.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Claim Denied by Company */}
+          <section className="mb-12">
+            <div className="flex items-center gap-3 mb-6">
+              <Building2 className="w-6 h-6 text-red-500" />
+              <h2 className="text-2xl font-bold text-gray-900">Claim Denied? Guides by Insurance Company</h2>
+            </div>
+            <p className="text-gray-600 mb-6">
+              Step-by-step guides for what to do if your claim was denied by a specific insurance company, including appeal processes and escalation options.
+            </p>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {companiesData.map((company) => (
+                  <Link
+                    key={company.slug}
+                    href={`/guides/${company.slug}-claim-denied-what-to-do`}
+                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-red-50 hover:border-red-200 border border-transparent transition-all group"
+                  >
+                    <span className="font-medium text-gray-900 group-hover:text-red-700">{company.name}</span>
+                    <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-red-500" />
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
 
           {/* Disclaimer */}
-          <div className="mt-8 p-6 bg-gray-100 rounded-xl">
+          <div className="p-6 bg-gray-100 rounded-xl">
             <h3 className="font-semibold text-gray-900 mb-2">About These Guides</h3>
             <p className="text-gray-600 text-sm leading-relaxed">
               These educational resources are provided for general informational purposes only. They do not constitute legal, 
