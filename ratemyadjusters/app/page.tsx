@@ -6,7 +6,16 @@ import QuickLinks from '@/components/QuickLinks'
 export const metadata = {
   title: 'RateMyAdjusters | Insurance Adjuster Reviews & Ratings',
   description: 'Search 168,824 licensed insurance adjusters by name, company, or state. Read real reviews from homeowners and contractors before your claim. Know your adjuster.',
-  keywords: 'insurance adjuster reviews, adjuster ratings, claim adjuster, State Farm adjuster, Allstate adjuster, insurance claim help',
+  keywords: [
+    'insurance adjuster reviews',
+    'adjuster ratings',
+    'claim adjuster',
+    'State Farm adjuster',
+    'Allstate adjuster',
+    'insurance claim help',
+    'find insurance adjuster',
+    'adjuster lookup',
+  ],
 }
 
 function Logo({ className = "w-10 h-10" }: { className?: string }) {
@@ -76,7 +85,7 @@ export default function Home() {
             <p className="text-lg text-slate-300 mb-4 max-w-xl mx-auto">Search 168,824 licensed adjusters by name, company, or state. Read reviews from homeowners and contractors.</p>
             
             <p className="text-sm text-slate-400 mb-8 max-w-lg mx-auto">
-              RateMyAdjusters helps homeowners, contractors, and insurance professionals share experiences and improve clarity in the claims process.
+              RateMyAdjusters helps homeowners, contractors, and insurance professionals share experiences and bring clarity to the claims process.
             </p>
 
             <div className="max-w-2xl mx-auto mb-3">
@@ -225,7 +234,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ========== COMING SOON (NO SECRET SAUCE) ========== */}
+      {/* ========== COMING SOON ========== */}
       <section className="py-10 bg-slate-50">
         <div className="max-w-4xl mx-auto px-4">
           <h2 className="text-xl font-bold text-center text-gray-900 mb-6">Coming Soon</h2>
@@ -236,7 +245,7 @@ export default function Home() {
             </div>
             <div className="bg-white rounded-lg p-4 border border-gray-200 text-center">
               <BarChart3 className="w-6 h-6 text-teal-600 mx-auto mb-2" />
-              <p className="text-sm font-medium text-gray-900">Future Analytics Features</p>
+              <p className="text-sm font-medium text-gray-900">Analytics Dashboard</p>
             </div>
             <div className="bg-white rounded-lg p-4 border border-gray-200 text-center">
               <MessageSquare className="w-6 h-6 text-purple-600 mx-auto mb-2" />
@@ -254,7 +263,7 @@ export default function Home() {
       <section className="py-12 bg-gradient-to-r from-blue-600 to-teal-600">
         <div className="max-w-2xl mx-auto px-4 text-center">
           <h2 className="text-2xl font-bold text-white mb-3">Had a Recent Claim?</h2>
-          <p className="text-blue-100 mb-6">Share your experience to help others.</p>
+          <p className="text-blue-100 mb-6">Share your experience to help others navigate the process.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/review" className="inline-flex items-center justify-center gap-2 bg-white text-blue-700 font-semibold py-3 px-6 rounded-lg hover:bg-blue-50 transition-colors">
               <Star className="w-5 h-5" />
@@ -291,7 +300,7 @@ export default function Home() {
           </div>
           <SearchBar size="default" showFilters={true} />
           <p className="text-xs text-gray-500 text-center mt-6">
-            Reviews reflect individual user experiences. Information may be updated by users or by the professionals themselves.
+            RateMyAdjusters does not independently evaluate or rate insurance companies or adjusters. Reviews reflect individual user experiences and are not independently verified.
           </p>
         </div>
       </section>
