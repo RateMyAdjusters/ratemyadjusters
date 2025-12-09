@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 export async function GET() {
   const baseUrl = 'https://ratemyadjusters.com';
   const today = new Date().toISOString().split('T')[0];
-
+  
   const stateCodes = [
     'al', 'ak', 'az', 'ar', 'ca', 'co', 'ct', 'de', 'fl', 'ga',
     'hi', 'id', 'il', 'in', 'ia', 'ks', 'ky', 'la', 'me', 'md',
@@ -27,7 +27,7 @@ export async function GET() {
     <lastmod>${today}</lastmod>
   </sitemap>
   <sitemap>
-    <loc>${baseUrl}/sitemap-resources.xml</loc>
+    <loc>${baseUrl}/api/sitemap-resources</loc>
     <lastmod>${today}</lastmod>
   </sitemap>
 `;
