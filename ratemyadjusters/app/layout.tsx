@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
+import { Analytics } from "@vercel/analytics/react"
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -43,7 +44,7 @@ export const metadata: Metadata = {
     creator: '@ratemyadjusters',
   },
   verification: {
-    google: 'your-google-verification-code', // Add your verification code
+    google: 'your-google-verification-code',
   },
 }
 
@@ -52,7 +53,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  // WebSite Schema - enables sitelinks search box in Google
   const websiteSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
@@ -69,7 +69,6 @@ export default function RootLayout({
     },
   }
 
-  // Organization Schema - brand signals
   const organizationSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
@@ -80,7 +79,6 @@ export default function RootLayout({
     foundingDate: '2025',
     sameAs: [
       'https://twitter.com/ratemyadjusters',
-      // Add other social profiles as you create them
     ],
     contactPoint: {
       '@type': 'ContactPoint',
@@ -96,7 +94,6 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <meta name="theme-color" content="#0F4C81" />
         
-        {/* Structured Data */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
@@ -110,6 +107,7 @@ export default function RootLayout({
         <Header />
         {children}
         <Footer />
+        <Analytics />
       </body>
     </html>
   )
