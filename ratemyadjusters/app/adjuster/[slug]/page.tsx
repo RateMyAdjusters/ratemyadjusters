@@ -124,6 +124,18 @@ function formatDate(dateStr: string | null): string {
   }
 }
 
+function formatReviewDate(dateStr: string | null): string {
+  if (!dateStr) return 'Historical Review'
+  try {
+    const date = new Date(dateStr)
+    // Check for epoch date (Jan 1, 1970) which indicates null
+    if (date.getFullYear() < 1980) return 'Historical Review'
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+  } catch {
+    return 'Historical Review'
+  }
+}
+
 function getCommonExperiences(reviews: any[]): string[] {
   if (reviews.length === 0) return []
   
@@ -408,7 +420,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
                             </div>
                             <div className="flex items-center gap-2 mb-3">
                               <StarRating rating={review.overall_rating} />
-                              <span className="text-sm text-gray-500">{new Date(review.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                              <span className="text-sm text-gray-500">{formatReviewDate(review.created_at)}</span>
                             </div>
                             {review.claim_type && (
                               <div className="flex gap-2 mb-3">
