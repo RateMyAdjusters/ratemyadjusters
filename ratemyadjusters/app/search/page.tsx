@@ -11,7 +11,7 @@ function SearchContent() {
   const [selectedCompany, setSelectedCompany] = useState('')
   const [selectedState, setSelectedState] = useState('')
   const [adjusters, setAdjusters] = useState<any[]>([])
-  const [companies, setCompanies] = useState<any[]>([])
+  const [companies, setCompanies] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -34,8 +34,27 @@ function SearchContent() {
 
   const states = Object.keys(stateNames)
 
+  // Major insurance companies for the dropdown
+  const majorCompanies = [
+    'State Farm',
+    'Allstate',
+    'USAA',
+    'Liberty Mutual',
+    'Progressive',
+    'Farmers',
+    'Nationwide',
+    'Travelers',
+    'GEICO',
+    'American Family',
+    'Erie Insurance',
+    'Chubb',
+    'The Hartford',
+    'Sedgwick',
+    'Crawford & Company',
+    'Alacrity Solutions'
+  ]
+
   useEffect(() => {
-    fetchCompanies()
     const q = searchParams.get('q')?.trim() || ''
     const stateParam = searchParams.get('state')?.trim().toUpperCase() || ''
     
@@ -45,28 +64,17 @@ function SearchContent() {
     
     if (q) {
       setSearchTerm(q)
-    } else if (!stateParam) {
+    }
+    
+    // Initial load
+    if (!q && !stateParam) {
       fetchAdjusters()
     }
   }, [searchParams])
 
   useEffect(() => {
-    if (searchTerm || selectedCompany || selectedState) {
-      applyFilters()
-    }
+    applyFilters()
   }, [searchTerm, selectedCompany, selectedState])
-
-  async function fetchCompanies() {
-    const { data, error } = await supabase
-      .from('companies')
-      .select('id, name, slug')
-      .order('name')
-    if (error) {
-      console.error('Error fetching companies:', error)
-      return
-    }
-    if (data) setCompanies(data)
-  }
 
   async function fetchAdjusters() {
     setLoading(true)
@@ -79,16 +87,17 @@ function SearchContent() {
         first_name,
         last_name,
         slug,
-        title,
+        company_name,
         state,
+        city,
         avg_rating,
-        total_reviews,
-        companies(name, slug)
+        total_reviews
       `)
       .order('total_reviews', { ascending: false })
       .limit(50)
     
     if (error) {
+      console.error('Supabase error:', error)
       setError('Something went wrong. Please try again.')
       setLoading(false)
       return
@@ -96,36 +105,6 @@ function SearchContent() {
     
     if (data) setAdjusters(data)
     setLoading(false)
-  }
-
-  function parseSearchTerm(term: string) {
-    const normalized = term.trim().toLowerCase()
-    
-    const upperTerm = term.trim().toUpperCase()
-    if (states.includes(upperTerm)) {
-      return { type: 'state', value: upperTerm }
-    }
-    
-    for (const [abbrev, name] of Object.entries(stateNames)) {
-      if (name.toLowerCase() === normalized) {
-        return { type: 'state', value: abbrev }
-      }
-    }
-    
-    const matchedCompany = companies.find(c => 
-      c.name.toLowerCase().includes(normalized) || 
-      c.slug.toLowerCase().includes(normalized)
-    )
-    if (matchedCompany) {
-      return { type: 'company', value: matchedCompany.id, name: matchedCompany.name }
-    }
-    
-    const words = term.trim().split(/\s+/)
-    if (words.length >= 2) {
-      return { type: 'fullname', firstName: words[0], lastName: words.slice(1).join(' ') }
-    }
-    
-    return { type: 'name', value: term.trim() }
   }
 
   async function applyFilters() {
@@ -139,40 +118,66 @@ function SearchContent() {
         first_name,
         last_name,
         slug,
-        title,
+        company_name,
         state,
+        city,
         avg_rating,
-        total_reviews,
-        companies(name, slug)
+        total_reviews
       `)
 
+    // Handle search term
     if (searchTerm) {
-      const parsed = parseSearchTerm(searchTerm)
+      const normalized = searchTerm.trim().toLowerCase()
+      const upperTerm = searchTerm.trim().toUpperCase()
       
-      if (parsed.type === 'state') {
-        query = query.eq('state', parsed.value)
-      } else if (parsed.type === 'company') {
-        query = query.eq('company_id', parsed.value)
-      } else if (parsed.type === 'fullname') {
+      // Check if it's a state abbreviation
+      if (states.includes(upperTerm)) {
+        query = query.eq('state', upperTerm)
+      }
+      // Check if it's a state name
+      else if (Object.values(stateNames).map(s => s.toLowerCase()).includes(normalized)) {
+        const stateAbbrev = Object.entries(stateNames).find(([_, name]) => 
+          name.toLowerCase() === normalized
+        )?.[0]
+        if (stateAbbrev) {
+          query = query.eq('state', stateAbbrev)
+        }
+      }
+      // Check if it's a company name
+      else if (majorCompanies.some(c => c.toLowerCase().includes(normalized))) {
+        query = query.ilike('company_name', `%${searchTerm.trim()}%`)
+      }
+      // Check if it looks like a full name (has space)
+      else if (searchTerm.includes(' ')) {
+        const words = searchTerm.trim().split(/\s+/)
+        const firstName = words[0]
+        const lastName = words.slice(1).join(' ')
         query = query
-          .filter('first_name', 'ilike', `%${parsed.firstName}%`)
-          .filter('last_name', 'ilike', `%${parsed.lastName}%`)
-      } else {
-        query = query.or(`first_name.ilike.%${parsed.value}%,last_name.ilike.%${parsed.value}%`)
+          .ilike('first_name', `%${firstName}%`)
+          .ilike('last_name', `%${lastName}%`)
+      }
+      // Single word - search first or last name
+      else {
+        query = query.or(`first_name.ilike.%${searchTerm.trim()}%,last_name.ilike.%${searchTerm.trim()}%`)
       }
     }
 
+    // Apply company filter
     if (selectedCompany) {
-      query = query.eq('company_id', selectedCompany)
+      query = query.ilike('company_name', `%${selectedCompany}%`)
     }
 
+    // Apply state filter
     if (selectedState) {
       query = query.eq('state', selectedState)
     }
 
-    const { data, error } = await query.order('total_reviews', { ascending: false }).limit(50)
+    const { data, error } = await query
+      .order('total_reviews', { ascending: false })
+      .limit(50)
 
     if (error) {
+      console.error('Supabase error:', error)
       setError('Something went wrong. Please try again.')
       setLoading(false)
       return
@@ -186,43 +191,43 @@ function SearchContent() {
     return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase()
   }
 
-  const getCompanyName = (adj: any) => {
-    if (adj.companies) return adj.companies.name
-    return 'Unknown Company'
-  }
-
   const getSearchDescription = () => {
     if (!searchTerm && !selectedState && !selectedCompany) return 'Browse Adjusters'
     
     if (searchTerm) {
-      const parsed = parseSearchTerm(searchTerm)
-      if (parsed.type === 'state') {
-        return `Adjusters in ${stateNames[parsed.value] || parsed.value}`
+      const upperTerm = searchTerm.trim().toUpperCase()
+      if (states.includes(upperTerm)) {
+        return `Adjusters in ${stateNames[upperTerm]}`
       }
-      if (parsed.type === 'company') {
-        return `${parsed.name} Adjusters`
+      const normalized = searchTerm.trim().toLowerCase()
+      const matchedState = Object.entries(stateNames).find(([_, name]) => 
+        name.toLowerCase() === normalized
+      )
+      if (matchedState) {
+        return `Adjusters in ${matchedState[1]}`
       }
       return `Results for "${searchTerm}"`
     }
     
+    if (selectedState && selectedCompany) {
+      return `${selectedCompany} Adjusters in ${stateNames[selectedState]}`
+    }
+    
     if (selectedState) {
-      return `Adjusters in ${stateNames[selectedState] || selectedState}`
+      return `Adjusters in ${stateNames[selectedState]}`
     }
     
     if (selectedCompany) {
-      const company = companies.find(c => c.id === selectedCompany)
-      return company ? `${company.name} Adjusters` : 'Browse Adjusters'
+      return `${selectedCompany} Adjusters`
     }
     
     return 'Browse Adjusters'
   }
 
   const getResultsText = () => {
-    // No search/filter = browsing all, show generic text
     if (!searchTerm && !selectedState && !selectedCompany) {
       return 'Showing top reviewed adjusters'
     }
-    // Searching/filtering = show count
     if (adjusters.length === 0) {
       return 'No results found'
     }
@@ -268,8 +273,8 @@ function SearchContent() {
                 className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
               >
                 <option value="">All Companies</option>
-                {companies.map((company) => (
-                  <option key={company.id} value={company.id}>{company.name}</option>
+                {majorCompanies.map((company) => (
+                  <option key={company} value={company}>{company}</option>
                 ))}
               </select>
               
@@ -333,9 +338,9 @@ function SearchContent() {
                       {adjuster.first_name} {adjuster.last_name}
                     </h3>
                     <p className="text-gray-600">
-                      {getCompanyName(adjuster)}
-                      {adjuster.title && ` • ${adjuster.title}`}
-                      {adjuster.state && ` • ${adjuster.state}`}
+                      {adjuster.company_name || 'Independent Adjuster'}
+                      {adjuster.city && ` • ${adjuster.city}`}
+                      {adjuster.state && `, ${adjuster.state}`}
                     </p>
                     <div className="flex items-center gap-2 mt-1">
                       <StarRating rating={adjuster.avg_rating || 0} />
