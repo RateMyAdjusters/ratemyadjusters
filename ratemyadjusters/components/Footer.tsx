@@ -65,7 +65,7 @@ export default function Footer() {
               Know Your Adjuster.
             </p>
             <p className="text-slate-500 text-xs">
-              168,824 adjusters across 50 states
+              Thousands of adjuster profiles across all 50 states.
             </p>
           </div>
           
