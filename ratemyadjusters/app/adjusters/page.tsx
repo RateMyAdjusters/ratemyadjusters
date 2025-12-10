@@ -1,7 +1,6 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
-import { MapPin, ChevronRight, Users } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { MapPin, Users, ArrowRight } from 'lucide-react'
 import Breadcrumb from '@/components/Breadcrumb'
 import QuickLinks from '@/components/QuickLinks'
 
@@ -69,26 +68,7 @@ const STATES = [
   { slug: 'district-of-columbia', name: 'District of Columbia', abbr: 'DC' },
 ]
 
-async function getStateCounts(): Promise<Record<string, number>> {
-  const counts: Record<string, number> = {}
-  
-  const promises = STATES.map(async (state) => {
-    const { count } = await supabase
-      .from('adjusters')
-      .select('*', { count: 'exact', head: true })
-      .eq('state', state.abbr)
-    
-    counts[state.abbr] = count || 0
-  })
-  
-  await Promise.all(promises)
-  return counts
-}
-
 export default async function AdjustersIndexPage() {
-  const stateCounts = await getStateCounts()
-  const totalAdjusters = Object.values(stateCounts).reduce((a, b) => a + b, 0)
-
   const breadcrumbData = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -116,9 +96,19 @@ export default async function AdjustersIndexPage() {
               Find insurance adjuster ratings and reviews across all 50 US states. 
               Select your state to see local adjusters.
             </p>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg px-6 py-4 inline-block">
-              <div className="text-3xl font-bold">{totalAdjusters.toLocaleString()}</div>
-              <div className="text-slate-400 text-sm">Total Adjusters</div>
+            <div className="flex flex-wrap gap-4">
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg px-6 py-4">
+                <div className="text-2xl font-bold">Nationwide</div>
+                <div className="text-slate-400 text-sm">Coverage</div>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg px-6 py-4">
+                <div className="text-2xl font-bold">50</div>
+                <div className="text-slate-400 text-sm">States</div>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg px-6 py-4">
+                <div className="text-2xl font-bold">100%</div>
+                <div className="text-slate-400 text-sm">Free</div>
+              </div>
             </div>
           </div>
         </div>
@@ -138,11 +128,11 @@ export default async function AdjustersIndexPage() {
                       {state.name}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {(stateCounts[state.abbr] || 0).toLocaleString()} adjusters
+                      Browse adjusters
                     </div>
                   </div>
                   <div className="w-10 h-10 bg-gray-100 group-hover:bg-blue-100 rounded-full flex items-center justify-center transition-colors">
-                    <MapPin className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                    <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
                   </div>
                 </div>
               </Link>
