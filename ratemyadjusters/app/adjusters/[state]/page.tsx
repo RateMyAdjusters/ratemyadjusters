@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { MapPin, Users, Star, ChevronRight, ArrowRight } from 'lucide-react'
+import { MapPin, Users, Star, ChevronRight, ArrowRight, Clock } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import StarRating from '@/components/StarRating'
 
@@ -113,15 +113,6 @@ function getStateClaimInfo(abbr: string, stateName: string): string {
   return stateInfo[abbr] || `Homeowners in ${stateName} file insurance claims for various types of property damage including weather-related losses, water damage, fire damage, and theft. The specific types of claims vary by region and local weather patterns.`
 }
 
-async function getStateData(stateAbbr: string) {
-  const { count } = await supabase
-    .from('adjusters')
-    .select('*', { count: 'exact', head: true })
-    .eq('state', stateAbbr)
-
-  return count || 0
-}
-
 async function getTopAdjusters(stateAbbr: string): Promise<Adjuster[]> {
   const { data } = await supabase
     .from('adjusters')
@@ -190,23 +181,6 @@ async function getTopCities(stateAbbr: string): Promise<CityCount[]> {
     .map(([city, count]) => ({ city, count }))
 }
 
-async function getReviewCount(stateAbbr: string): Promise<number> {
-  const { data: adjusters } = await supabase
-    .from('adjusters')
-    .select('id')
-    .eq('state', stateAbbr)
-
-  if (!adjusters || adjusters.length === 0) return 0
-
-  const { count } = await supabase
-    .from('reviews')
-    .select('*', { count: 'exact', head: true })
-    .in('adjuster_id', adjusters.map(a => a.id))
-    .eq('status', 'approved')
-
-  return count || 0
-}
-
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const stateData = STATES[params.state]
   
@@ -214,17 +188,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: 'State Not Found | RateMyAdjusters' }
   }
 
-  const count = await getStateData(stateData.abbr)
-
   return {
     title: `${stateData.name} Insurance Adjusters – Reviews & Ratings`,
-    description: `Find ${count.toLocaleString()} insurance adjusters in ${stateData.name}. Read reviews from homeowners and contractors. See ratings, license details, and claim experiences.`,
+    description: `Find insurance adjusters in ${stateData.name}. Read reviews from homeowners and contractors. See ratings, license details, and claim experiences.`,
     alternates: {
       canonical: `https://ratemyadjusters.com/adjusters/${params.state}`,
     },
     openGraph: {
       title: `${stateData.name} Insurance Adjusters`,
-      description: `Search ${count.toLocaleString()} adjusters in ${stateData.name}. Read real reviews from homeowners and contractors.`,
+      description: `Search adjusters in ${stateData.name}. Read real reviews from homeowners and contractors.`,
     },
   }
 }
@@ -242,12 +214,10 @@ export default async function StatePage({ params }: PageProps) {
     notFound()
   }
 
-  const [adjusterCount, adjusters, reviews, topCities, reviewCount] = await Promise.all([
-    getStateData(stateData.abbr),
+  const [adjusters, reviews, topCities] = await Promise.all([
     getTopAdjusters(stateData.abbr),
     getRecentReviews(stateData.abbr),
     getTopCities(stateData.abbr),
-    getReviewCount(stateData.abbr),
   ])
 
   const breadcrumbSchema = {
@@ -264,9 +234,8 @@ export default async function StatePage({ params }: PageProps) {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: `Insurance Adjusters in ${stateData.name}`,
-    description: `Browse ${adjusterCount.toLocaleString()} insurance adjusters in ${stateData.name}`,
+    description: `Browse insurance adjusters in ${stateData.name}`,
     url: `https://ratemyadjusters.com/adjusters/${params.state}`,
-    numberOfItems: adjusterCount,
   }
 
   return (
@@ -299,23 +268,29 @@ export default async function StatePage({ params }: PageProps) {
               Insurance Adjusters in {stateData.name}
             </h1>
             <p className="text-slate-300 text-lg mb-8 max-w-2xl">
-              Browse {adjusterCount.toLocaleString()} licensed insurance adjusters in {stateData.name}. 
+              Browse licensed insurance adjusters in {stateData.name}. 
               Read reviews from homeowners and contractors.
             </p>
             
             {/* Stats */}
             <div className="flex flex-wrap gap-6">
               <div className="bg-white/10 backdrop-blur-sm rounded-lg px-6 py-4">
-                <div className="text-2xl font-bold">{adjusterCount.toLocaleString()}</div>
-                <div className="text-slate-400 text-sm">Adjusters</div>
+                <div className="text-2xl font-bold">Statewide</div>
+                <div className="text-slate-400 text-sm">Coverage</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-lg px-6 py-4">
-                <div className="text-2xl font-bold">{reviewCount.toLocaleString()}</div>
-                <div className="text-slate-400 text-sm">Reviews</div>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-teal-400" />
+                  <span className="text-lg font-semibold text-teal-400">Coming Soon</span>
+                </div>
+                <div className="text-slate-400 text-sm">Review Stats</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-lg px-6 py-4">
-                <div className="text-2xl font-bold">{topCities.length}</div>
-                <div className="text-slate-400 text-sm">Major Cities</div>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-teal-400" />
+                  <span className="text-lg font-semibold text-teal-400">Coming Soon</span>
+                </div>
+                <div className="text-slate-400 text-sm">City Rankings</div>
               </div>
             </div>
           </div>
@@ -343,14 +318,14 @@ export default async function StatePage({ params }: PageProps) {
                 <div className="bg-white rounded-xl shadow-sm p-6">
                   <h2 className="text-xl font-bold text-gray-900 mb-4">Browse by City</h2>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {topCities.map(({ city, count }) => (
+                    {topCities.map(({ city }) => (
                       <Link
                         key={city}
                         href={`/adjusters/${params.state}/${nameToSlug(city)}`}
                         className="flex items-center justify-between p-3 bg-gray-50 hover:bg-blue-50 rounded-lg transition-colors group"
                       >
                         <span className="text-gray-900 group-hover:text-blue-700 font-medium text-sm">{city}</span>
-                        <span className="text-xs text-gray-500">{count.toLocaleString()}</span>
+                        <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
                       </Link>
                     ))}
                   </div>
@@ -399,7 +374,7 @@ export default async function StatePage({ params }: PageProps) {
                               <div className="text-xs text-gray-500">{adjuster.total_reviews} reviews</div>
                             </>
                           ) : (
-                            <span className="text-xs text-gray-400">No reviews</span>
+                            <span className="text-xs text-gray-400">No reviews yet</span>
                           )}
                         </div>
                         <ChevronRight className="w-5 h-5 text-gray-400" />
@@ -413,7 +388,7 @@ export default async function StatePage({ params }: PageProps) {
                     href={`/search?state=${stateData.abbr}`}
                     className="text-blue-600 hover:text-blue-700 font-medium text-sm flex items-center gap-1 justify-center"
                   >
-                    View all {adjusterCount.toLocaleString()} adjusters in {stateData.name}
+                    Search all adjusters in {stateData.name}
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>
