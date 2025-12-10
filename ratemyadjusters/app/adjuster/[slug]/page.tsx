@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { Star, MapPin, Building, Shield, ChevronRight, Clock, Users, FileText, HelpCircle, ArrowRight, MessageSquare } from 'lucide-react'
+import { Star, MapPin, Building, Shield, ChevronRight, Clock, Users, HelpCircle, ArrowRight, MessageSquare, Phone, Briefcase, Globe, Lock, Mail } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import StarRating from '@/components/StarRating'
 import ShareButtons from '@/components/ShareButtons'
@@ -40,10 +40,25 @@ async function getReviews(adjusterId: string) {
   return data || []
 }
 
-async function getSimilarAdjusters(state: string, city: string | null, currentId: string) {
+async function getSimilarAdjusters(state: string, city: string | null, companyName: string | null, currentId: string) {
+  if (companyName) {
+    const { data: sameCompany } = await supabase
+      .from('adjusters')
+      .select('id, first_name, last_name, slug, state, city, company_name, avg_rating, total_reviews')
+      .eq('state', state)
+      .eq('company_name', companyName)
+      .neq('id', currentId)
+      .order('total_reviews', { ascending: false })
+      .limit(3)
+
+    if (sameCompany && sameCompany.length >= 3) {
+      return sameCompany
+    }
+  }
+
   let query = supabase
     .from('adjusters')
-    .select('id, first_name, last_name, slug, state, city, avg_rating, total_reviews')
+    .select('id, first_name, last_name, slug, state, city, company_name, avg_rating, total_reviews')
     .eq('state', state)
     .neq('id', currentId)
     .order('total_reviews', { ascending: false })
@@ -55,31 +70,6 @@ async function getSimilarAdjusters(state: string, city: string | null, currentId
 
   const { data } = await query
   return data || []
-}
-
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const adjuster = await getAdjuster(params.slug)
-  
-  if (!adjuster) {
-    return { title: 'Adjuster Not Found | RateMyAdjusters' }
-  }
-
-  const fullName = adjuster.first_name + ' ' + adjuster.last_name
-  const stateFullName = getStateName(adjuster.state)
-  const cityText = adjuster.city ? adjuster.city + ', ' : ''
-  
-  return {
-    title: `${fullName} – Insurance Adjuster Reviews (${adjuster.state}) | RateMyAdjusters`,
-    description: `Read reviews of ${fullName}, a licensed insurance adjuster in ${cityText}${stateFullName}. See ratings from homeowners and contractors, license details, and claim experiences.`,
-    alternates: {
-      canonical: 'https://ratemyadjusters.com/adjuster/' + adjuster.slug,
-    },
-    openGraph: {
-      title: `${fullName} – Insurance Adjuster Reviews`,
-      description: `See what homeowners and contractors say about ${fullName}, an insurance adjuster in ${stateFullName}.`,
-      type: 'profile',
-    },
-  }
 }
 
 function getStateName(abbr: string): string {
@@ -104,23 +94,12 @@ function getStateSlug(abbr: string): string {
   return stateName.toLowerCase().replace(/\s+/g, '-')
 }
 
-function getStateClaimInfo(abbr: string): string {
-  const stateInfo: Record<string, string> = {
-    TX: 'Texas experiences frequent weather-related claims including hail, wind, and hurricane damage.',
-    FL: 'Florida homeowners commonly file claims for hurricane damage, water damage, and wind-related losses.',
-    CA: 'California property claims frequently involve wildfire damage, earthquake coverage, and water damage.',
-    GA: 'Georgia residents often file claims for storm damage, including hail, wind, and tornado-related losses.',
-    OH: 'Ohio homeowners typically file claims for winter storm damage, wind damage, and water-related losses.',
-  }
-  return stateInfo[abbr] || `Homeowners in ${getStateName(abbr)} file insurance claims for various types of property damage.`
-}
-
 function formatDate(dateStr: string | null): string {
-  if (!dateStr) return 'Not listed'
+  if (!dateStr) return 'Not Available for Display'
   try {
     return new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
   } catch {
-    return 'Not listed'
+    return 'Not Available for Display'
   }
 }
 
@@ -128,7 +107,6 @@ function formatReviewDate(dateStr: string | null): string {
   if (!dateStr) return 'Historical Review'
   try {
     const date = new Date(dateStr)
-    // Check for epoch date (Jan 1, 1970) which indicates null
     if (date.getFullYear() < 1980) return 'Historical Review'
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
   } catch {
@@ -136,43 +114,88 @@ function formatReviewDate(dateStr: string | null): string {
   }
 }
 
+function formatLicenseType(qualification: string | null): string {
+  if (!qualification) return 'Insurance Adjuster'
+  const typeMap: Record<string, string> = {
+    '6-20': 'All-Lines Adjuster',
+    '620': 'All-Lines Adjuster',
+    'PA': 'Public Adjuster',
+    'IA': 'Independent Adjuster',
+    'SA': 'Staff Adjuster',
+    'CAT': 'Catastrophe Adjuster',
+  }
+  return typeMap[qualification.toUpperCase()] || qualification
+}
+
 function getCommonExperiences(reviews: any[]): string[] {
   if (reviews.length === 0) return []
   
   const experiences = []
-  const hasPositive = reviews.some(r => r.overall_rating >= 4)
+  const avgRating = reviews.reduce((sum, r) => sum + (r.overall_rating || 0), 0) / reviews.length
   
-  if (hasPositive) {
+  if (avgRating >= 3.5) {
     experiences.push('Communication')
     experiences.push('Professionalism')
+  }
+  if (avgRating >= 4) {
     experiences.push('Timeliness')
-    experiences.push('Clarity of the process')
+    experiences.push('Thoroughness')
   }
   
-  return experiences
+  return experiences.slice(0, 4)
 }
 
-function getFAQs(fullName: string, state: string) {
+function getFAQs(fullName: string, state: string, companyName: string | null) {
   const stateName = getStateName(state)
-  
+  const companyText = companyName ? ` at ${companyName}` : ''
+
   return [
     {
       question: `How can I leave a review for ${fullName}?`,
-      answer: `You can leave a review by clicking the stars above or the "Leave a Review" button. Your feedback helps other homeowners.`,
+      answer: `You can leave a review by clicking the "Leave a Review" button above or the rating stars. Share your experience with this insurance adjuster to help other homeowners and contractors in ${stateName}.`,
     },
     {
       question: `Is ${fullName} a licensed insurance adjuster?`,
-      answer: `${fullName} is listed as an insurance adjuster in ${stateName}. License details are shown in the sidebar when available.`,
+      answer: `${fullName} is listed as an insurance claims adjuster${companyText} in ${stateName}. License details, status, and other available information are shown in the "License Information" section on this page.`,
     },
     {
       question: `What types of claims does ${fullName} handle?`,
-      answer: `Insurance adjusters in ${stateName} typically handle roof damage, water damage, fire damage, wind and hail damage, and other covered losses.`,
+      answer: `Insurance adjusters in ${stateName} typically handle property damage claims such as roof damage, water damage, fire loss, wind and hail damage, hurricane or storm claims, and other covered home insurance losses.`,
     },
     {
       question: `Are the reviews on this page verified?`,
-      answer: `Reviews are submitted by homeowners and contractors who have worked with adjusters. We moderate for guidelines but cannot independently verify each experience.`,
+      answer: `Reviews for ${fullName} are submitted by homeowners, contractors, and public adjusters who report their own experiences. We moderate for civility and guidelines but do not independently verify each claim or review.`,
     },
   ]
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const adjuster = await getAdjuster(params.slug)
+  
+  if (!adjuster) {
+    return { title: 'Adjuster Not Found | RateMyAdjusters' }
+  }
+
+  const fullName = [adjuster.first_name, adjuster.middle_name, adjuster.last_name].filter(Boolean).join(' ')
+  const stateFullName = getStateName(adjuster.state)
+  const cityText = adjuster.city ? `${adjuster.city}, ` : ''
+  const licenseType = formatLicenseType(adjuster.qualification)
+  const companyText = adjuster.company_name ? ` at ${adjuster.company_name}` : ''
+  const profileUrl = `https://ratemyadjusters.com/adjuster/${adjuster.slug}`
+
+  return {
+    title: `${fullName} – ${licenseType} in ${cityText}${stateFullName} | RateMyAdjusters`,
+    description: `Read homeowner and contractor reviews for ${fullName}${companyText}, a ${licenseType.toLowerCase()} handling property insurance claims in ${cityText}${stateFullName}. See ratings, claim experiences, and license details before you deal with this adjuster.`,
+    alternates: {
+      canonical: profileUrl,
+    },
+    openGraph: {
+      title: `${fullName} – Insurance Adjuster Reviews in ${stateFullName}`,
+      description: `See what homeowners, contractors, and public adjusters say about ${fullName}${companyText} in ${stateFullName}. Read real reviews about claim handling, communication, and fairness.`,
+      type: 'profile',
+      url: profileUrl,
+    },
+  }
 }
 
 export default async function AdjusterProfile({ params }: PageProps) {
@@ -180,23 +203,36 @@ export default async function AdjusterProfile({ params }: PageProps) {
   if (!adjuster) notFound()
 
   const reviews = await getReviews(adjuster.id)
-  const similarAdjusters = await getSimilarAdjusters(adjuster.state, adjuster.city, adjuster.id)
+  const similarAdjusters = await getSimilarAdjusters(adjuster.state, adjuster.city, adjuster.company_name, adjuster.id)
   
-  const fullName = adjuster.first_name + ' ' + adjuster.last_name
-  const profileUrl = 'https://ratemyadjusters.com/adjuster/' + adjuster.slug
+  const fullName = [adjuster.first_name, adjuster.middle_name, adjuster.last_name].filter(Boolean).join(' ')
+  const displayName = adjuster.first_name + ' ' + adjuster.last_name
+  const profileUrl = `https://ratemyadjusters.com/adjuster/${adjuster.slug}`
   const isPendingVerification = adjuster.license_status === 'pending_verification'
   const stateName = getStateName(adjuster.state)
   const stateSlug = getStateSlug(adjuster.state)
   const location = adjuster.city ? `${adjuster.city}, ${stateName}` : stateName
-  const faqs = getFAQs(fullName, adjuster.state)
+  const faqs = getFAQs(fullName, adjuster.state, adjuster.company_name)
   const commonExperiences = getCommonExperiences(reviews)
+  const licenseType = formatLicenseType(adjuster.qualification)
+
+  // Privacy display helpers
+  const hasPhone = !!adjuster.phone_raw
+  const hasEmail = !!adjuster.email
 
   const personSchema = {
     '@context': 'https://schema.org',
     '@type': 'Person',
     name: fullName,
     url: profileUrl,
-    jobTitle: adjuster.qualification || 'Insurance Adjuster',
+    mainEntityOfPage: profileUrl,
+    jobTitle: licenseType,
+    ...(adjuster.company_name && {
+      worksFor: {
+        '@type': 'Organization',
+        name: adjuster.company_name,
+      },
+    }),
     address: {
       '@type': 'PostalAddress',
       addressLocality: adjuster.city || undefined,
@@ -256,14 +292,14 @@ export default async function AdjusterProfile({ params }: PageProps) {
         {/* Breadcrumb */}
         <div className="bg-white border-b">
           <div className="max-w-6xl mx-auto px-4 py-3">
-            <nav className="flex items-center gap-2 text-sm">
+            <nav className="flex items-center gap-2 text-sm flex-wrap">
               <Link href="/" className="text-gray-500 hover:text-gray-700">Home</Link>
               <ChevronRight className="w-4 h-4 text-gray-400" />
               <Link href="/adjusters" className="text-gray-500 hover:text-gray-700">Adjusters</Link>
               <ChevronRight className="w-4 h-4 text-gray-400" />
               <Link href={`/adjusters/${stateSlug}`} className="text-gray-500 hover:text-gray-700">{stateName}</Link>
               <ChevronRight className="w-4 h-4 text-gray-400" />
-              <span className="text-gray-900 font-medium">{fullName}</span>
+              <span className="text-gray-900 font-medium">{displayName}</span>
             </nav>
           </div>
         </div>
@@ -272,12 +308,14 @@ export default async function AdjusterProfile({ params }: PageProps) {
         <div className="bg-white border-b">
           <div className="max-w-6xl mx-auto px-4 py-8">
             <div className="flex flex-col md:flex-row gap-6">
+              {/* Avatar */}
               <div className="flex-shrink-0">
                 <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-teal-500 rounded-full flex items-center justify-center">
                   <span className="text-white font-bold text-3xl">{adjuster.first_name?.[0]}{adjuster.last_name?.[0]}</span>
                 </div>
               </div>
 
+              {/* Info */}
               <div className="flex-1">
                 <div className="flex flex-wrap items-center gap-3 mb-2">
                   <h1 className="text-3xl font-bold text-gray-900">{fullName}</h1>
@@ -289,15 +327,31 @@ export default async function AdjusterProfile({ params }: PageProps) {
                   )}
                 </div>
                 
-                <div className="flex flex-wrap items-center gap-4 text-gray-600 mb-4">
+                {/* Company & Role */}
+                <div className="flex flex-wrap items-center gap-4 text-gray-600 mb-2">
+                  {adjuster.company_name && (
+                    <span className="flex items-center gap-1.5 font-medium text-gray-900">
+                      <Building className="w-4 h-4 text-blue-600" />
+                      {adjuster.company_name}
+                    </span>
+                  )}
                   <span className="flex items-center gap-1">
-                    <Building className="w-4 h-4" />
-                    Property Claims Adjuster ({adjuster.state})
+                    <Briefcase className="w-4 h-4" />
+                    {licenseType}
                   </span>
+                </div>
+
+                {/* Location */}
+                <div className="flex flex-wrap items-center gap-4 text-gray-600 mb-4">
                   <span className="flex items-center gap-1">
                     <MapPin className="w-4 h-4" />
                     {location}
                   </span>
+                  {adjuster.residency_type && (
+                    <span className="text-sm text-gray-500">
+                      ({adjuster.residency_type === 'Resident' ? 'Resident' : 'Non-Resident'} License)
+                    </span>
+                  )}
                 </div>
 
                 {/* Stats Box */}
@@ -316,8 +370,8 @@ export default async function AdjusterProfile({ params }: PageProps) {
                   </div>
                   <div className="h-10 w-px bg-gray-300 hidden sm:block" />
                   <div>
-                    <p className="text-lg font-semibold text-gray-900">{location}</p>
-                    <p className="text-sm text-gray-500">Service Area</p>
+                    <p className="text-lg font-semibold text-gray-900">{adjuster.city || stateName}</p>
+                    <p className="text-sm text-gray-500">Primary Location</p>
                   </div>
                 </div>
 
@@ -325,6 +379,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
                 <FastReviewWidget adjusterId={adjuster.id} adjusterName={fullName} />
               </div>
 
+              {/* Actions */}
               <div className="flex flex-col gap-3">
                 <Link href={'/review?adjuster=' + adjuster.id} className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
                   <Star className="w-5 h-5" />
@@ -351,10 +406,16 @@ export default async function AdjusterProfile({ params }: PageProps) {
               {/* About Section */}
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">About {fullName}</h2>
-                <p className="text-gray-700 leading-relaxed">
-                  {fullName} is {adjuster.license_status === 'active' ? 'a licensed' : 'listed as an'} insurance adjuster in {stateName}.
-                  {adjuster.city && ` Based in ${adjuster.city}, this`} This adjuster evaluates property damage claims and prepares estimates for insurance companies and policyholders.
+                <p className="text-gray-700 leading-relaxed mb-4">
+                  {fullName} is {adjuster.license_status === 'active' ? 'a licensed' : 'listed as an'} {licenseType.toLowerCase()} in {stateName}
+                  {adjuster.company_name && `, working with ${adjuster.company_name}`}.
+                  {adjuster.city && ` Based in ${adjuster.city}, this`}{!adjuster.city && ' This'} adjuster evaluates property damage insurance claims and prepares estimates for insurance companies and policyholders. Reviews on this page reflect how policyholders and contractors describe their claim experience with this adjuster.
                 </p>
+                {adjuster.residency_type === 'Non-Resident' && (
+                  <p className="text-gray-600 text-sm">
+                    Note: This is a non-resident license, meaning the adjuster is primarily licensed in another state but authorized to work in {stateName}.
+                  </p>
+                )}
               </div>
 
               {/* Why Your Experience Matters */}
@@ -424,7 +485,17 @@ export default async function AdjusterProfile({ params }: PageProps) {
                             </div>
                             {review.claim_type && (
                               <div className="flex gap-2 mb-3">
-                                <span className="inline-block px-2 py-1 bg-gray-100 rounded text-xs text-gray-600">{review.claim_type} Claim</span>
+                                <span className="inline-block px-2 py-1 bg-gray-100 rounded text-xs text-gray-600 capitalize">{review.claim_type} Claim</span>
+                                {review.claim_outcome && (
+                                  <span className={`inline-block px-2 py-1 rounded text-xs ${
+                                    review.claim_outcome === 'approved' ? 'bg-green-100 text-green-700' :
+                                    review.claim_outcome === 'denied' ? 'bg-red-100 text-red-700' :
+                                    review.claim_outcome === 'partial' ? 'bg-yellow-100 text-yellow-700' :
+                                    'bg-gray-100 text-gray-600'
+                                  } capitalize`}>
+                                    {review.claim_outcome}
+                                  </span>
+                                )}
                               </div>
                             )}
                             <p className="text-gray-700 leading-relaxed mb-3">{review.review_text}</p>
@@ -458,21 +529,161 @@ export default async function AdjusterProfile({ params }: PageProps) {
             <div className="lg:col-span-1 space-y-6">
               {/* License Info */}
               <div className="bg-white rounded-xl shadow-sm p-6">
-                <h3 className="font-semibold text-gray-900 mb-4">License Information</h3>
+                <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-blue-600" />
+                  License Information
+                </h3>
                 <dl className="space-y-3 text-sm">
-                  <div className="flex justify-between"><dt className="text-gray-500">Name</dt><dd className="text-gray-900 font-medium">{fullName}</dd></div>
-                  <div className="flex justify-between"><dt className="text-gray-500">State</dt><dd className="text-gray-900 font-medium">{stateName}</dd></div>
-                  {adjuster.city && <div className="flex justify-between"><dt className="text-gray-500">City</dt><dd className="text-gray-900 font-medium">{adjuster.city}</dd></div>}
-                  {adjuster.license_number && <div className="flex justify-between"><dt className="text-gray-500">License #</dt><dd className="text-gray-900 font-medium">{adjuster.license_number}</dd></div>}
                   <div className="flex justify-between">
-                    <dt className="text-gray-500">Status</dt>
-                    <dd className={'font-medium ' + (adjuster.license_status === 'active' ? 'text-green-600' : 'text-gray-600')}>
-                      {adjuster.license_status === 'active' ? 'Active' : adjuster.license_status === 'expired' ? 'Expired' : 'Unknown'}
+                    <dt className="text-gray-500">Name</dt>
+                    <dd className="text-gray-900 font-medium text-right">{fullName}</dd>
+                  </div>
+                  
+                  {adjuster.company_name && (
+                    <div className="flex justify-between">
+                      <dt className="text-gray-500">Company</dt>
+                      <dd className="text-gray-900 font-medium text-right">{adjuster.company_name}</dd>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between">
+                    <dt className="text-gray-500">State</dt>
+                    <dd className="text-gray-900 font-medium">{stateName}</dd>
+                  </div>
+                  
+                  {adjuster.city && (
+                    <div className="flex justify-between">
+                      <dt className="text-gray-500">City</dt>
+                      <dd className="text-gray-900 font-medium">{adjuster.city}</dd>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between">
+                    <dt className="text-gray-500">License #</dt>
+                    <dd className="text-gray-900 font-medium font-mono text-xs">
+                      {adjuster.license_number || 'Not Available for Display'}
                     </dd>
                   </div>
-                  <div className="flex justify-between"><dt className="text-gray-500">Issued</dt><dd className="text-gray-900 font-medium">{formatDate(adjuster.issued_on)}</dd></div>
-                  <div className="flex justify-between"><dt className="text-gray-500">Expires</dt><dd className="text-gray-900 font-medium">{formatDate(adjuster.expires_on)}</dd></div>
+                  
+                  {adjuster.npn && (
+                    <div className="flex justify-between">
+                      <dt className="text-gray-500">NPN</dt>
+                      <dd className="text-gray-900 font-medium font-mono text-xs">{adjuster.npn}</dd>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between">
+                    <dt className="text-gray-500">Type</dt>
+                    <dd className="text-gray-900 font-medium">{licenseType}</dd>
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <dt className="text-gray-500">Status</dt>
+                    <dd className={`font-medium ${
+                      adjuster.license_status === 'active' ? 'text-green-600' : 
+                      adjuster.license_status === 'expired' ? 'text-red-600' : 
+                      'text-gray-600'
+                    }`}>
+                      {adjuster.license_status === 'active' ? '● Active' : 
+                       adjuster.license_status === 'expired' ? '● Expired' : 
+                       adjuster.license_status === 'pending_verification' ? '● Pending' :
+                       '● Unknown'}
+                    </dd>
+                  </div>
+                  
+                  {adjuster.residency_type && (
+                    <div className="flex justify-between">
+                      <dt className="text-gray-500">Residency</dt>
+                      <dd className="text-gray-900 font-medium">{adjuster.residency_type}</dd>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between">
+                    <dt className="text-gray-500">Issued</dt>
+                    <dd className="text-gray-900 font-medium">{formatDate(adjuster.issued_on)}</dd>
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <dt className="text-gray-500">Expires</dt>
+                    <dd className="text-gray-900 font-medium">{formatDate(adjuster.expires_on)}</dd>
+                  </div>
                 </dl>
+                
+                {/* Multi-state licenses */}
+                {adjuster.licensed_states && adjuster.licensed_states.length > 1 && (
+                  <div className="mt-4 pt-4 border-t border-gray-100">
+                    <p className="text-gray-500 text-sm mb-2 flex items-center gap-1">
+                      <Globe className="w-4 h-4" />
+                      Licensed in Multiple States
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {adjuster.licensed_states.slice(0, 10).map((st: string) => (
+                        <span key={st} className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs font-medium">
+                          {st}
+                        </span>
+                      ))}
+                      {adjuster.licensed_states.length > 10 && (
+                        <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded text-xs">
+                          +{adjuster.licensed_states.length - 10} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Contact Information - Privacy Protected */}
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Lock className="w-5 h-5 text-gray-600" />
+                  Contact Information
+                </h3>
+                <dl className="space-y-4 text-sm">
+                  <div className="flex justify-between items-start">
+                    <dt className="text-gray-500 flex items-center gap-1.5">
+                      <Phone className="w-4 h-4" />
+                      Phone
+                    </dt>
+                    <dd className="text-right">
+                      {hasPhone ? (
+                        <span className="inline-flex items-center gap-1.5 text-gray-600 text-xs bg-gray-50 px-2 py-1 rounded">
+                          <Lock className="w-3 h-3" />
+                          Verified — Not Publicly Displayed
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 text-xs italic">Not Available for Display</span>
+                      )}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between items-start">
+                    <dt className="text-gray-500 flex items-center gap-1.5">
+                      <Mail className="w-4 h-4" />
+                      Email
+                    </dt>
+                    <dd className="text-right">
+                      {hasEmail ? (
+                        <span className="inline-flex items-center gap-1.5 text-gray-600 text-xs bg-gray-50 px-2 py-1 rounded">
+                          <Lock className="w-3 h-3" />
+                          Verified — Not Publicly Displayed
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 text-xs italic">Not Available for Display</span>
+                      )}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between items-start">
+                    <dt className="text-gray-500 flex items-center gap-1.5">
+                      <MapPin className="w-4 h-4" />
+                      Address
+                    </dt>
+                    <dd className="text-right">
+                      <span className="text-gray-400 text-xs italic">Not Available for Display</span>
+                    </dd>
+                  </div>
+                </dl>
+                <p className="text-xs text-gray-400 mt-4 pt-4 border-t border-gray-100 leading-relaxed">
+                  Contact details are withheld for privacy. Adjusters may update their profile by claiming it.
+                </p>
               </div>
 
               {/* Claim Profile Form */}
@@ -483,7 +694,9 @@ export default async function AdjusterProfile({ params }: PageProps) {
                 <div className="bg-white rounded-xl shadow-sm p-6">
                   <div className="flex items-center gap-2 mb-4">
                     <Users className="w-5 h-5 text-gray-600" />
-                    <h3 className="font-semibold text-gray-900">Other Adjusters Nearby</h3>
+                    <h3 className="font-semibold text-gray-900">
+                      {adjuster.company_name ? `Other ${adjuster.company_name} Adjusters` : 'Other Adjusters Nearby'}
+                    </h3>
                   </div>
                   <div className="space-y-3">
                     {similarAdjusters.map((adj) => (
@@ -494,7 +707,9 @@ export default async function AdjusterProfile({ params }: PageProps) {
                       >
                         <div>
                           <div className="font-medium text-gray-900 text-sm">{adj.first_name} {adj.last_name}</div>
-                          <div className="text-xs text-gray-500">{adj.city ? `${adj.city}, ` : ''}{adj.state}</div>
+                          <div className="text-xs text-gray-500">
+                            {adj.company_name ? adj.company_name : (adj.city ? `${adj.city}, ` : '') + adj.state}
+                          </div>
                         </div>
                         {adj.total_reviews > 0 && (
                           <div className="text-right">
@@ -535,8 +750,11 @@ export default async function AdjusterProfile({ params }: PageProps) {
         {/* Footer Disclaimer */}
         <div className="border-t border-gray-200 bg-gray-50">
           <div className="max-w-6xl mx-auto px-4 py-6">
-            <p className="text-xs text-gray-500 text-center">
-              RateMyAdjusters does not evaluate or rate insurance companies or adjusters. Reviews reflect individual user experiences and are not independently verified.
+            <p className="text-xs text-gray-500 text-center leading-relaxed">
+              <strong>Disclaimer:</strong> RateMyAdjusters publishes information and user-generated content for general informational purposes only. 
+              Profile data, reviews, and commentary may be incomplete, outdated, or inaccurate, and are not independently verified. 
+              We do not guarantee the accuracy, reliability, or completeness of any content displayed on this site. 
+              Nothing on this site constitutes legal, financial, or professional advice, and no endorsement of any adjuster, company, or service is implied.
             </p>
           </div>
         </div>
