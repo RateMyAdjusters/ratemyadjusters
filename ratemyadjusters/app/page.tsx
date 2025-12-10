@@ -6,7 +6,7 @@ import QuickLinks from '@/components/QuickLinks'
 
 export const metadata = {
   title: 'RateMyAdjusters | Insurance Adjuster Reviews & Ratings',
-  description: 'Search 168,824 licensed insurance adjusters by name, company, or state. Read real reviews from homeowners and contractors before your claim. Know your adjuster.',
+  description: 'Search licensed insurance adjusters by name, company, or state. Read real reviews from homeowners and contractors before your claim. Know your adjuster.',
   keywords: [
     'insurance adjuster reviews',
     'adjuster ratings',
@@ -32,12 +32,12 @@ export default function Home() {
   ]
 
   const topStates = [
-    { name: 'Texas', abbr: 'TX', count: '74,853' },
-    { name: 'Florida', abbr: 'FL', count: '13,998' },
-    { name: 'Georgia', abbr: 'GA', count: '10,940' },
-    { name: 'Ohio', abbr: 'OH', count: '10,529' },
-    { name: 'Massachusetts', abbr: 'MA', count: '8,682' },
-    { name: 'Arizona', abbr: 'AZ', count: '8,507' },
+    { name: 'Texas', abbr: 'TX' },
+    { name: 'Florida', abbr: 'FL' },
+    { name: 'Georgia', abbr: 'GA' },
+    { name: 'Ohio', abbr: 'OH' },
+    { name: 'California', abbr: 'CA' },
+    { name: 'Arizona', abbr: 'AZ' },
   ]
 
   return (
@@ -68,7 +68,7 @@ export default function Home() {
             </div>
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-5">Know Your Adjuster.</h1>
-            <p className="text-lg text-slate-300 mb-4 max-w-xl mx-auto">Search 168,824 licensed adjusters by name, company, or state. Read reviews from homeowners and contractors.</p>
+            <p className="text-lg text-slate-300 mb-4 max-w-xl mx-auto">Search thousands of licensed adjusters by name, company, or state. Read reviews from homeowners and contractors.</p>
             
             <p className="text-sm text-slate-400 mb-8 max-w-lg mx-auto">
               RateMyAdjusters helps homeowners, contractors, and insurance professionals share experiences and bring clarity to the claims process.
@@ -77,16 +77,15 @@ export default function Home() {
             <div className="max-w-2xl mx-auto mb-3">
               <SearchBar size="large" showFilters={true} autoFocus={false} />
             </div>
-            <p className="text-slate-400 text-sm mb-8">Try: "John Smith" or "Texas" or "FL"</p>
+            <p className="text-slate-400 text-sm mb-8">Try: "John Smith" or "Texas" or "State Farm"</p>
 
             <div className="flex justify-center items-center gap-6 md:gap-10">
-              <div><div className="text-2xl md:text-3xl font-bold">168,824</div><div className="text-slate-400 text-sm">Adjusters</div></div>
+              <div><div className="text-2xl md:text-3xl font-bold">Nationwide</div><div className="text-slate-400 text-sm">Coverage</div></div>
               <div className="w-px h-10 bg-slate-700"></div>
               <div><div className="text-2xl md:text-3xl font-bold">50</div><div className="text-slate-400 text-sm">States</div></div>
               <div className="w-px h-10 bg-slate-700"></div>
               <div><div className="text-2xl md:text-3xl font-bold">100%</div><div className="text-slate-400 text-sm">Free</div></div>
             </div>
-            <p className="text-slate-500 text-xs mt-3">Updated: Dec 2025</p>
           </div>
         </div>
       </section>
@@ -125,7 +124,7 @@ export default function Home() {
             {topStates.map((s) => (
               <Link key={s.abbr} href={'/adjusters/' + s.name.toLowerCase().replace(' ', '-')} className="flex items-center justify-between p-3 bg-gray-50 hover:bg-teal-50 border border-gray-200 hover:border-teal-300 rounded-lg transition-all">
                 <span className="text-gray-900 font-medium text-sm">{s.name}</span>
-                <span className="text-xs text-gray-500">{s.count}</span>
+                <ArrowRight className="w-4 h-4 text-gray-400" />
               </Link>
             ))}
           </div>
