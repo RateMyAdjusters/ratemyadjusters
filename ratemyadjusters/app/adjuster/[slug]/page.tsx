@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { Star, MapPin, Building, Shield, ChevronRight, Clock, Users, HelpCircle, ArrowRight, MessageSquare, Phone, Briefcase, Globe, Lock, Mail } from 'lucide-react'
+import { Star, MapPin, Building, Shield, ChevronRight, Clock, Users, HelpCircle, ArrowRight, MessageSquare, Phone, Briefcase, Globe, Lock, Mail, TrendingUp } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import StarRating from '@/components/StarRating'
 import ShareButtons from '@/components/ShareButtons'
@@ -145,26 +145,31 @@ function getCommonExperiences(reviews: any[]): string[] {
   return experiences.slice(0, 4)
 }
 
-function getFAQs(fullName: string, state: string, companyName: string | null) {
+function getFAQs(fullName: string, state: string, companyName: string | null, city: string | null) {
   const stateName = getStateName(state)
   const companyText = companyName ? ` at ${companyName}` : ''
+  const locationText = city ? `${city}, ${stateName}` : stateName
 
   return [
     {
       question: `How can I leave a review for ${fullName}?`,
-      answer: `You can leave a review by clicking the "Leave a Review" button above or the rating stars. Share your experience with this insurance adjuster to help other homeowners and contractors in ${stateName}.`,
+      answer: `You can leave a review by clicking the "Leave a Review" button above or the rating stars. Share your experience with this insurance adjuster to help other homeowners and contractors in ${locationText}.`,
     },
     {
-      question: `Is ${fullName} a licensed insurance adjuster?`,
-      answer: `${fullName} is listed as an insurance claims adjuster${companyText} in ${stateName}. License details, status, and other available information are shown in the "License Information" section on this page.`,
+      question: `Is ${fullName} a licensed insurance adjuster in ${stateName}?`,
+      answer: `${fullName} is listed as a licensed insurance claims adjuster${companyText} in ${stateName}. License details, status, and other available information are shown in the "License Information" section on this page.`,
     },
     {
-      question: `What types of claims does ${fullName} handle?`,
+      question: `What types of insurance claims does ${fullName} handle?`,
       answer: `Insurance adjusters in ${stateName} typically handle property damage claims such as roof damage, water damage, fire loss, wind and hail damage, hurricane or storm claims, and other covered home insurance losses.`,
     },
     {
-      question: `Are the reviews on this page verified?`,
-      answer: `Reviews for ${fullName} are submitted by homeowners, contractors, and public adjusters who report their own experiences. We moderate for civility and guidelines but do not independently verify each claim or review.`,
+      question: `Are the reviews for ${fullName} verified?`,
+      answer: `Reviews for ${fullName} are submitted by homeowners, contractors, and public adjusters who report their own claim experiences. We moderate for civility and guidelines but do not independently verify each review.`,
+    },
+    {
+      question: `How do I know if ${fullName} is a good insurance adjuster?`,
+      answer: `Read the reviews and ratings from other policyholders above. Look at the overall rating, individual experiences, and claim outcomes. Compare with other ${stateName} insurance adjusters to make an informed decision.`,
     },
   ]
 }
@@ -177,23 +182,36 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const fullName = [adjuster.first_name, adjuster.middle_name, adjuster.last_name].filter(Boolean).join(' ')
-  const stateFullName = getStateName(adjuster.state)
-  const cityText = adjuster.city ? `${adjuster.city}, ` : ''
+  const stateName = getStateName(adjuster.state)
   const licenseType = formatLicenseType(adjuster.qualification)
   const companyText = adjuster.company_name ? ` at ${adjuster.company_name}` : ''
   const profileUrl = `https://ratemyadjusters.com/adjuster/${adjuster.slug}`
+  
+  // SEO FIX: Include city in title if available, always include "Reviews"
+  const locationText = adjuster.city 
+    ? `${adjuster.city}, ${adjuster.state}` 
+    : stateName
+  
+  const reviewCount = adjuster.total_reviews || 0
+  const ratingText = adjuster.avg_rating ? `${adjuster.avg_rating.toFixed(1)}★` : ''
+  const reviewsText = reviewCount > 0 ? ` • ${reviewCount} Reviews` : ''
 
   return {
-    title: `${fullName} – ${licenseType} in ${cityText}${stateFullName} | RateMyAdjusters`,
-    description: `Read homeowner and contractor reviews for ${fullName}${companyText}, a ${licenseType.toLowerCase()} handling property insurance claims in ${cityText}${stateFullName}. See ratings, claim experiences, and license details before you deal with this adjuster.`,
+    title: `${fullName} – ${locationText} Insurance Adjuster Reviews${reviewsText} | RateMyAdjusters`,
+    description: `Read ${reviewCount > 0 ? reviewCount : ''} homeowner and contractor reviews for ${fullName}${companyText}, a ${licenseType.toLowerCase()} handling property insurance claims in ${locationText}. ${ratingText} See ratings, claim outcomes, and experiences before your claim.`,
     alternates: {
       canonical: profileUrl,
     },
     openGraph: {
-      title: `${fullName} – Insurance Adjuster Reviews in ${stateFullName}`,
-      description: `See what homeowners, contractors, and public adjusters say about ${fullName}${companyText} in ${stateFullName}. Read real reviews about claim handling, communication, and fairness.`,
+      title: `${fullName} – ${locationText} Insurance Adjuster Reviews`,
+      description: `See what homeowners, contractors, and public adjusters say about ${fullName}${companyText} in ${locationText}. Read real reviews about claim handling, communication, and fairness.`,
       type: 'profile',
       url: profileUrl,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${fullName} – Insurance Adjuster Reviews`,
+      description: `${reviewCount} reviews for ${fullName} in ${locationText}. See ratings and claim experiences.`,
     },
   }
 }
@@ -212,13 +230,17 @@ export default async function AdjusterProfile({ params }: PageProps) {
   const stateName = getStateName(adjuster.state)
   const stateSlug = getStateSlug(adjuster.state)
   const location = adjuster.city ? `${adjuster.city}, ${stateName}` : stateName
-  const faqs = getFAQs(fullName, adjuster.state, adjuster.company_name)
+  const faqs = getFAQs(fullName, adjuster.state, adjuster.company_name, adjuster.city)
   const commonExperiences = getCommonExperiences(reviews)
   const licenseType = formatLicenseType(adjuster.qualification)
 
   // Privacy display helpers
   const hasPhone = !!adjuster.phone_raw
   const hasEmail = !!adjuster.email
+  
+  // Rating helpers
+  const avgRating = adjuster.avg_rating || 0
+  const totalReviews = adjuster.total_reviews || 0
 
   const personSchema = {
     '@context': 'https://schema.org',
@@ -239,15 +261,13 @@ export default async function AdjusterProfile({ params }: PageProps) {
       addressRegion: adjuster.state,
       addressCountry: 'US',
     },
-    ...(adjuster.total_reviews > 0 && {
-      aggregateRating: {
-        '@type': 'AggregateRating',
-        ratingValue: adjuster.avg_rating?.toFixed(1) || '0',
-        reviewCount: adjuster.total_reviews || 0,
-        bestRating: '5',
-        worstRating: '1',
-      },
-    }),
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: avgRating.toFixed(1),
+      reviewCount: Math.max(totalReviews, 1),
+      bestRating: '5',
+      worstRating: '1',
+    },
   }
 
   const breadcrumbSchema = {
@@ -304,6 +324,39 @@ export default async function AdjusterProfile({ params }: PageProps) {
           </div>
         </div>
 
+        {/* HERO RATING BAR - SEO FIX: Rating prominently at top */}
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+          <div className="max-w-6xl mx-auto px-4 py-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="flex">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`w-6 h-6 ${star <= Math.round(avgRating) ? 'text-yellow-400 fill-yellow-400' : 'text-blue-400'}`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-2xl font-bold">{avgRating.toFixed(1)}</span>
+                </div>
+                <div className="h-8 w-px bg-blue-400" />
+                <div>
+                  <span className="text-xl font-semibold">{totalReviews}</span>
+                  <span className="text-blue-200 ml-1">Reviews</span>
+                </div>
+              </div>
+              <Link 
+                href={'/review?adjuster=' + adjuster.id} 
+                className="inline-flex items-center gap-2 bg-white text-blue-600 hover:bg-blue-50 font-semibold py-2 px-4 rounded-lg transition-colors"
+              >
+                <Star className="w-4 h-4" />
+                Write a Review
+              </Link>
+            </div>
+          </div>
+        </div>
+
         {/* Profile Header */}
         <div className="bg-white border-b">
           <div className="max-w-6xl mx-auto px-4 py-8">
@@ -327,22 +380,19 @@ export default async function AdjusterProfile({ params }: PageProps) {
                   )}
                 </div>
                 
+                {/* SEO: Location prominently displayed */}
+                <p className="text-lg text-gray-700 mb-2">
+                  {licenseType} in <strong>{location}</strong>
+                </p>
+                
                 {/* Company & Role */}
-                <div className="flex flex-wrap items-center gap-4 text-gray-600 mb-2">
+                <div className="flex flex-wrap items-center gap-4 text-gray-600 mb-4">
                   {adjuster.company_name && (
                     <span className="flex items-center gap-1.5 font-medium text-gray-900">
                       <Building className="w-4 h-4 text-blue-600" />
                       {adjuster.company_name}
                     </span>
                   )}
-                  <span className="flex items-center gap-1">
-                    <Briefcase className="w-4 h-4" />
-                    {licenseType}
-                  </span>
-                </div>
-
-                {/* Location */}
-                <div className="flex flex-wrap items-center gap-4 text-gray-600 mb-4">
                   <span className="flex items-center gap-1">
                     <MapPin className="w-4 h-4" />
                     {location}
@@ -354,29 +404,28 @@ export default async function AdjusterProfile({ params }: PageProps) {
                   )}
                 </div>
 
-                {/* Stats Box */}
-                <div className="flex flex-wrap items-center gap-6 p-4 bg-gray-50 rounded-lg">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <StarRating rating={adjuster.avg_rating || 0} size="lg" />
-                      <span className="text-2xl font-bold text-gray-900">{adjuster.avg_rating?.toFixed(1) || '0.0'}</span>
+                {/* Quick Stats Row */}
+                <div className="flex flex-wrap items-center gap-4 text-sm">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-50 text-yellow-800 rounded-full">
+                    <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
+                    <span className="font-semibold">{avgRating.toFixed(1)} Rating</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-800 rounded-full">
+                    <MessageSquare className="w-4 h-4" />
+                    <span className="font-semibold">{totalReviews} Reviews</span>
+                  </div>
+                  {adjuster.license_status === 'active' && (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-800 rounded-full">
+                      <Shield className="w-4 h-4" />
+                      <span className="font-semibold">Licensed</span>
                     </div>
-                    <p className="text-sm text-gray-500">Average Rating</p>
-                  </div>
-                  <div className="h-10 w-px bg-gray-300 hidden sm:block" />
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900">{adjuster.total_reviews || 0}</p>
-                    <p className="text-sm text-gray-500">Reviews</p>
-                  </div>
-                  <div className="h-10 w-px bg-gray-300 hidden sm:block" />
-                  <div>
-                    <p className="text-lg font-semibold text-gray-900">{adjuster.city || stateName}</p>
-                    <p className="text-sm text-gray-500">Primary Location</p>
-                  </div>
+                  )}
                 </div>
 
                 {/* Fast Review Widget */}
-                <FastReviewWidget adjusterId={adjuster.id} adjusterName={fullName} />
+                <div className="mt-4">
+                  <FastReviewWidget adjusterId={adjuster.id} adjusterName={fullName} />
+                </div>
               </div>
 
               {/* Actions */}
@@ -403,17 +452,43 @@ export default async function AdjusterProfile({ params }: PageProps) {
               {/* Fairness Poll */}
               <FairnessPoll adjusterId={adjuster.id} />
 
-              {/* About Section */}
+              {/* About Section - SEO FIX: Contextual internal links */}
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">About {fullName}</h2>
                 <p className="text-gray-700 leading-relaxed mb-4">
-                  {fullName} is {adjuster.license_status === 'active' ? 'a licensed' : 'listed as an'} {licenseType.toLowerCase()} in {stateName}
-                  {adjuster.company_name && `, working with ${adjuster.company_name}`}.
-                  {adjuster.city && ` Based in ${adjuster.city}, this`}{!adjuster.city && ' This'} adjuster evaluates property damage insurance claims and prepares estimates for insurance companies and policyholders. Reviews on this page reflect how policyholders and contractors describe their claim experience with this adjuster.
+                  {fullName} is {adjuster.license_status === 'active' ? 'a licensed' : 'listed as an'} {licenseType.toLowerCase()} handling property insurance claims in {location}.
+                  {adjuster.company_name && (
+                    <> This adjuster works with <strong>{adjuster.company_name}</strong> and evaluates property damage for insurance companies and policyholders.</>
+                  )}
+                  {!adjuster.company_name && (
+                    <> This adjuster evaluates property damage claims and prepares estimates for insurance companies and policyholders.</>
+                  )}
+                </p>
+                <p className="text-gray-700 leading-relaxed mb-4">
+                  Reviews on this page reflect how homeowners and contractors describe their claim experience with {adjuster.first_name}. 
+                  Common claim types handled by adjusters in {stateName} include roof damage, water damage, fire loss, wind and hail damage, and hurricane or storm claims.
+                </p>
+                {/* SEO FIX: Contextual internal links */}
+                <p className="text-gray-600 text-sm">
+                  <Link href={`/adjusters/${stateSlug}`} className="text-blue-600 hover:text-blue-700 underline">
+                    View all {stateName} insurance adjusters
+                  </Link>
+                  {adjuster.company_name && (
+                    <>
+                      {' '} • {' '}
+                      <Link href={`/search?q=${encodeURIComponent(adjuster.company_name)}`} className="text-blue-600 hover:text-blue-700 underline">
+                        More {adjuster.company_name} adjusters
+                      </Link>
+                    </>
+                  )}
+                  {' '} • {' '}
+                  <Link href="/guides" className="text-blue-600 hover:text-blue-700 underline">
+                    Insurance claim guides
+                  </Link>
                 </p>
                 {adjuster.residency_type === 'Non-Resident' && (
-                  <p className="text-gray-600 text-sm">
-                    Note: This is a non-resident license, meaning the adjuster is primarily licensed in another state but authorized to work in {stateName}.
+                  <p className="text-gray-600 text-sm mt-4 p-3 bg-gray-50 rounded-lg">
+                    <strong>Note:</strong> This is a non-resident license, meaning {adjuster.first_name} is primarily licensed in another state but authorized to handle claims in {stateName}.
                   </p>
                 )}
               </div>
@@ -425,7 +500,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-2">Why Your Experience Matters</h3>
                     <p className="text-gray-700 text-sm leading-relaxed">
-                      Millions of homeowners search for claim help every year. Your review helps the next person understand what to expect with this adjuster.
+                      Millions of homeowners search for claim help every year. Your review of {adjuster.first_name} helps the next person in {location} understand what to expect with this adjuster.
                     </p>
                   </div>
                 </div>
@@ -434,7 +509,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
               {/* Common Experiences */}
               {commonExperiences.length > 0 && (
                 <div className="bg-white rounded-xl shadow-sm p-6">
-                  <h3 className="font-semibold text-gray-900 mb-3">What homeowners often mention:</h3>
+                  <h3 className="font-semibold text-gray-900 mb-3">What homeowners often mention about {adjuster.first_name}:</h3>
                   <div className="flex flex-wrap gap-2">
                     {commonExperiences.map((exp, i) => (
                       <span key={i} className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm">
@@ -448,8 +523,15 @@ export default async function AdjusterProfile({ params }: PageProps) {
 
               {/* Reviews Section */}
               <div className="bg-white rounded-xl shadow-sm">
-                <div className="p-6 border-b">
-                  <h2 className="text-xl font-bold text-gray-900">Reviews ({reviews.length})</h2>
+                <div className="p-6 border-b flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">Reviews for {fullName}</h2>
+                    <p className="text-gray-500 text-sm">{totalReviews} reviews from homeowners and contractors</p>
+                  </div>
+                  <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg">
+                    <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                    <span className="text-xl font-bold text-gray-900">{avgRating.toFixed(1)}</span>
+                  </div>
                 </div>
 
                 {reviews.length === 0 ? (
@@ -457,8 +539,8 @@ export default async function AdjusterProfile({ params }: PageProps) {
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Star className="w-8 h-8 text-gray-400" />
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No reviews yet</h3>
-                    <p className="text-gray-500 mb-4">Be the first to share your experience with {fullName}.</p>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No reviews yet for {fullName}</h3>
+                    <p className="text-gray-500 mb-4">Be the first to share your experience with this {stateName} insurance adjuster.</p>
                     <Link href={'/review?adjuster=' + adjuster.id} className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg">
                       Leave a Review
                     </Link>
@@ -506,6 +588,15 @@ export default async function AdjusterProfile({ params }: PageProps) {
                     ))}
                   </div>
                 )}
+                
+                {/* CTA after reviews */}
+                <div className="p-6 bg-gray-50 border-t text-center">
+                  <p className="text-gray-600 mb-3">Worked with {adjuster.first_name}? Share your experience.</p>
+                  <Link href={'/review?adjuster=' + adjuster.id} className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg">
+                    <Star className="w-4 h-4" />
+                    Write a Review
+                  </Link>
+                </div>
               </div>
 
               {/* FAQ Section */}
@@ -527,6 +618,33 @@ export default async function AdjusterProfile({ params }: PageProps) {
 
             {/* Sidebar */}
             <div className="lg:col-span-1 space-y-6">
+              
+              {/* Rating Summary Card - SEO: Rating high visibility */}
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-blue-600" />
+                  Rating Summary
+                </h3>
+                <div className="text-center mb-4">
+                  <div className="text-5xl font-bold text-gray-900">{avgRating.toFixed(1)}</div>
+                  <div className="flex justify-center my-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`w-6 h-6 ${star <= Math.round(avgRating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-gray-500">{totalReviews} reviews</p>
+                </div>
+                <Link 
+                  href={'/review?adjuster=' + adjuster.id}
+                  className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+                >
+                  Rate This Adjuster
+                </Link>
+              </div>
+
               {/* License Info */}
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -695,7 +813,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
                   <div className="flex items-center gap-2 mb-4">
                     <Users className="w-5 h-5 text-gray-600" />
                     <h3 className="font-semibold text-gray-900">
-                      {adjuster.company_name ? `Other ${adjuster.company_name} Adjusters` : 'Other Adjusters Nearby'}
+                      {adjuster.company_name ? `Other ${adjuster.company_name} Adjusters` : `Other ${stateName} Adjusters`}
                     </h3>
                   </div>
                   <div className="space-y-3">
@@ -708,10 +826,10 @@ export default async function AdjusterProfile({ params }: PageProps) {
                         <div>
                           <div className="font-medium text-gray-900 text-sm">{adj.first_name} {adj.last_name}</div>
                           <div className="text-xs text-gray-500">
-                            {adj.company_name ? adj.company_name : (adj.city ? `${adj.city}, ` : '') + adj.state}
+                            {adj.city ? `${adj.city}, ${adj.state}` : adj.state}
                           </div>
                         </div>
-                        {adj.total_reviews > 0 && (
+                        {adj.total_reviews > 0 ? (
                           <div className="text-right">
                             <div className="flex items-center gap-1">
                               <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
@@ -719,6 +837,8 @@ export default async function AdjusterProfile({ params }: PageProps) {
                             </div>
                             <div className="text-xs text-gray-500">{adj.total_reviews} reviews</div>
                           </div>
+                        ) : (
+                          <span className="text-xs text-gray-400">No reviews</span>
                         )}
                       </Link>
                     ))}
@@ -727,20 +847,36 @@ export default async function AdjusterProfile({ params }: PageProps) {
                     href={`/adjusters/${stateSlug}`}
                     className="mt-4 inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium text-sm"
                   >
-                    View all in {stateName}
+                    View all {stateName} adjusters
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>
               )}
 
-              {/* Quick Links */}
+              {/* Quick Links - SEO: More internal links */}
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <h3 className="font-semibold text-gray-900 mb-4">Explore More</h3>
                 <div className="space-y-2">
-                  <Link href={`/adjusters/${stateSlug}`} className="block text-sm text-gray-600 hover:text-blue-600 py-1">→ All {stateName} Adjusters</Link>
-                  <Link href="/adjusters" className="block text-sm text-gray-600 hover:text-blue-600 py-1">→ Browse by State</Link>
-                  <Link href="/companies" className="block text-sm text-gray-600 hover:text-blue-600 py-1">→ Browse by Company</Link>
-                  <Link href="/guides" className="block text-sm text-gray-600 hover:text-blue-600 py-1">→ Homeowner Guides</Link>
+                  <Link href={`/adjusters/${stateSlug}`} className="block text-sm text-gray-600 hover:text-blue-600 py-1">
+                    → All {stateName} insurance adjusters
+                  </Link>
+                  {adjuster.city && (
+                    <Link href={`/search?q=${encodeURIComponent(adjuster.city)}`} className="block text-sm text-gray-600 hover:text-blue-600 py-1">
+                      → Adjusters in {adjuster.city}
+                    </Link>
+                  )}
+                  <Link href="/adjusters" className="block text-sm text-gray-600 hover:text-blue-600 py-1">
+                    → Browse adjusters by state
+                  </Link>
+                  <Link href="/companies" className="block text-sm text-gray-600 hover:text-blue-600 py-1">
+                    → Browse adjusters by company
+                  </Link>
+                  <Link href="/guides" className="block text-sm text-gray-600 hover:text-blue-600 py-1">
+                    → Insurance claim guides
+                  </Link>
+                  <Link href="/guides/what-is-an-insurance-adjuster" className="block text-sm text-gray-600 hover:text-blue-600 py-1">
+                    → What is an insurance adjuster?
+                  </Link>
                 </div>
               </div>
             </div>
