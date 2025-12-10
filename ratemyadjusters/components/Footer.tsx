@@ -144,8 +144,11 @@ export default function Footer() {
         <div className="border-t border-slate-800 pt-8">
           {/* Disclaimer */}
           <div className="bg-slate-800/50 rounded-lg p-4 mb-6">
-            <p className="text-slate-400 text-xs leading-relaxed">
-              <span className="font-semibold text-slate-300">Disclaimer:</span> All reviews are user-submitted and moderated for accuracy and civility. RateMyAdjusters does not verify or endorse any user-submitted content. Information on this site is for informational purposes only and should not be construed as legal or professional advice. Insurance adjusters may dispute reviews through our response portal.
+            <p className="text-slate-400 text-xs leading-relaxed mb-3">
+              <span className="font-semibold text-slate-300">Disclaimer:</span> RateMyAdjusters publishes information and user-generated content for general informational purposes only. Profile data, reviews, and commentary may be incomplete, outdated, or inaccurate, and are not independently verified. We do not guarantee the accuracy, reliability, or completeness of any content displayed on this site.
+            </p>
+            <p className="text-slate-500 text-xs leading-relaxed">
+              Nothing on this site constitutes legal, financial, or professional advice, and no endorsement of any adjuster, company, or service is implied. Users are responsible for the statements they submit. Adjusters may claim their profiles and submit corrections. To report inaccurate information, please <Link href="/contact" className="text-blue-400 hover:text-blue-300 underline">contact us</Link>.
             </p>
           </div>
           
