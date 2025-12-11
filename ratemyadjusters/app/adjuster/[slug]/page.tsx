@@ -270,6 +270,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
   // Rating helpers
   const avgRating = adjuster.avg_rating || 0
   const totalReviews = adjuster.total_reviews || 0
+  const hasValidRating = totalReviews > 0 && avgRating > 0
 
   // Metrics from database
   const hasMetrics = !!adjuster.experience_index
@@ -320,13 +321,15 @@ export default async function AdjusterProfile({ params }: PageProps) {
       addressRegion: adjuster.state,
       addressCountry: 'US',
     },
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: avgRating.toFixed(1),
-      reviewCount: Math.max(totalReviews, 1),
-      bestRating: '5',
-      worstRating: '1',
-    },
+    ...(hasValidRating && {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: avgRating.toFixed(1),
+        reviewCount: totalReviews,
+        bestRating: '5',
+        worstRating: '1',
+      },
+    }),
   }
 
   // LocalBusiness schema for local SEO
@@ -351,13 +354,15 @@ export default async function AdjusterProfile({ params }: PageProps) {
       name: stateName,
     },
     priceRange: '$$',
-    aggregateRating: totalReviews > 0 ? {
-      '@type': 'AggregateRating',
-      ratingValue: avgRating.toFixed(1),
-      reviewCount: totalReviews,
-      bestRating: '5',
-      worstRating: '1',
-    } : undefined,
+    ...(hasValidRating && {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: avgRating.toFixed(1),
+        reviewCount: totalReviews,
+        bestRating: '5',
+        worstRating: '1',
+      },
+    }),
   }
 
   const breadcrumbSchema = {
