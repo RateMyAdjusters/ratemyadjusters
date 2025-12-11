@@ -3,14 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 import crypto from 'crypto';
 
-// Initialize clients
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! // Use service role for server-side
-);
-
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 // Rate limiting: 5 submissions per hour per IP
 const RATE_LIMIT = 5;
 const RATE_WINDOW_HOURS = 1;
@@ -33,51 +25,7 @@ const INQUIRY_CONFIG: Record<string, {
 
 // Hash IP for privacy
 function hashIP(ip: string): string {
-  return crypto.createHash('sha256').update(ip + process.env.IP_SALT || 'rma-salt').digest('hex');
-}
-
-// Check rate limit
-async function checkRateLimit(ipHash: string): Promise<{ allowed: boolean; remaining: number }> {
-  const windowStart = new Date(Date.now() - RATE_WINDOW_HOURS * 60 * 60 * 1000);
-  
-  const { data, error } = await supabase
-    .from('contact_rate_limits')
-    .select('submission_count')
-    .eq('ip_hash', ipHash)
-    .gte('window_start', windowStart.toISOString())
-    .single();
-
-  if (error || !data) {
-    // No recent submissions, allow
-    return { allowed: true, remaining: RATE_LIMIT - 1 };
-  }
-
-  const remaining = RATE_LIMIT - data.submission_count;
-  return { allowed: remaining > 0, remaining: Math.max(0, remaining - 1) };
-}
-
-// Update rate limit counter
-async function updateRateLimit(ipHash: string): Promise<void> {
-  const windowStart = new Date(Date.now() - RATE_WINDOW_HOURS * 60 * 60 * 1000);
-  
-  // Try to update existing record
-  const { data: existing } = await supabase
-    .from('contact_rate_limits')
-    .select('id, submission_count')
-    .eq('ip_hash', ipHash)
-    .gte('window_start', windowStart.toISOString())
-    .single();
-
-  if (existing) {
-    await supabase
-      .from('contact_rate_limits')
-      .update({ submission_count: existing.submission_count + 1 })
-      .eq('id', existing.id);
-  } else {
-    await supabase
-      .from('contact_rate_limits')
-      .insert({ ip_hash: ipHash, submission_count: 1, window_start: new Date().toISOString() });
-  }
+  return crypto.createHash('sha256').update(ip + (process.env.IP_SALT || 'rma-salt')).digest('hex');
 }
 
 // Validate email format
@@ -246,12 +194,12 @@ function buildEmailHTML(data: {
       <div style="border-top: 1px solid #e5e7eb; padding-top: 24px; text-align: center;">
         <a href="mailto:${sanitize(data.email)}?subject=Re: ${encodeURIComponent(data.subject || 'Your RateMyAdjusters Inquiry')}" 
            style="display: inline-block; background: #0F4C81; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500; font-size: 14px; margin-right: 10px;">
-          ↩️ Reply to ${sanitize(data.name)?.split(' ')[0] || 'Sender'}
+          Reply to ${sanitize(data.name)?.split(' ')[0] || 'Sender'}
         </a>
         ${data.adjuster_profile_url ? `
         <a href="${sanitize(data.adjuster_profile_url)}" 
            style="display: inline-block; background: #f3f4f6; color: #374151; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500; font-size: 14px;">
-          👤 View Profile
+          View Profile
         </a>
         ` : ''}
       </div>
@@ -264,10 +212,10 @@ function buildEmailHTML(data: {
         Submission ID: <code style="background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-family: monospace;">${data.submission_id}</code>
       </p>
       <p style="margin: 0 0 8px 0;">
-        Source: ${data.page_source || 'Contact Page'} • ${new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })} ET
+        Source: ${data.page_source || 'Contact Page'} | ${new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })} ET
       </p>
       <p style="margin: 0;">
-        RateMyAdjusters LLC • <a href="https://ratemyadjusters.com" style="color: #9ca3af;">ratemyadjusters.com</a>
+        RateMyAdjusters LLC
       </p>
     </div>
     
@@ -351,23 +299,18 @@ Reply directly to this email to respond to ${data.name || 'the sender'}.
 
 export async function POST(request: NextRequest) {
   try {
+    // Initialize clients inside the function (not at top level)
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+      process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+    );
+    
+    const resend = new Resend(process.env.RESEND_API_KEY);
+
     // Get IP for rate limiting
     const forwardedFor = request.headers.get('x-forwarded-for');
     const ip = forwardedFor?.split(',')[0] || request.headers.get('x-real-ip') || 'unknown';
     const ipHash = hashIP(ip);
-    
-    // Check rate limit
-    const { allowed, remaining } = await checkRateLimit(ipHash);
-    if (!allowed) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Too many submissions. Please try again later.',
-          code: 'RATE_LIMITED'
-        },
-        { status: 429, headers: { 'X-RateLimit-Remaining': '0' } }
-      );
-    }
 
     // Parse request body
     const body = await request.json();
@@ -385,12 +328,11 @@ export async function POST(request: NextRequest) {
       company_represented,
       legal_capacity,
       page_source,
-      honeypot, // Hidden field for spam detection
+      honeypot,
     } = body;
 
     // Honeypot check (spam bots fill hidden fields)
     if (honeypot) {
-      // Silently reject but return success to confuse bots
       return NextResponse.json({ success: true, id: 'spam-blocked' });
     }
 
@@ -422,31 +364,30 @@ export async function POST(request: NextRequest) {
     const submission_id = crypto.randomUUID();
     const config = INQUIRY_CONFIG[inquiry_type];
 
-    // Store in Supabase first (backup)
-    const { error: dbError } = await supabase
-      .from('contact_submissions')
-      .insert({
-        id: submission_id,
-        inquiry_type: sanitize(inquiry_type),
-        subject: sanitize(subject),
-        name: sanitize(name),
-        email: sanitize(email),
-        phone: sanitize(phone),
-        message: sanitize(message),
-        adjuster_name: sanitize(adjuster_name),
-        adjuster_profile_url: sanitize(adjuster_profile_url),
-        company_represented: sanitize(company_represented),
-        legal_capacity: sanitize(legal_capacity),
-        ip_hash: ipHash,
-        user_agent: request.headers.get('user-agent'),
-        referrer: request.headers.get('referer'),
-        page_source: sanitize(page_source),
-        priority: config.priority,
-      });
-
-    if (dbError) {
-      console.error('Database error:', dbError);
-      // Continue even if DB fails - email is more important
+    // Try to store in Supabase (don't fail if it doesn't work)
+    try {
+      await supabase
+        .from('contact_submissions')
+        .insert({
+          id: submission_id,
+          inquiry_type: sanitize(inquiry_type),
+          subject: sanitize(subject),
+          name: sanitize(name),
+          email: sanitize(email),
+          phone: sanitize(phone),
+          message: sanitize(message),
+          adjuster_name: sanitize(adjuster_name),
+          adjuster_profile_url: sanitize(adjuster_profile_url),
+          company_represented: sanitize(company_represented),
+          legal_capacity: sanitize(legal_capacity),
+          ip_hash: ipHash,
+          user_agent: request.headers.get('user-agent'),
+          referrer: request.headers.get('referer'),
+          page_source: sanitize(page_source),
+          priority: config.priority,
+        });
+    } catch (dbError) {
+      console.error('Database error (non-fatal):', dbError);
     }
 
     // Build email content
@@ -471,47 +412,28 @@ export async function POST(request: NextRequest) {
       : config.subject_prefix;
 
     // Send email via Resend
-    const { data: emailResult, error: emailError } = await resend.emails.send({
-      from: 'RateMyAdjusters <noreply@ratemyadjusters.com>',
-      replyTo: sanitize(email), // Allow direct reply to sender
+    const { error: emailError } = await resend.emails.send({
+      from: 'RateMyAdjusters <onboarding@resend.dev>',
+      replyTo: sanitize(email),
       to: ['info@ratemyadjusters.com'],
       subject: emailSubject,
       html: buildEmailHTML(emailData),
       text: buildEmailText(emailData),
-      tags: [
-        { name: 'inquiry_type', value: inquiry_type },
-        { name: 'priority', value: config.priority },
-      ],
     });
 
     if (emailError) {
       console.error('Email error:', emailError);
-      // Still return success if DB worked - we have the submission
-      if (!dbError) {
-        return NextResponse.json({ 
-          success: true, 
-          id: submission_id,
-          warning: 'Submission saved but email notification failed'
-        });
-      }
       return NextResponse.json(
-        { success: false, error: 'Failed to process submission. Please try again.' },
+        { success: false, error: 'Failed to send message. Please try again.' },
         { status: 500 }
       );
     }
 
-    // Update rate limit
-    await updateRateLimit(ipHash);
-
-    // Success!
-    return NextResponse.json(
-      { 
-        success: true, 
-        id: submission_id,
-        message: 'Thank you for your submission. We will review it shortly.'
-      },
-      { headers: { 'X-RateLimit-Remaining': remaining.toString() } }
-    );
+    return NextResponse.json({ 
+      success: true, 
+      id: submission_id,
+      message: 'Thank you for your submission.'
+    });
 
   } catch (error) {
     console.error('Contact form error:', error);
@@ -522,7 +444,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Handle OPTIONS for CORS (if needed)
 export async function OPTIONS() {
   return NextResponse.json({}, { status: 200 });
 }
