@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
-const resend = new Resend('re_4hBnjfJZ_LxvWqGLKCbuvoFHt3o3Ect1W');
-
 // Inquiry type configurations
 const INQUIRY_CONFIG: Record<string, { 
   priority: string; 
@@ -287,6 +285,19 @@ Reply directly to this email to respond to ${data.name || 'the sender'}.
 
 export async function POST(request: NextRequest) {
   try {
+    // Get API key from environment variable (SECURE - not hardcoded)
+    const apiKey = process.env.RESEND_API_KEY;
+    
+    if (!apiKey) {
+      console.error('RESEND_API_KEY is not set');
+      return NextResponse.json(
+        { success: false, error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
+
+    const resend = new Resend(apiKey);
+
     const body = await request.json();
     
     const {
@@ -357,10 +368,11 @@ export async function POST(request: NextRequest) {
       : config.subject_prefix;
 
     // Send email via Resend
+    // IMPORTANT: With onboarding@resend.dev, you can only send to your Resend signup email
     const { error: emailError } = await resend.emails.send({
       from: 'RateMyAdjusters <onboarding@resend.dev>',
       replyTo: sanitize(email),
-      to: ['info@adminpostbox.com'],
+      to: ['mail@adminpostbox.com'],
       subject: emailSubject,
       html: buildEmailHTML(emailData),
       text: buildEmailText(emailData),
