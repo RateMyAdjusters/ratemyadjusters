@@ -5,7 +5,7 @@ import { ChevronRight, Shield } from 'lucide-react'
 export const metadata: Metadata = {
   title: 'Privacy Policy | RateMyAdjusters',
   description:
-    'Privacy Policy for RateMyAdjusters. Learn how we collect, use, and protect your information and the information displayed on our platform.',
+    'Privacy Policy for RateMyAdjusters LLC. Learn how we collect, use, and protect your information and the information displayed on our platform.',
   alternates: {
     canonical: 'https://ratemyadjusters.com/privacy',
   },
@@ -49,7 +49,7 @@ export default function PrivacyPage() {
             <section className="mb-8">
               <h2 className="text-xl font-bold text-gray-900 mb-4">1. Introduction</h2>
               <p className="text-gray-700 leading-relaxed mb-4">
-                RateMyAdjusters (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) operates the website
+                RateMyAdjusters LLC (&quot;RateMyAdjusters,&quot; &quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) operates the website
                 ratemyadjusters.com (the &quot;Site&quot;). This Privacy Policy explains how we collect, use, disclose,
                 and protect information about you when you visit our Site or use our services.
               </p>
@@ -60,7 +60,7 @@ export default function PrivacyPage() {
               </p>
               <p className="text-gray-700 leading-relaxed">
                 Nothing in this Privacy Policy is intended to create, and does not create, any contractual,
-                fiduciary, or attorney–client relationship between you and RateMyAdjusters.
+                fiduciary, or attorney–client relationship between you and RateMyAdjusters LLC.
               </p>
             </section>
 
@@ -420,7 +420,7 @@ export default function PrivacyPage() {
               </p>
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-gray-700 mb-3">
-                  <strong>RateMyAdjusters</strong>
+                  <strong>RateMyAdjusters LLC</strong>
                 </p>
                 <p className="text-gray-700 mb-3">
                   For all privacy-related inquiries, please use our secure contact form:<br />
@@ -468,7 +468,7 @@ export default function PrivacyPage() {
       <div className="border-t border-gray-200 bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 py-6">
           <p className="text-xs text-gray-500 text-center leading-relaxed">
-            <strong>Disclaimer:</strong> RateMyAdjusters publishes information and user-generated content for general
+            <strong>Disclaimer:</strong> RateMyAdjusters LLC publishes information and user-generated content for general
             informational purposes only. Profile data, reviews, and commentary may be incomplete, outdated, or
             inaccurate, and are not independently verified. We do not guarantee the accuracy, reliability, or
             completeness of any content displayed on this site. Nothing on this site constitutes legal, financial, or
