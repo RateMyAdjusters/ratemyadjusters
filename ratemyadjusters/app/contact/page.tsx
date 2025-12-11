@@ -11,7 +11,7 @@ import {
   Newspaper, 
   Scale, 
   UserCircle, 
-  Handshake, 
+  Briefcase,
   Bug, 
   Lightbulb,
   Trash2,
@@ -69,7 +69,7 @@ const INQUIRY_TYPES = [
     id: 'partnership',
     label: 'Partnerships',
     description: 'Business development or integration inquiries',
-    icon: Handshake,
+    icon: Briefcase,
     color: 'bg-indigo-500',
     bgLight: 'bg-indigo-50',
     borderColor: 'border-indigo-200',
@@ -230,7 +230,7 @@ export default function ContactPage() {
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">How can we help?</h1>
         <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-          Select the type of inquiry that best matches your needs. We'll route your message to the right team.
+          Select the type of inquiry that best matches your needs. We&apos;ll route your message to the right team.
         </p>
       </div>
       
@@ -241,14 +241,14 @@ export default function ContactPage() {
             <button
               key={type.id}
               onClick={() => handleTypeSelect(type.id)}
-              className={`flex items-start gap-4 p-6 rounded-xl border-2 transition-all duration-200 text-left group hover:shadow-lg ${type.borderColor} ${type.bgLight} hover:border-current hover:${type.textColor}`}
+              className={`flex items-start gap-4 p-6 rounded-xl border-2 transition-all duration-200 text-left group hover:shadow-lg ${type.borderColor} ${type.bgLight} hover:border-current`}
             >
               <div className={`p-3 rounded-lg ${type.color} text-white shrink-0`}>
                 <Icon className="w-6 h-6" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <h3 className={`font-semibold text-gray-900 group-hover:${type.textColor}`}>
+                  <h3 className="font-semibold text-gray-900">
                     {type.label}
                   </h3>
                   {type.priority === 'urgent' && (
@@ -559,7 +559,7 @@ export default function ContactPage() {
         </div>
         <h1 className="text-3xl font-bold text-gray-900 mb-4">Message Sent</h1>
         <p className="text-lg text-gray-600">
-          Thank you for reaching out. We've received your message and will review it shortly.
+          Thank you for reaching out. We&apos;ve received your message and will review it shortly.
         </p>
       </div>
       
@@ -633,7 +633,7 @@ export default function ContactPage() {
           </div>
           <h1 className="text-3xl md:text-4xl font-bold">Get in Touch</h1>
           <p className="mt-2 text-blue-100 max-w-2xl">
-            Have a question, concern, or business inquiry? We're here to help.
+            Have a question, concern, or business inquiry? We&apos;re here to help.
           </p>
         </div>
       </div>
