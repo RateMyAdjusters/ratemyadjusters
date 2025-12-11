@@ -450,9 +450,9 @@ export default async function AdjusterProfile({ params }: PageProps) {
                 
                 <p className="text-lg text-gray-700 mb-2">
                   {licenseType} in <strong>{location}</strong>
-                  {tenureYears && tenureYears > 0 && (
+                  {tenureYears !== null && tenureYears > 0 ? (
                     <span className="text-gray-500"> • {tenureYears}+ years experience</span>
-                  )}
+                  ) : null}
                 </p>
                 
                 {/* Company & Role */}
@@ -533,10 +533,9 @@ export default async function AdjusterProfile({ params }: PageProps) {
                 <h2 className="text-xl font-bold text-gray-900 mb-4">About {fullName}</h2>
                 <p className="text-gray-700 leading-relaxed mb-4">
                   {fullName} is a licensed <strong>{licenseType.toLowerCase()}</strong> (License #{adjuster.license_number || 'on file'}) handling property insurance claims in <strong>{location}</strong>.
-                  {tenureYears && tenureYears > 0 && (
+                  {tenureYears !== null && tenureYears > 0 ? (
                     <> With approximately <strong>{tenureYears} years</strong> of experience in the insurance industry, {adjuster.first_name} evaluates property damage, prepares estimates, and processes claims for policyholders.</>
-                  )}
-                  {!tenureYears && (
+                  ) : (
                     <> {adjuster.first_name} evaluates property damage, prepares estimates, and processes claims for policyholders in {stateName}.</>
                   )}
                 </p>
@@ -641,7 +640,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
                         </h3>
                         <p className="text-gray-600 text-sm">
                           {metrics.careerDescription || `${adjuster.first_name} is classified as ${metrics.careerStage?.toLowerCase()} based on tenure and licensing history.`}
-                          {tenureYears && ` With ${tenureYears} years in the industry, this adjuster has developed expertise in handling ${stateName} property claims.`}
+                          {tenureYears !== null && tenureYears > 0 ? ` With ${tenureYears} years in the industry, this adjuster has developed expertise in handling ${stateName} property claims.` : ''}
                         </p>
                       </div>
                     )}
