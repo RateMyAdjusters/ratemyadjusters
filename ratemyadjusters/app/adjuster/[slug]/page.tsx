@@ -215,30 +215,30 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const locationText = adjuster.city ? `${adjuster.city}, ${adjuster.state}` : stateName
   
   const reviewCount = adjuster.total_reviews || 0
-  const ratingText = adjuster.avg_rating ? `${adjuster.avg_rating.toFixed(1)}★ rating.` : ''
+  const ratingText = adjuster.avg_rating ? `${adjuster.avg_rating.toFixed(1)}★` : ''
   
   // Include metrics in meta description for SEO
-  const expIndex = adjuster.experience_index ? `Experience: ${adjuster.experience_index}/10.` : ''
-  const annualClaims = adjuster.est_annual_low && adjuster.est_annual_high 
-    ? `Est. ${adjuster.est_annual_low}–${adjuster.est_annual_high} claims/year.` 
-    : ''
+  const cityUpper = adjuster.city ? adjuster.city.toUpperCase() : ''
+  const locationUpper = adjuster.city ? `${cityUpper}, ${adjuster.state}` : stateName.toUpperCase()
+  const locationNormal = adjuster.city ? `${adjuster.city}, ${stateName}` : stateName
 
   return {
-    title: `${fullName} – ${locationText} Insurance Adjuster Reviews | RateMyAdjusters`,
-    description: `${reviewCount > 0 ? `${reviewCount} reviews for ` : 'Reviews for '}${fullName}${companyText}, ${licenseType.toLowerCase()} in ${locationText}. ${ratingText} ${expIndex} ${annualClaims} Read homeowner experiences, claim outcomes, and ratings.`,
+    title: `${fullName} – ${locationUpper} Insurance Adjuster Reviews | RateMyAdjusters`,
+    description: `Read reviews and claim estimates for ${fullName}, a licensed ${stateName} insurance adjuster${adjuster.city ? ` based in ${adjuster.city}` : ''}. ${ratingText ? `${ratingText} rating. ` : ''}See licensing info, experience metrics, and what homeowners say.`.slice(0, 160),
     alternates: {
       canonical: profileUrl,
     },
     openGraph: {
-      title: `${fullName} – ${locationText} Insurance Adjuster Reviews`,
-      description: `See what homeowners and contractors say about ${fullName}${companyText} in ${locationText}. Read real reviews about claim handling, communication, and fairness.`,
+      title: `${fullName} – ${locationUpper} Insurance Adjuster Reviews`,
+      description: `See what homeowners and contractors say about ${fullName} in ${locationNormal}. Read real reviews about claim handling, communication, and fairness.`,
       type: 'profile',
       url: profileUrl,
+      siteName: 'RateMyAdjusters',
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${fullName} – Insurance Adjuster Reviews`,
-      description: `${reviewCount} reviews for ${fullName} in ${locationText}. See ratings and claim experiences.`,
+      title: `${fullName} – ${adjuster.state} Insurance Adjuster`,
+      description: `${reviewCount > 0 ? `${reviewCount} reviews` : 'No reviews yet'} for ${fullName} in ${locationNormal}. See ratings and claim experiences.`,
     },
   }
 }
@@ -329,6 +329,37 @@ export default async function AdjusterProfile({ params }: PageProps) {
     },
   }
 
+  // LocalBusiness schema for local SEO
+  const localBusinessSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'ProfessionalService',
+    name: `${fullName} - Insurance Adjuster`,
+    description: `Licensed ${licenseType.toLowerCase()} handling property insurance claims in ${location}`,
+    url: profileUrl,
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: adjuster.city || undefined,
+      addressRegion: adjuster.state,
+      addressCountry: 'US',
+    },
+    geo: adjuster.city ? {
+      '@type': 'GeoCoordinates',
+      addressRegion: adjuster.state,
+    } : undefined,
+    areaServed: {
+      '@type': 'State',
+      name: stateName,
+    },
+    priceRange: '$$',
+    aggregateRating: totalReviews > 0 ? {
+      '@type': 'AggregateRating',
+      ratingValue: avgRating.toFixed(1),
+      reviewCount: totalReviews,
+      bestRating: '5',
+      worstRating: '1',
+    } : undefined,
+  }
+
   const breadcrumbSchema = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -353,6 +384,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
@@ -476,24 +508,30 @@ export default async function AdjusterProfile({ params }: PageProps) {
 
                 {/* Quick Stats Row */}
                 <div className="flex flex-wrap items-center gap-3 text-sm">
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-50 text-yellow-800 rounded-full">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-50 text-yellow-800 rounded-full border border-yellow-200">
                     <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
-                    <span className="font-semibold">{avgRating.toFixed(1)} Rating</span>
+                    <span className="font-semibold">{avgRating > 0 ? `${avgRating.toFixed(1)} Rating` : 'Not Rated'}</span>
                   </div>
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-800 rounded-full">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-800 rounded-full border border-blue-200">
                     <MessageSquare className="w-4 h-4" />
-                    <span className="font-semibold">{totalReviews} Reviews</span>
+                    <span className="font-semibold">{totalReviews} {totalReviews === 1 ? 'Review' : 'Reviews'}</span>
                   </div>
                   {hasMetrics && metrics.careerStage && (
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-800 rounded-full">
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-800 rounded-full border border-purple-200">
                       <Award className="w-4 h-4" />
                       <span className="font-semibold">{metrics.careerStage}</span>
                     </div>
                   )}
                   {adjuster.license_status === 'active' && (
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-800 rounded-full">
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-800 rounded-full border border-green-200">
                       <Shield className="w-4 h-4" />
-                      <span className="font-semibold">Licensed</span>
+                      <span className="font-semibold">Active License</span>
+                    </div>
+                  )}
+                  {adjuster.residency_type === 'Resident' && (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 text-gray-700 rounded-full border border-gray-200">
+                      <MapPin className="w-4 h-4" />
+                      <span className="font-semibold">Resident</span>
                     </div>
                   )}
                 </div>
@@ -786,15 +824,22 @@ export default async function AdjusterProfile({ params }: PageProps) {
                 </div>
 
                 {reviews.length === 0 ? (
-                  <div className="p-8 text-center">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Star className="w-8 h-8 text-gray-400" />
+                  <div className="p-8 text-center bg-gradient-to-b from-blue-50 to-white">
+                    <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Star className="w-10 h-10 text-blue-500" />
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No reviews yet for {fullName}</h3>
-                    <p className="text-gray-500 mb-4">Be the first to share your experience with this {stateName} insurance adjuster.</p>
-                    <Link href={'/review?adjuster=' + adjuster.id} className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg">
-                      Leave a Review
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Be the First to Review {fullName}</h3>
+                    <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                      No one has shared their experience yet. Your review helps other {stateName} homeowners know what to expect with this adjuster.
+                    </p>
+                    <Link 
+                      href={'/review?adjuster=' + adjuster.id} 
+                      className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg text-lg shadow-lg hover:shadow-xl transition-all"
+                    >
+                      <Star className="w-5 h-5" />
+                      Write the First Review
                     </Link>
+                    <p className="text-sm text-gray-500 mt-4">It only takes 2 minutes</p>
                   </div>
                 ) : (
                   <div className="divide-y">
@@ -898,24 +943,40 @@ export default async function AdjusterProfile({ params }: PageProps) {
                   <TrendingUp className="w-5 h-5 text-blue-600" />
                   Rating Summary
                 </h3>
-                <div className="text-center mb-4">
-                  <div className="text-5xl font-bold text-gray-900">{avgRating.toFixed(1)}</div>
-                  <div className="flex justify-center my-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star
-                        key={star}
-                        className={`w-6 h-6 ${star <= Math.round(avgRating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
-                      />
-                    ))}
+                {totalReviews === 0 ? (
+                  <div className="text-center">
+                    <div className="text-4xl mb-2">⭐</div>
+                    <p className="text-gray-600 font-medium mb-1">No ratings yet</p>
+                    <p className="text-sm text-gray-500 mb-4">Be the first to rate this adjuster</p>
+                    <Link 
+                      href={'/review?adjuster=' + adjuster.id}
+                      className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+                    >
+                      Write First Review
+                    </Link>
                   </div>
-                  <p className="text-gray-500">{totalReviews} reviews</p>
-                </div>
-                <Link 
-                  href={'/review?adjuster=' + adjuster.id}
-                  className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
-                >
-                  Rate This Adjuster
-                </Link>
+                ) : (
+                  <>
+                    <div className="text-center mb-4">
+                      <div className="text-5xl font-bold text-gray-900">{avgRating.toFixed(1)}</div>
+                      <div className="flex justify-center my-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className={`w-6 h-6 ${star <= Math.round(avgRating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+                          />
+                        ))}
+                      </div>
+                      <p className="text-gray-500">{totalReviews} reviews</p>
+                    </div>
+                    <Link 
+                      href={'/review?adjuster=' + adjuster.id}
+                      className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+                    >
+                      Rate This Adjuster
+                    </Link>
+                  </>
+                )}
               </div>
 
               {/* Quick Metrics Card (Sidebar) */}
@@ -978,10 +1039,21 @@ export default async function AdjusterProfile({ params }: PageProps) {
 
               {/* License Info */}
               <div className="bg-white rounded-xl shadow-sm p-6">
-                <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
                   <Shield className="w-5 h-5 text-blue-600" />
                   License Information
                 </h3>
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 px-2 py-1 rounded-full">
+                    <Shield className="w-3 h-3" />
+                    Verified Public Record
+                  </span>
+                  {adjuster.updated_at && (
+                    <span className="text-xs text-gray-400">
+                      Updated {new Date(adjuster.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </span>
+                  )}
+                </div>
                 <dl className="space-y-3 text-sm">
                   <div className="flex justify-between">
                     <dt className="text-gray-500">Name</dt>
@@ -1184,7 +1256,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
         </div>
 
         {/* Footer Disclaimer */}
-        <div className="border-t border-gray-200 bg-gray-50">
+        <div className="border-t border-gray-200 bg-gray-50 pb-20 md:pb-0">
           <div className="max-w-6xl mx-auto px-4 py-6">
             <p className="text-xs text-gray-500 text-center leading-relaxed">
               <strong>Disclaimer:</strong> RateMyAdjusters provides information for general educational purposes only. 
@@ -1193,6 +1265,17 @@ export default async function AdjusterProfile({ params }: PageProps) {
               We do not guarantee the accuracy of any content on this site. Nothing here constitutes legal, financial, or professional advice.
             </p>
           </div>
+        </div>
+
+        {/* Sticky Mobile CTA */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 md:hidden shadow-lg z-50">
+          <Link 
+            href={'/review?adjuster=' + adjuster.id}
+            className="flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg"
+          >
+            <Star className="w-5 h-5" />
+            {totalReviews === 0 ? 'Write First Review' : 'Leave a Review'}
+          </Link>
         </div>
       </main>
     </>
