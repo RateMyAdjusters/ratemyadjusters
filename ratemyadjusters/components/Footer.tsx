@@ -145,7 +145,7 @@ export default function Footer() {
           {/* Disclaimer */}
           <div className="bg-slate-800/50 rounded-lg p-4 mb-6">
             <p className="text-slate-400 text-xs leading-relaxed mb-3">
-              <span className="font-semibold text-slate-300">Disclaimer:</span> RateMyAdjusters publishes information and user-generated content for general informational purposes only. Profile data, reviews, and commentary may be incomplete, outdated, or inaccurate, and are not independently verified. We do not guarantee the accuracy, reliability, or completeness of any content displayed on this site.
+              <span className="font-semibold text-slate-300">Disclaimer:</span> RateMyAdjusters LLC publishes information and user-generated content for general informational purposes only. Profile data, reviews, and commentary may be incomplete, outdated, or inaccurate, and are not independently verified. We do not guarantee the accuracy, reliability, or completeness of any content displayed on this site.
             </p>
             <p className="text-slate-500 text-xs leading-relaxed">
               Nothing on this site constitutes legal, financial, or professional advice, and no endorsement of any adjuster, company, or service is implied. Users are responsible for the statements they submit. Adjusters may claim their profiles and submit corrections. To report inaccurate information, please <Link href="/contact" className="text-blue-400 hover:text-blue-300 underline">contact us</Link>.
@@ -155,7 +155,7 @@ export default function Footer() {
           {/* Bottom Row */}
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-slate-500 text-sm">
-              © {new Date().getFullYear()} RateMyAdjusters. All rights reserved.
+              © {new Date().getFullYear()} RateMyAdjusters LLC. All rights reserved.
             </p>
             <div className="flex gap-6 text-sm">
               <Link href="/terms" className="text-slate-400 hover:text-white transition-colors">
