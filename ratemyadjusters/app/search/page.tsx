@@ -1,24 +1,8 @@
 'use client'
 
-import { useState, useEffect, Suspense, useCallback } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
-
-// Singleton Supabase client
-let supabaseInstance: SupabaseClient | null = null
-
-function getSupabase(): SupabaseClient | null {
-  if (supabaseInstance) return supabaseInstance
-  
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  
-  if (!url || !key) return null
-  
-  supabaseInstance = createClient(url, key)
-  return supabaseInstance
-}
 
 const stateNames: { [key: string]: string } = {
   'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas',
@@ -89,103 +73,65 @@ function SearchContent() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [hasSearched, setHasSearched] = useState(false)
-  const [retryCount, setRetryCount] = useState(0)
 
   const hasFilter = searchTerm.trim() !== '' || selectedState !== '' || selectedCompany !== ''
 
-  const loadAdjusters = useCallback(async (isRetry = false) => {
+  useEffect(() => {
     if (!hasFilter) {
       setAdjusters([])
       setHasSearched(false)
-      return
-    }
-
-    // Small delay on first load to let everything initialize
-    if (!isRetry) {
-      await new Promise(resolve => setTimeout(resolve, 100))
-    }
-
-    const supabase = getSupabase()
-    
-    if (!supabase) {
-      setError('Unable to connect. Please refresh the page.')
-      return
-    }
-    
-    setLoading(true)
-    setError(null)
-    setHasSearched(true)
-
-    try {
-      let query = supabase
-        .from('adjusters')
-        .select('id, first_name, last_name, slug, company_name, state, city, avg_rating, total_reviews')
-
-      const trimmedSearch = searchTerm.trim()
-
-      if (selectedState) {
-        query = query.eq('state', selectedState)
-      }
-
-      if (selectedCompany) {
-        query = query.ilike('company_name', `%${selectedCompany}%`)
-      }
-
-      if (trimmedSearch) {
-        if (stateAbbreviations.includes(trimmedSearch.toUpperCase())) {
-          query = query.eq('state', trimmedSearch.toUpperCase())
-        } else if (trimmedSearch.includes(' ')) {
-          const parts = trimmedSearch.split(' ')
-          const firstName = parts[0]
-          const lastName = parts.slice(1).join(' ')
-          query = query
-            .ilike('first_name', `${firstName}%`)
-            .ilike('last_name', `${lastName}%`)
-        } else {
-          query = query.ilike('last_name', `${trimmedSearch}%`)
-        }
-      }
-
-      const { data, error: queryError } = await query
-        .order('total_reviews', { ascending: false, nullsFirst: false })
-        .limit(50)
-
-      if (queryError) {
-        throw new Error(queryError.message)
-      }
-      
-      setAdjusters(data || [])
       setError(null)
-    } catch (err) {
-      console.error('Search error:', err)
-      
-      // Auto-retry once on failure
-      if (!isRetry && retryCount < 1) {
-        setRetryCount(prev => prev + 1)
-        setTimeout(() => loadAdjusters(true), 500)
-        return
-      }
-      
-      setError('Search failed. Please try again.')
-      setAdjusters([])
-    } finally {
-      setLoading(false)
+      return
     }
-  }, [searchTerm, selectedState, selectedCompany, hasFilter, retryCount])
 
-  // Trigger search when filters change
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setRetryCount(0)
-      loadAdjusters()
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [searchTerm, selectedState, selectedCompany, loadAdjusters])
+    const controller = new AbortController()
 
-  const handleRetry = () => {
-    setRetryCount(0)
-    loadAdjusters(true)
-  }
+    async function doSearch() {
+      setLoading(true)
+      setError(null)
+      setHasSearched(true)
+
+      try {
+        const params = new URLSearchParams()
+        if (searchTerm.trim()) params.set('q', searchTerm.trim())
+        if (selectedState) params.set('state', selectedState)
+        if (selectedCompany) params.set('company', selectedCompany)
+
+        const response = await fetch(`/api/search?${params.toString()}`, {
+          signal: controller.signal,
+        })
+
+        if (!response.ok) {
+          throw new Error('Search failed')
+        }
+
+        const data = await response.json()
+        
+        if (data.error) {
+          throw new Error(data.error)
+        }
+
+        setAdjusters(data.adjusters || [])
+        setError(null)
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name === 'AbortError') {
+          return // Ignore aborted requests
+        }
+        console.error('Search error:', err)
+        setError('Search failed. Please try again.')
+        setAdjusters([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    const timer = setTimeout(doSearch, 300)
+    
+    return () => {
+      clearTimeout(timer)
+      controller.abort()
+    }
+  }, [searchTerm, selectedState, selectedCompany, hasFilter])
 
   const getInitials = (firstName: string, lastName: string) => {
     return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase()
@@ -252,16 +198,10 @@ function SearchContent() {
 
       {/* Results */}
       <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Error with retry button */}
+        {/* Error */}
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-red-700">{error}</p>
-            <button
-              onClick={handleRetry}
-              className="ml-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
-            >
-              Retry
-            </button>
           </div>
         )}
 
