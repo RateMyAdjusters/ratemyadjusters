@@ -4,7 +4,8 @@ import { notFound } from 'next/navigation'
 import { 
   Star, MapPin, Building, Shield, ChevronRight, Clock, Users, HelpCircle, 
   ArrowRight, MessageSquare, Phone, Briefcase, Globe, Lock, Mail, TrendingUp,
-  Zap, Target, BarChart3, AlertTriangle, FileText, Activity, Award
+  Zap, Target, BarChart3, AlertTriangle, FileText, Activity, Award, Eye,
+  CheckCircle2, Circle, AlertCircle, ExternalLink
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import StarRating from '@/components/StarRating'
@@ -168,6 +169,30 @@ function getVerificationLink(state: string): { name: string; url: string } {
   return links[state] || { name: 'NIPR', url: 'https://nipr.com/help/look-up-a-license' }
 }
 
+// Calculate Trust Score based on profile completeness
+function calculateTrustScore(adjuster: any, totalReviews: number): { score: number; breakdown: { label: string; points: number; earned: boolean }[] } {
+  const breakdown = [
+    { label: 'License found in public records', points: 25, earned: !!adjuster.license_number },
+    { label: 'Profile claimed', points: 15, earned: !!adjuster.profile_claimed },
+    { label: 'Bio added', points: 10, earned: !!adjuster.bio },
+    { label: 'Headshot uploaded', points: 10, earned: !!adjuster.photo_url },
+    { label: 'Certifications verified', points: 8, earned: false }, // Future feature
+    { label: 'Experience listed', points: 5, earned: !!adjuster.years_experience },
+    { label: 'Contact info added', points: 5, earned: !!adjuster.contact_email_private || !!adjuster.contact_phone_private },
+    { label: 'Responded to reviews', points: 2, earned: false }, // Future feature - per response
+  ]
+  
+  const score = breakdown.reduce((total, item) => total + (item.earned ? item.points : 0), 0)
+  return { score: Math.min(score, 100), breakdown }
+}
+
+function getTrustScoreLabel(score: number): { label: string; color: string; bgColor: string; borderColor: string } {
+  if (score >= 75) return { label: 'Trusted Pro', color: 'text-yellow-700', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200' }
+  if (score >= 50) return { label: 'Verified', color: 'text-blue-700', bgColor: 'bg-blue-50', borderColor: 'border-blue-200' }
+  if (score >= 26) return { label: 'Basic', color: 'text-gray-700', bgColor: 'bg-gray-50', borderColor: 'border-gray-200' }
+  return { label: 'Incomplete', color: 'text-orange-700', bgColor: 'bg-orange-50', borderColor: 'border-orange-200' }
+}
+
 function getFAQs(fullName: string, state: string, companyName: string | null, city: string | null, licenseType: string) {
   const stateName = getStateName(state)
   const companyText = companyName ? ` at ${companyName}` : ''
@@ -196,6 +221,18 @@ function getFAQs(fullName: string, state: string, companyName: string | null, ci
       question: `How can I leave a review for ${fullName}?`,
       answer: `Click the "Leave a Review" button on this page to share your experience. Reviews from homeowners, contractors, and public adjusters help others in ${locationText} make informed decisions about their insurance claims.`,
     },
+    {
+      question: `Who sees this page?`,
+      answer: `Homeowners, contractors, and sometimes IA firms or carrier teams. This page may appear in Google searches or internal lookups. Anyone researching a claim or an adjuster can view this profile.`,
+    },
+    {
+      question: `What does claiming a profile cost?`,
+      answer: `Nothing. Claiming your profile is 100% free. No upsells. No ads. No spam. Ever. You simply verify your identity and gain control over how your professional information appears.`,
+    },
+    {
+      question: `What if something on my profile is inaccurate?`,
+      answer: `We believe in transparency and fairness. If any information or review appears incorrect or inappropriate, contact us — we review every request and will work with you to ensure accuracy.`,
+    },
   ]
 }
 
@@ -217,7 +254,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const reviewCount = adjuster.total_reviews || 0
   const ratingText = adjuster.avg_rating ? `${adjuster.avg_rating.toFixed(1)}★` : ''
   
-  // Include metrics in meta description for SEO
   const cityUpper = adjuster.city ? adjuster.city.toUpperCase() : ''
   const locationUpper = adjuster.city ? `${cityUpper}, ${adjuster.state}` : stateName.toUpperCase()
   const locationNormal = adjuster.city ? `${adjuster.city}, ${stateName}` : stateName
@@ -271,6 +307,11 @@ export default async function AdjusterProfile({ params }: PageProps) {
   const avgRating = adjuster.avg_rating || 0
   const totalReviews = adjuster.total_reviews || 0
   const hasValidRating = totalReviews > 0 && avgRating > 0
+
+  // Trust Score calculation
+  const { score: trustScore, breakdown: trustBreakdown } = calculateTrustScore(adjuster, totalReviews)
+  const trustLabel = getTrustScoreLabel(trustScore)
+  const isProfileClaimed = !!adjuster.profile_claimed
 
   // Metrics from database
   const hasMetrics = !!adjuster.experience_index
@@ -332,7 +373,6 @@ export default async function AdjusterProfile({ params }: PageProps) {
     }),
   }
 
-  // LocalBusiness schema for local SEO
   const localBusinessSchema = {
     '@context': 'https://schema.org',
     '@type': 'ProfessionalService',
@@ -394,6 +434,56 @@ export default async function AdjusterProfile({ params }: PageProps) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
       <main className="min-h-screen bg-gray-50">
+        
+        {/* SECTION 1: Top Banner for Unclaimed Profiles */}
+        {!isProfileClaimed && (
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200">
+            <div className="max-w-6xl mx-auto px-4 py-4">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-amber-100 rounded-lg">
+                    <AlertCircle className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <div>
+                    <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+                      📋 Profile Status: Not Yet Claimed
+                    </h2>
+                    <p className="text-gray-700 text-sm mt-0.5">
+                      This is your public professional page. Claim it to manage how you appear.
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Your carrier or IA firm may view this profile before assignments.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-col items-start md:items-end gap-2">
+                  <Link 
+                    href="#claim-profile"
+                    className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-5 rounded-lg transition-colors shadow-sm"
+                  >
+                    Claim My Profile – Free
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
+                    <span className="flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-green-600" />
+                      Takes 60 seconds
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-green-600" />
+                      Add credentials & bio
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-green-600" />
+                      Control what's shown
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {isPendingVerification && (
           <div className="bg-amber-50 border-b border-amber-200">
             <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
@@ -462,7 +552,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
           </div>
         </div>
 
-        {/* Profile Header */}
+        {/* SECTION 2: Profile Header with Trust Score Badge */}
         <div className="bg-white border-b">
           <div className="max-w-6xl mx-auto px-4 py-8">
             <div className="flex flex-col md:flex-row gap-6">
@@ -477,10 +567,16 @@ export default async function AdjusterProfile({ params }: PageProps) {
               <div className="flex-1">
                 <div className="flex flex-wrap items-center gap-3 mb-2">
                   <h1 className="text-3xl font-bold text-gray-900">{fullName}</h1>
-                  {!adjuster.profile_claimed && (
+                  {!isProfileClaimed && (
                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border border-gray-300 text-gray-600 bg-gray-50">
                       <Shield className="w-3 h-3" />
                       Profile Unclaimed
+                    </span>
+                  )}
+                  {isProfileClaimed && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border border-green-300 text-green-700 bg-green-50">
+                      <CheckCircle2 className="w-3 h-3" />
+                      Claimed Profile
                     </span>
                   )}
                 </div>
@@ -511,8 +607,21 @@ export default async function AdjusterProfile({ params }: PageProps) {
                   )}
                 </div>
 
-                {/* Quick Stats Row */}
+                {/* Quick Stats Row with Trust Score */}
                 <div className="flex flex-wrap items-center gap-3 text-sm">
+                  {/* Trust Score Badge */}
+                  <div className={`flex items-center gap-1.5 px-3 py-1.5 ${trustLabel.bgColor} ${trustLabel.color} rounded-full border ${trustLabel.borderColor}`}>
+                    {trustScore >= 75 ? (
+                      <Star className="w-4 h-4 fill-current" />
+                    ) : trustScore >= 50 ? (
+                      <CheckCircle2 className="w-4 h-4" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4" />
+                    )}
+                    <span className="font-semibold">Trust Score: {trustScore}/100</span>
+                    <span className="text-xs opacity-75">({trustLabel.label})</span>
+                  </div>
+                  
                   <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-50 text-yellow-800 rounded-full border border-yellow-200">
                     <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
                     <span className="font-semibold">{avgRating > 0 ? `${avgRating.toFixed(1)} Rating` : 'Not Rated'}</span>
@@ -531,12 +640,6 @@ export default async function AdjusterProfile({ params }: PageProps) {
                     <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-800 rounded-full border border-green-200">
                       <Shield className="w-4 h-4" />
                       <span className="font-semibold">Active License</span>
-                    </div>
-                  )}
-                  {adjuster.residency_type === 'Resident' && (
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 text-gray-700 rounded-full border border-gray-200">
-                      <MapPin className="w-4 h-4" />
-                      <span className="font-semibold">Resident</span>
                     </div>
                   )}
                 </div>
@@ -570,6 +673,96 @@ export default async function AdjusterProfile({ params }: PageProps) {
               
               {/* Fairness Poll */}
               <FairnessPoll adjusterId={adjuster.id} />
+
+              {/* SECTION 6: Trust Score Breakdown */}
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    🏆 Trust Score: {trustScore}/100
+                  </h2>
+                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${trustLabel.bgColor} ${trustLabel.color} border ${trustLabel.borderColor}`}>
+                    {trustScore >= 75 && <Star className="w-4 h-4 fill-current" />}
+                    {trustLabel.label}
+                  </span>
+                </div>
+                
+                {/* Progress Bar */}
+                <div className="w-full bg-gray-200 rounded-full h-3 mb-6">
+                  <div 
+                    className={`h-3 rounded-full transition-all ${
+                      trustScore >= 75 ? 'bg-yellow-500' : 
+                      trustScore >= 50 ? 'bg-blue-500' : 
+                      trustScore >= 26 ? 'bg-gray-500' : 'bg-orange-500'
+                    }`}
+                    style={{ width: `${trustScore}%` }}
+                  />
+                </div>
+
+                <h3 className="font-semibold text-gray-700 mb-3">What's included:</h3>
+                <div className="space-y-2">
+                  {trustBreakdown.map((item, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      {item.earned ? (
+                        <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+                      ) : (
+                        <Circle className="w-5 h-5 text-gray-300 flex-shrink-0" />
+                      )}
+                      <span className={`text-sm ${item.earned ? 'text-gray-900' : 'text-gray-500'}`}>
+                        {item.label}
+                      </span>
+                      <span className={`text-xs font-medium ml-auto ${item.earned ? 'text-green-600' : 'text-gray-400'}`}>
+                        +{item.points}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-gray-100">
+                  <p className="text-sm text-gray-600 mb-3">
+                    🎯 Profiles above 75 are marked <strong className="text-yellow-700">⭐ Trusted Pro</strong>
+                  </p>
+                  {!isProfileClaimed && (
+                    <Link 
+                      href="#claim-profile"
+                      className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm"
+                    >
+                      How do I raise my score?
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  )}
+                </div>
+              </div>
+
+              {/* SECTION 7: Preview as Homeowner Notice */}
+              <div className="bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl border border-gray-200 p-5">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-gray-200 rounded-lg">
+                    <Eye className="w-5 h-5 text-gray-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
+                      👁 What Homeowners See
+                    </h3>
+                    {!isProfileClaimed ? (
+                      <>
+                        <p className="text-gray-700 text-sm mb-2">
+                          "This adjuster has not verified their license, added credentials, or responded to any reviews yet."
+                        </p>
+                        <p className="text-gray-600 text-sm">
+                          Claimed profiles appear higher in search and show more trust signals.
+                        </p>
+                        <p className="text-xs text-gray-500 mt-2">
+                          🧑‍💼 Your carrier or IA firm may view this version before assignments.
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-gray-700 text-sm">
+                        This profile is claimed and verified. Homeowners can see your credentials, bio, and professional information.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
 
               {/* About Section - SEO Rich */}
               <div className="bg-white rounded-xl shadow-sm p-6">
@@ -810,12 +1003,12 @@ export default async function AdjusterProfile({ params }: PageProps) {
 
                   {/* Disclaimer */}
                   <p className="text-xs text-gray-400 mt-6 pt-4 border-t border-gray-100">
-                    <strong>Note:</strong> These estimates are derived from public licensing data, state-level claim patterns, and industry benchmarks. Actual claim volumes and experience may vary. This data is not verified by the adjuster and should be used for general informational purposes only.
+                    <strong>Note:</strong> These estimates reflect known industry averages and market activity in your region. Actual claim volumes and experience may vary. This data is not verified by the adjuster and should be used for general informational purposes only.
                   </p>
                 </div>
               )}
 
-              {/* Reviews Section */}
+              {/* SECTION 10: Reviews Section */}
               <div className="bg-white rounded-xl shadow-sm">
                 <div className="p-6 border-b flex items-center justify-between">
                   <div>
@@ -829,65 +1022,104 @@ export default async function AdjusterProfile({ params }: PageProps) {
                 </div>
 
                 {reviews.length === 0 ? (
-                  <div className="p-8 text-center bg-gradient-to-b from-blue-50 to-white">
-                    <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Star className="w-10 h-10 text-blue-500" />
+                  <div className="p-8 bg-gradient-to-b from-blue-50 to-white">
+                    <div className="text-center mb-6">
+                      <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <MessageSquare className="w-10 h-10 text-blue-500" />
+                      </div>
+                      <h3 className="text-xl font-bold text-gray-900 mb-2">📭 No Reviews Yet</h3>
+                      <p className="text-gray-600 max-w-md mx-auto mb-4">
+                        This profile is publicly visible. Reviews may be submitted at any time — anonymously by homeowners, contractors, or public adjusters.
+                      </p>
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">Be the First to Review {fullName}</h3>
-                    <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                      No one has shared their experience yet. Your review helps other {stateName} homeowners know what to expect with this adjuster.
-                    </p>
-                    <Link 
-                      href={'/review?adjuster=' + adjuster.id} 
-                      className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg text-lg shadow-lg hover:shadow-xl transition-all"
-                    >
-                      <Star className="w-5 h-5" />
-                      Write the First Review
-                    </Link>
-                    <p className="text-sm text-gray-500 mt-4">It only takes 2 minutes</p>
+                    
+                    {/* Key Conversion Message */}
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 max-w-lg mx-auto">
+                      <p className="text-gray-800 text-sm">
+                        <strong>Here's what most adjusters don't realize:</strong>
+                      </p>
+                      <p className="text-gray-700 text-sm mt-2">
+                        An incomplete profile with a low score often looks worse than a claimed profile with one critical review.
+                      </p>
+                      <p className="text-gray-600 text-sm mt-2">
+                        Claiming shows you take your reputation seriously.
+                      </p>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                      <Link 
+                        href={'/review?adjuster=' + adjuster.id} 
+                        className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all"
+                      >
+                        <Star className="w-5 h-5" />
+                        Write the First Review
+                      </Link>
+                      {!isProfileClaimed && (
+                        <Link 
+                          href="#claim-profile"
+                          className="inline-flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-800 font-semibold py-3 px-6 rounded-lg border border-gray-300 transition-all"
+                        >
+                          Claim Before Reviews Come In
+                          <ArrowRight className="w-4 h-4" />
+                        </Link>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-500 mt-4 text-center">It only takes 2 minutes</p>
                   </div>
                 ) : (
-                  <div className="divide-y">
-                    {reviews.map((review) => (
-                      <div key={review.id} className="p-6">
-                        <div className="flex items-start gap-4">
-                          <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
-                            <span className="text-gray-600 font-semibold text-sm">{review.reviewer_display_name?.[0] || 'A'}</span>
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium text-gray-900">{review.reviewer_display_name || 'Anonymous'}</span>
-                              <span className="text-gray-400">•</span>
-                              <span className="text-sm text-gray-500">
-                                {review.reviewer_type === 'contractor' ? 'Contractor' : review.reviewer_type === 'public_adjuster' ? 'Public Adjuster' : 'Homeowner'}
-                              </span>
+                  <>
+                    <div className="divide-y">
+                      {reviews.map((review) => (
+                        <div key={review.id} className="p-6">
+                          <div className="flex items-start gap-4">
+                            <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-gray-600 font-semibold text-sm">{review.reviewer_display_name?.[0] || 'A'}</span>
                             </div>
-                            <div className="flex items-center gap-2 mb-3">
-                              <StarRating rating={review.overall_rating} />
-                              <span className="text-sm text-gray-500">{formatReviewDate(review.created_at)}</span>
-                            </div>
-                            {review.claim_type && (
-                              <div className="flex gap-2 mb-3">
-                                <span className="inline-block px-2 py-1 bg-gray-100 rounded text-xs text-gray-600 capitalize">{review.claim_type} Claim</span>
-                                {review.claim_outcome && (
-                                  <span className={`inline-block px-2 py-1 rounded text-xs ${
-                                    review.claim_outcome === 'approved' ? 'bg-green-100 text-green-700' :
-                                    review.claim_outcome === 'denied' ? 'bg-red-100 text-red-700' :
-                                    review.claim_outcome === 'partial' ? 'bg-yellow-100 text-yellow-700' :
-                                    'bg-gray-100 text-gray-600'
-                                  } capitalize`}>
-                                    {review.claim_outcome}
-                                  </span>
-                                )}
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="font-medium text-gray-900">{review.reviewer_display_name || 'Anonymous'}</span>
+                                <span className="text-gray-400">•</span>
+                                <span className="text-sm text-gray-500">
+                                  {review.reviewer_type === 'contractor' ? 'Contractor' : review.reviewer_type === 'public_adjuster' ? 'Public Adjuster' : 'Homeowner'}
+                                </span>
                               </div>
-                            )}
-                            <p className="text-gray-700 leading-relaxed mb-3">{review.review_text}</p>
-                            <ReportReviewButton reviewId={review.id} />
+                              <div className="flex items-center gap-2 mb-3">
+                                <StarRating rating={review.overall_rating} />
+                                <span className="text-sm text-gray-500">{formatReviewDate(review.created_at)}</span>
+                              </div>
+                              {review.claim_type && (
+                                <div className="flex gap-2 mb-3">
+                                  <span className="inline-block px-2 py-1 bg-gray-100 rounded text-xs text-gray-600 capitalize">{review.claim_type} Claim</span>
+                                  {review.claim_outcome && (
+                                    <span className={`inline-block px-2 py-1 rounded text-xs ${
+                                      review.claim_outcome === 'approved' ? 'bg-green-100 text-green-700' :
+                                      review.claim_outcome === 'denied' ? 'bg-red-100 text-red-700' :
+                                      review.claim_outcome === 'partial' ? 'bg-yellow-100 text-yellow-700' :
+                                      'bg-gray-100 text-gray-600'
+                                    } capitalize`}>
+                                      {review.claim_outcome}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                              <p className="text-gray-700 leading-relaxed mb-3">{review.review_text}</p>
+                              <ReportReviewButton reviewId={review.id} />
+                            </div>
                           </div>
                         </div>
+                      ))}
+                    </div>
+                    
+                    {/* Response CTA for adjusters */}
+                    {!isProfileClaimed && (
+                      <div className="p-4 bg-blue-50 border-t border-blue-100">
+                        <p className="text-blue-800 text-sm text-center">
+                          ✅ Claimed adjusters can respond to reviews — responses appear directly below each review.
+                          <Link href="#claim-profile" className="font-semibold ml-2 underline">Claim to Respond →</Link>
+                        </p>
                       </div>
-                    ))}
-                  </div>
+                    )}
+                  </>
                 )}
                 
                 {/* CTA after reviews */}
@@ -911,6 +1143,12 @@ export default async function AdjusterProfile({ params }: PageProps) {
                     <div key={index} className="border-b border-gray-100 pb-6 last:border-0 last:pb-0">
                       <h3 className="font-semibold text-gray-900 mb-2">{faq.question}</h3>
                       <p className="text-gray-600 text-sm leading-relaxed">{faq.answer}</p>
+                      {faq.question.includes('inaccurate') && (
+                        <Link href="/contact" className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium text-sm mt-2">
+                          Submit a Correction
+                          <ExternalLink className="w-3 h-3" />
+                        </Link>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -1050,8 +1288,8 @@ export default async function AdjusterProfile({ params }: PageProps) {
                 </h3>
                 <div className="flex items-center gap-2 mb-4">
                   <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 px-2 py-1 rounded-full">
-                    <Shield className="w-3 h-3" />
-                    Verified Public Record
+                    <CheckCircle2 className="w-3 h-3" />
+                    Verified
                   </span>
                   {adjuster.updated_at && (
                     <span className="text-xs text-gray-400">
@@ -1181,8 +1419,60 @@ export default async function AdjusterProfile({ params }: PageProps) {
                 </p>
               </div>
 
-              {/* Claim Profile Form */}
-              <ClaimProfileForm adjusterId={adjuster.id} adjusterName={fullName} isClaimed={adjuster.profile_claimed || false} />
+              {/* SECTION 12: Claim Profile Box - Enhanced */}
+              <div id="claim-profile" className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl shadow-sm p-6 border border-blue-100">
+                <h3 className="font-bold text-gray-900 mb-3 text-lg">
+                  {isProfileClaimed ? '✅ Profile Claimed' : 'Is this your profile?'}
+                </h3>
+                
+                {!isProfileClaimed ? (
+                  <>
+                    <p className="text-gray-700 text-sm mb-4">
+                      Claim this profile to:
+                    </p>
+                    <ul className="space-y-2 mb-4">
+                      <li className="flex items-start gap-2 text-sm text-gray-700">
+                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                        Update your information
+                      </li>
+                      <li className="flex items-start gap-2 text-sm text-gray-700">
+                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                        Add credentials & certifications
+                      </li>
+                      <li className="flex items-start gap-2 text-sm text-gray-700">
+                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                        Respond to reviews professionally
+                      </li>
+                      <li className="flex items-start gap-2 text-sm text-gray-700">
+                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                        Show your side of the story
+                      </li>
+                      <li className="flex items-start gap-2 text-sm text-gray-700">
+                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                        Control what homeowners and carriers see
+                      </li>
+                    </ul>
+                    
+                    <ClaimProfileForm adjusterId={adjuster.id} adjusterName={fullName} isClaimed={isProfileClaimed} />
+                    
+                    <div className="mt-4 pt-4 border-t border-blue-200">
+                      <p className="text-xs text-gray-600 flex items-center gap-1.5 mb-3">
+                        <Lock className="w-3 h-3" />
+                        Private. No marketing. Just control.
+                      </p>
+                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                        <p className="text-xs text-gray-700">
+                          💡 <strong>Pro tip:</strong> An empty profile often looks worse than a claimed profile with one tough review.
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-gray-600 text-sm">
+                    This profile has been claimed and verified.
+                  </p>
+                )}
+              </div>
 
               {/* Similar Adjusters */}
               {similarAdjusters.length > 0 && (
@@ -1264,7 +1554,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
         <div className="border-t border-gray-200 bg-gray-50 pb-20 md:pb-0">
           <div className="max-w-6xl mx-auto px-4 py-6">
             <p className="text-xs text-gray-500 text-center leading-relaxed">
-              <strong>Disclaimer:</strong> RateMyAdjusters provides information for general educational purposes only. 
+              <strong>Disclaimer:</strong> RateMyAdjusters LLC provides information for general educational purposes only. 
               Profile data, metrics, reviews, and estimates may be incomplete, outdated, or inaccurate and are not independently verified. 
               Estimated claims volumes and experience metrics are derived from public licensing data and industry benchmarks, not actual performance records. 
               We do not guarantee the accuracy of any content on this site. Nothing here constitutes legal, financial, or professional advice.
@@ -1272,16 +1562,37 @@ export default async function AdjusterProfile({ params }: PageProps) {
           </div>
         </div>
 
-        {/* Sticky Mobile CTA */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 md:hidden shadow-lg z-50">
-          <Link 
-            href={'/review?adjuster=' + adjuster.id}
-            className="flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg"
-          >
-            <Star className="w-5 h-5" />
-            {totalReviews === 0 ? 'Write First Review' : 'Leave a Review'}
-          </Link>
-        </div>
+        {/* Mobile Sticky CTA - For Homeowners (Reviews) */}
+        {isProfileClaimed && (
+          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 md:hidden shadow-lg z-50">
+            <Link 
+              href={'/review?adjuster=' + adjuster.id}
+              className="flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg"
+            >
+              <Star className="w-5 h-5" />
+              {totalReviews === 0 ? 'Write First Review' : 'Leave a Review'}
+            </Link>
+          </div>
+        )}
+
+        {/* Mobile Sticky CTA - For Adjusters (Claim Profile) */}
+        {!isProfileClaimed && (
+          <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white to-transparent pt-4 pb-3 px-3 md:hidden shadow-lg z-50 border-t border-gray-200">
+            <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+              <p className="text-xs text-gray-600 text-center mb-2">📋 This profile is public</p>
+              <Link 
+                href="#claim-profile"
+                className="flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg"
+              >
+                Claim My Profile – Free
+              </Link>
+              <p className="text-xs text-gray-500 text-center mt-2 flex items-center justify-center gap-1">
+                <Lock className="w-3 h-3" />
+                Free & private – takes 60 seconds
+              </p>
+            </div>
+          </div>
+        )}
       </main>
     </>
   )
