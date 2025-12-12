@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense, useRef } from 'react'
+import { useState, useEffect, Suspense, useRef, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
@@ -61,79 +61,77 @@ function StarRatingDisplay({ rating }: { rating: number }) {
 function SearchContent() {
   const searchParams = useSearchParams()
   
-  const urlQuery = searchParams.get('q') || ''
-  const urlState = searchParams.get('state')?.toUpperCase() || ''
-  
-  const [searchTerm, setSearchTerm] = useState(urlQuery)
-  const [selectedState, setSelectedState] = useState(
-    stateAbbreviations.includes(urlState) ? urlState : ''
-  )
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedState, setSelectedState] = useState('')
   const [selectedCompany, setSelectedCompany] = useState('')
   const [adjusters, setAdjusters] = useState<Adjuster[]>([])
   const [loading, setLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
+  const [mounted, setMounted] = useState(false)
   
-  // Track request ID to ignore stale responses
   const requestIdRef = useRef(0)
+
+  // Sync URL params to state on mount and when URL changes
+  useEffect(() => {
+    const urlQuery = searchParams.get('q') || ''
+    const urlState = searchParams.get('state')?.toUpperCase() || ''
+    
+    setSearchTerm(urlQuery)
+    setSelectedState(stateAbbreviations.includes(urlState) ? urlState : '')
+    setMounted(true)
+  }, [searchParams])
 
   const hasFilter = searchTerm.trim() !== '' || selectedState !== '' || selectedCompany !== ''
 
-  useEffect(() => {
+  const doSearch = useCallback(async () => {
     if (!hasFilter) {
       setAdjusters([])
       setHasSearched(false)
       return
     }
 
-    // Increment request ID
     const currentRequestId = ++requestIdRef.current
+    setLoading(true)
+    setHasSearched(true)
 
-    async function doSearch() {
-      setLoading(true)
-      setHasSearched(true)
+    try {
+      const params = new URLSearchParams()
+      if (searchTerm.trim()) params.set('q', searchTerm.trim())
+      if (selectedState) params.set('state', selectedState)
+      if (selectedCompany) params.set('company', selectedCompany)
 
-      try {
-        const params = new URLSearchParams()
-        if (searchTerm.trim()) params.set('q', searchTerm.trim())
-        if (selectedState) params.set('state', selectedState)
-        if (selectedCompany) params.set('company', selectedCompany)
+      const response = await fetch(`/api/search?${params.toString()}`)
 
-        const response = await fetch(`/api/search?${params.toString()}`)
+      if (currentRequestId !== requestIdRef.current) return
 
-        // Ignore if this is a stale request
-        if (currentRequestId !== requestIdRef.current) return
-
-        if (!response.ok) {
-          setAdjusters([])
-          return
-        }
-
-        const data = await response.json()
-        
-        // Ignore if this is a stale request
-        if (currentRequestId !== requestIdRef.current) return
-
-        setAdjusters(data.adjusters || [])
-      } catch (err) {
-        // Ignore if this is a stale request
-        if (currentRequestId !== requestIdRef.current) return
-        
-        console.error('Search error:', err)
+      if (!response.ok) {
         setAdjusters([])
-      } finally {
-        // Only update loading if this is the current request
-        if (currentRequestId === requestIdRef.current) {
-          setLoading(false)
-        }
+        return
+      }
+
+      const data = await response.json()
+      
+      if (currentRequestId !== requestIdRef.current) return
+
+      setAdjusters(data.adjusters || [])
+    } catch (err) {
+      if (currentRequestId !== requestIdRef.current) return
+      console.error('Search error:', err)
+      setAdjusters([])
+    } finally {
+      if (currentRequestId === requestIdRef.current) {
+        setLoading(false)
       }
     }
-
-    const timer = setTimeout(doSearch, 300)
-    
-    return () => {
-      clearTimeout(timer)
-    }
   }, [searchTerm, selectedState, selectedCompany, hasFilter])
+
+  // Run search when filters change (after mount)
+  useEffect(() => {
+    if (!mounted) return
+    
+    const timer = setTimeout(doSearch, 100)
+    return () => clearTimeout(timer)
+  }, [mounted, doSearch])
 
   const getInitials = (firstName: string, lastName: string) => {
     return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase()
@@ -145,6 +143,25 @@ function SearchContent() {
     if (selectedState) return `Adjusters in ${stateNames[selectedState]}`
     if (selectedCompany) return `${selectedCompany} Adjusters`
     return 'Search Insurance Adjusters'
+  }
+
+  // Show loading until mounted
+  if (!mounted) {
+    return (
+      <main className="min-h-screen bg-gray-50">
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-6xl mx-auto px-4 py-6">
+            <div className="h-8 bg-gray-200 rounded w-64 animate-pulse" />
+          </div>
+        </div>
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="text-center py-16">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-gray-600 mt-4">Loading...</p>
+          </div>
+        </div>
+      </main>
+    )
   }
 
   return (
