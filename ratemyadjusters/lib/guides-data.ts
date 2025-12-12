@@ -1,133 +1,100 @@
-// lib/guides-data.ts
-// Central configuration for all guides - add new guides here and the index page auto-updates
-
 export interface Guide {
   slug: string
   title: string
   description: string
   readTime: string
-  category: 'Claims Process' | 'Basics' | 'Adjuster Types' | 'Industry Analysis' | 'Industry History' | 'Technology' | 'How To'
+  category: string
+  featured?: boolean
   new?: boolean
 }
 
-export const guides: Guide[] = [
-  // HOW TO GUIDES (High Intent)
-  {
-    slug: 'how-to-review-your-insurance-adjuster',
-    title: 'How to Review Your Insurance Adjuster',
-    description: 'Step-by-step guide to leaving an anonymous review and helping other homeowners protect themselves.',
-    readTime: '5 min read',
-    category: 'How To',
-    new: true,
-  },
-  
-  // CORE GUIDES - Claims Process
+export const guidesData: Guide[] = [
+  // ===== CORE GUIDES =====
   {
     slug: 'what-to-expect-when-adjuster-visits',
-    title: 'What to Expect When an Adjuster Visits',
-    description: 'Prepare for your insurance adjuster inspection with this comprehensive guide.',
-    readTime: '8 min read',
+    title: 'What to Expect When an Insurance Adjuster Visits Your Home',
+    description: 'Your complete guide to the insurance claim inspection process—from preparation to what happens after the adjuster leaves.',
+    readTime: '5 min read',
     category: 'Claims Process',
+    featured: true,
   },
-  {
-    slug: 'how-to-file-insurance-claim',
-    title: 'How to File an Insurance Claim',
-    description: 'Step-by-step guide to filing a homeowners insurance claim after property damage.',
-    readTime: '10 min read',
-    category: 'Claims Process',
-  },
-  {
-    slug: 'claim-denied-what-to-do',
-    title: 'What to Do If Your Claim Is Denied',
-    description: 'Your options when an insurance company denies your property damage claim.',
-    readTime: '9 min read',
-    category: 'Claims Process',
-  },
-  {
-    slug: 'how-to-negotiate-with-adjuster',
-    title: 'How to Communicate with Your Adjuster',
-    description: 'Tips for effective communication during the claims process.',
-    readTime: '7 min read',
-    category: 'Claims Process',
-  },
-
-  // CORE GUIDES - Basics
   {
     slug: 'what-is-an-insurance-adjuster',
     title: 'What Is an Insurance Adjuster?',
-    description: 'Understanding the role of insurance adjusters in the claims process.',
+    description: 'Learn about the role of insurance adjusters, what they do during the claims process, and how they evaluate property damage.',
     readTime: '6 min read',
     category: 'Basics',
+    featured: true,
   },
-
-  // CORE GUIDES - Adjuster Types
   {
     slug: 'staff-vs-independent-adjuster',
     title: 'Staff vs. Independent Adjusters',
-    description: 'The key differences between staff adjusters and independent adjusters.',
-    readTime: '7 min read',
+    description: 'Understand the differences between staff adjusters, independent adjusters, and public adjusters, and how each type works.',
+    readTime: '5 min read',
     category: 'Adjuster Types',
   },
   {
     slug: 'what-is-a-public-adjuster',
     title: 'What Is a Public Adjuster?',
-    description: 'When and why you might hire a public adjuster to represent your interests.',
-    readTime: '8 min read',
+    description: 'Learn what public adjusters do, how they differ from company adjusters, and when homeowners may consider hiring one.',
+    readTime: '6 min read',
     category: 'Adjuster Types',
   },
+  {
+    slug: 'how-to-file-insurance-claim',
+    title: 'How to File an Insurance Claim',
+    description: 'A step-by-step overview of the insurance claim process, from documenting damage to working with your adjuster.',
+    readTime: '7 min read',
+    category: 'Claims Process',
+  },
+  {
+    slug: 'claim-denied-what-to-do',
+    title: 'What to Do If Your Claim Is Denied',
+    description: 'Understand your options if your insurance claim is denied, including the appeals process and when to seek professional help.',
+    readTime: '7 min read',
+    category: 'Claims Process',
+  },
+  {
+    slug: 'how-to-negotiate-with-adjuster',
+    title: 'How to Communicate with Your Adjuster',
+    description: 'Tips for effective communication with your insurance adjuster to help ensure a smooth claims process.',
+    readTime: '6 min read',
+    category: 'Claims Process',
+  },
 
-  // INDUSTRY DEEP DIVES
+  // ===== INDUSTRY DEEP DIVES =====
   {
     slug: 'wall-street-blackrock-insurance-claims',
     title: 'How Wall Street, BlackRock, and Alacrity Solutions Shape Insurance Claims',
-    description: 'Understanding institutional investment in claims management and what it means for policyholders.',
+    description: 'Understanding how asset managers, private equity, and vendor networks influence the modern insurance claim experience.',
     readTime: '12 min read',
     category: 'Industry Analysis',
-    new: false,
+    new: true,
   },
   {
     slug: 'ai-insurance-claims-2025',
     title: 'How AI Is Transforming Homeowners Insurance in 2025',
-    description: 'The rise of automated claims processing, AI damage assessment, and what policyholders should know.',
-    readTime: '10 min read',
+    description: 'Learn how artificial intelligence is changing claims processing, underwriting, fraud detection, and what it means for homeowners.',
+    readTime: '15 min read',
     category: 'Technology',
-    new: false,
+    new: true,
   },
   {
     slug: 'mckinsey-allstate-insurance-claims-history',
     title: 'How the Insurance Industry Fell Behind: The McKinsey Era',
-    description: 'The controversial history of claims management consulting and its lasting impact on policyholders.',
-    readTime: '11 min read',
+    description: 'An analysis of how claims practices evolved from the 1990s to today, and how technology is reshaping the policyholder experience.',
+    readTime: '12 min read',
     category: 'Industry History',
-    new: false,
+    new: true,
   },
   {
     slug: 'vendor-networks-insurance-claims',
-    title: 'Vendor Networks: Sedgwick, Alacrity & Third-Party Administrators',
-    description: 'How TPAs and vendor networks influence the claims process between you and your insurer.',
-    readTime: '9 min read',
+    title: 'Vendor Networks: Sedgwick, Alacrity, Wardlaw & Third-Party Administrators',
+    description: 'How third-party administrators, managed repair networks, and desk reviewers influence insurance claim outcomes.',
+    readTime: '14 min read',
     category: 'Industry Analysis',
-    new: false,
+    new: true,
   },
+
+  // ===== ADD NEW GUIDES BELOW THIS LINE =====
 ]
-
-// Helper function to get guides by category
-export function getGuidesByCategory(category: Guide['category']): Guide[] {
-  return guides.filter(g => g.category === category)
-}
-
-// Helper function to get featured/new guides
-export function getNewGuides(): Guide[] {
-  return guides.filter(g => g.new)
-}
-
-// Category display order and labels
-export const categoryConfig = {
-  'How To': { label: 'How To Guides', order: 0 },
-  'Claims Process': { label: 'Claims Process', order: 1 },
-  'Basics': { label: 'Getting Started', order: 2 },
-  'Adjuster Types': { label: 'Types of Adjusters', order: 3 },
-  'Industry Analysis': { label: 'Industry Deep Dives', order: 4 },
-  'Industry History': { label: 'Industry History', order: 5 },
-  'Technology': { label: 'Technology & Trends', order: 6 },
-}
