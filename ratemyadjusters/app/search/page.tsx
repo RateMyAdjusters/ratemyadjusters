@@ -1,14 +1,9 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@supabase/supabase-js'
-
-// Create Supabase client directly to avoid any import issues
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-const supabase = createClient(supabaseUrl, supabaseAnonKey)
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
 const stateNames: { [key: string]: string } = {
   'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas',
@@ -30,8 +25,7 @@ const stateAbbreviations = Object.keys(stateNames)
 
 const majorCompanies = [
   'State Farm', 'Allstate', 'USAA', 'Liberty Mutual', 'Progressive',
-  'Farmers', 'Nationwide', 'Travelers', 'GEICO', 'American Family',
-  'Erie Insurance', 'Chubb', 'The Hartford', 'Sedgwick', 'Crawford & Company'
+  'Farmers', 'Nationwide', 'Travelers', 'GEICO', 'Sedgwick'
 ]
 
 interface Adjuster {
@@ -47,39 +41,33 @@ interface Adjuster {
 }
 
 function StarRatingDisplay({ rating }: { rating: number }) {
-  const stars = []
   const fullStars = Math.floor(rating)
   const hasHalf = rating % 1 >= 0.5
+  
+  return (
+    <div className="flex gap-0.5">
+      {[0, 1, 2, 3, 4].map((i) => (
+        <svg
+          key={i}
+          className={`w-4 h-4 ${i < fullStars ? 'text-yellow-400' : (i === fullStars && hasHalf) ? 'text-yellow-400' : 'text-gray-300'} fill-current`}
+          viewBox="0 0 20 20"
+        >
+          <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+        </svg>
+      ))}
+    </div>
+  )
+}
 
-  for (let i = 0; i < 5; i++) {
-    if (i < fullStars) {
-      stars.push(
-        <svg key={i} className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
-          <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-        </svg>
-      )
-    } else if (i === fullStars && hasHalf) {
-      stars.push(
-        <svg key={i} className="w-4 h-4 text-yellow-400" viewBox="0 0 20 20">
-          <defs>
-            <linearGradient id={`half-${i}`}>
-              <stop offset="50%" stopColor="currentColor" />
-              <stop offset="50%" stopColor="#D1D5DB" />
-            </linearGradient>
-          </defs>
-          <path fill={`url(#half-${i})`} d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-        </svg>
-      )
-    } else {
-      stars.push(
-        <svg key={i} className="w-4 h-4 text-gray-300 fill-current" viewBox="0 0 20 20">
-          <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-        </svg>
-      )
-    }
+function getSupabaseClient(): SupabaseClient | null {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  
+  if (!url || !key) {
+    return null
   }
-
-  return <div className="flex gap-0.5">{stars}</div>
+  
+  return createClient(url, key)
 }
 
 function SearchContent() {
@@ -94,50 +82,61 @@ function SearchContent() {
   )
   const [selectedCompany, setSelectedCompany] = useState('')
   const [adjusters, setAdjusters] = useState<Adjuster[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [debugInfo, setDebugInfo] = useState<string>('')
+  const [hasSearched, setHasSearched] = useState(false)
+  const [isReady, setIsReady] = useState(false)
+  
+  const supabaseRef = useRef<SupabaseClient | null>(null)
+
+  // Initialize Supabase client on mount
+  useEffect(() => {
+    supabaseRef.current = getSupabaseClient()
+    setIsReady(true)
+  }, [])
+
+  const hasFilter = searchTerm.trim() !== '' || selectedState !== '' || selectedCompany !== ''
 
   useEffect(() => {
+    if (!isReady) return
+    
+    if (!hasFilter) {
+      setAdjusters([])
+      setHasSearched(false)
+      return
+    }
+
     async function loadAdjusters() {
+      const supabase = supabaseRef.current
+      
+      if (!supabase) {
+        setError('Database connection not available. Please refresh the page.')
+        return
+      }
+      
       setLoading(true)
       setError(null)
-      setDebugInfo('')
+      setHasSearched(true)
 
       try {
-        // Check if Supabase is configured
-        if (!supabaseUrl || !supabaseAnonKey) {
-          setError('Supabase is not configured. Please check environment variables.')
-          setDebugInfo('Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY')
-          setLoading(false)
-          return
-        }
-
-        // Build the query
         let query = supabase
           .from('adjusters')
           .select('id, first_name, last_name, slug, company_name, state, city, avg_rating, total_reviews')
 
-        // Apply filters
         const trimmedSearch = searchTerm.trim()
-        
+
+        if (selectedState) {
+          query = query.eq('state', selectedState)
+        }
+
+        if (selectedCompany) {
+          query = query.ilike('company_name', `%${selectedCompany}%`)
+        }
+
         if (trimmedSearch) {
-          // Check if search term is a state abbreviation
           if (stateAbbreviations.includes(trimmedSearch.toUpperCase())) {
             query = query.eq('state', trimmedSearch.toUpperCase())
-          }
-          // Check if search term is a full state name
-          else if (Object.values(stateNames).map(s => s.toLowerCase()).includes(trimmedSearch.toLowerCase())) {
-            const abbrev = Object.entries(stateNames).find(
-              ([, name]) => name.toLowerCase() === trimmedSearch.toLowerCase()
-            )?.[0]
-            if (abbrev) {
-              query = query.eq('state', abbrev)
-            }
-          }
-          // Check if it looks like a name search
-          else if (trimmedSearch.includes(' ')) {
-            // Full name search
+          } else if (trimmedSearch.includes(' ')) {
             const parts = trimmedSearch.split(' ')
             const firstName = parts[0]
             const lastName = parts.slice(1).join(' ')
@@ -145,60 +144,63 @@ function SearchContent() {
               .ilike('first_name', `${firstName}%`)
               .ilike('last_name', `${lastName}%`)
           } else {
-            // Single term - search in both first and last name
-            query = query.or(`first_name.ilike.${trimmedSearch}%,last_name.ilike.${trimmedSearch}%`)
+            query = query.ilike('last_name', `${trimmedSearch}%`)
           }
         }
 
-        // State filter from dropdown
-        if (selectedState) {
-          query = query.eq('state', selectedState)
-        }
-
-        // Company filter
-        if (selectedCompany) {
-          query = query.ilike('company_name', `%${selectedCompany}%`)
-        }
-
-        // Order and limit
-        query = query
+        const { data, error: queryError } = await query
           .order('total_reviews', { ascending: false, nullsFirst: false })
           .limit(50)
 
-        const { data, error: queryError } = await query
-
         if (queryError) {
-          console.error('Supabase error:', queryError)
-          setError(`Database error: ${queryError.message}`)
-          setDebugInfo(JSON.stringify(queryError, null, 2))
+          console.error('Query error:', queryError)
+          setError(`Search failed: ${queryError.message}`)
           setAdjusters([])
         } else {
           setAdjusters(data || [])
-          setDebugInfo(`Found ${data?.length || 0} adjusters`)
         }
-      } catch (err: any) {
-        console.error('Error loading adjusters:', err)
-        setError(`Error: ${err.message || 'Unknown error'}`)
-        setDebugInfo(err.stack || '')
+      } catch (err: unknown) {
+        console.error('Error:', err)
+        setError('Something went wrong. Please try again.')
         setAdjusters([])
       } finally {
         setLoading(false)
       }
     }
 
-    loadAdjusters()
-  }, [searchTerm, selectedState, selectedCompany])
+    const timer = setTimeout(loadAdjusters, 300)
+    return () => clearTimeout(timer)
+  }, [searchTerm, selectedState, selectedCompany, hasFilter, isReady])
 
   const getInitials = (firstName: string, lastName: string) => {
     return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase()
   }
 
   const getPageTitle = () => {
-    if (searchTerm) return `Search results for "${searchTerm}"`
+    if (searchTerm) return `Results for "${searchTerm}"`
     if (selectedState && selectedCompany) return `${selectedCompany} Adjusters in ${stateNames[selectedState]}`
     if (selectedState) return `Adjusters in ${stateNames[selectedState]}`
     if (selectedCompany) return `${selectedCompany} Adjusters`
-    return 'Browse Insurance Adjusters'
+    return 'Search Insurance Adjusters'
+  }
+
+  // Show loading while initializing
+  if (!isReady) {
+    return (
+      <main className="min-h-screen bg-gray-50">
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-6xl mx-auto px-4 py-6">
+            <div className="h-8 bg-gray-200 rounded w-64 animate-pulse" />
+          </div>
+        </div>
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="text-center py-16">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-gray-600 mt-4">Loading...</p>
+          </div>
+        </div>
+      </main>
+    )
   }
 
   return (
@@ -208,18 +210,18 @@ function SearchContent() {
         <div className="max-w-6xl mx-auto px-4 py-6">
           <h1 className="text-2xl font-bold text-gray-900">{getPageTitle()}</h1>
           <p className="text-gray-600 mt-1">
-            {loading ? 'Loading...' : `${adjusters.length} adjuster${adjusters.length !== 1 ? 's' : ''} found`}
+            {loading ? 'Searching...' : hasSearched ? `${adjusters.length} adjuster${adjusters.length !== 1 ? 's' : ''} found` : 'Enter a name, select a state, or choose a company to search'}
           </p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex flex-wrap gap-4">
             <input
               type="text"
-              placeholder="Search by name..."
+              placeholder="Search by last name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="flex-1 min-w-[200px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -229,7 +231,7 @@ function SearchContent() {
               onChange={(e) => setSelectedState(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
             >
-              <option value="">All States</option>
+              <option value="">Select State</option>
               {stateAbbreviations.map((abbr) => (
                 <option key={abbr} value={abbr}>
                   {abbr} - {stateNames[abbr]}
@@ -241,7 +243,7 @@ function SearchContent() {
               onChange={(e) => setSelectedCompany(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
             >
-              <option value="">All Companies</option>
+              <option value="">Select Company</option>
               {majorCompanies.map((company) => (
                 <option key={company} value={company}>
                   {company}
@@ -254,17 +256,57 @@ function SearchContent() {
 
       {/* Results */}
       <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Error display */}
+        {/* Error */}
         {error && (
           <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-700 font-medium">{error}</p>
-            {debugInfo && (
-              <pre className="mt-2 text-xs text-red-600 overflow-auto">{debugInfo}</pre>
-            )}
+            <p className="text-red-700">{error}</p>
           </div>
         )}
 
-        {/* Loading state */}
+        {/* Prompt to search */}
+        {!hasFilter && !loading && (
+          <div className="text-center py-16">
+            <div className="text-6xl mb-4">🔍</div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Search 400,000+ Adjusters</h2>
+            <p className="text-gray-600 mb-6 max-w-md mx-auto">
+              Enter an adjuster&apos;s name, select a state, or choose an insurance company to get started.
+            </p>
+            <div className="flex flex-wrap justify-center gap-2">
+              <button
+                onClick={() => setSelectedState('TX')}
+                className="px-4 py-2 bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors"
+              >
+                Texas
+              </button>
+              <button
+                onClick={() => setSelectedState('FL')}
+                className="px-4 py-2 bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors"
+              >
+                Florida
+              </button>
+              <button
+                onClick={() => setSelectedState('CA')}
+                className="px-4 py-2 bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors"
+              >
+                California
+              </button>
+              <button
+                onClick={() => setSelectedCompany('State Farm')}
+                className="px-4 py-2 bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition-colors"
+              >
+                State Farm
+              </button>
+              <button
+                onClick={() => setSelectedCompany('Allstate')}
+                className="px-4 py-2 bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition-colors"
+              >
+                Allstate
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Loading */}
         {loading && (
           <div className="space-y-4">
             {[1, 2, 3, 4, 5].map((i) => (
@@ -283,12 +325,12 @@ function SearchContent() {
         )}
 
         {/* No results */}
-        {!loading && !error && adjusters.length === 0 && (
+        {!loading && hasSearched && adjusters.length === 0 && (
           <div className="text-center py-16">
-            <div className="text-6xl mb-4">🔍</div>
+            <div className="text-6xl mb-4">😕</div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">No adjusters found</h2>
             <p className="text-gray-600 mb-6">
-              Try adjusting your search or filters
+              Try a different search or broaden your filters
             </p>
             <Link
               href="/add-adjuster"
@@ -299,7 +341,7 @@ function SearchContent() {
           </div>
         )}
 
-        {/* Results list */}
+        {/* Results */}
         {!loading && adjusters.length > 0 && (
           <div className="space-y-4">
             {adjusters.map((adjuster) => (
@@ -334,7 +376,7 @@ function SearchContent() {
                     </div>
                   </div>
                   <div className="hidden sm:block">
-                    <span className="text-blue-600 font-medium">View Profile →</span>
+                    <span className="text-blue-600 font-medium">View →</span>
                   </div>
                 </div>
               </Link>
@@ -342,10 +384,10 @@ function SearchContent() {
           </div>
         )}
 
-        {/* Add adjuster CTA at bottom */}
+        {/* Add adjuster CTA */}
         {!loading && adjusters.length > 0 && (
           <div className="mt-8 text-center">
-            <p className="text-gray-600 mb-3">Can&#39;t find the adjuster you&#39;re looking for?</p>
+            <p className="text-gray-600 mb-3">Can&apos;t find who you&apos;re looking for?</p>
             <Link
               href="/add-adjuster"
               className="inline-block bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors"
@@ -370,19 +412,9 @@ export default function SearchPage() {
             </div>
           </div>
           <div className="max-w-6xl mx-auto px-4 py-8">
-            <div className="space-y-4">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="bg-white rounded-xl p-6 shadow-sm animate-pulse">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 bg-gray-200 rounded-full" />
-                    <div className="flex-1">
-                      <div className="h-5 bg-gray-200 rounded w-48 mb-2" />
-                      <div className="h-4 bg-gray-200 rounded w-64 mb-2" />
-                      <div className="h-4 bg-gray-200 rounded w-32" />
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="text-center py-16">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="text-gray-600 mt-4">Loading...</p>
             </div>
           </div>
         </main>
