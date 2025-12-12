@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
@@ -71,8 +71,10 @@ function SearchContent() {
   const [selectedCompany, setSelectedCompany] = useState('')
   const [adjusters, setAdjusters] = useState<Adjuster[]>([])
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [hasSearched, setHasSearched] = useState(false)
+  
+  // Track request ID to ignore stale responses
+  const requestIdRef = useRef(0)
 
   const hasFilter = searchTerm.trim() !== '' || selectedState !== '' || selectedCompany !== ''
 
@@ -80,15 +82,14 @@ function SearchContent() {
     if (!hasFilter) {
       setAdjusters([])
       setHasSearched(false)
-      setError(null)
       return
     }
 
-    const controller = new AbortController()
+    // Increment request ID
+    const currentRequestId = ++requestIdRef.current
 
     async function doSearch() {
       setLoading(true)
-      setError(null)
       setHasSearched(true)
 
       try {
@@ -97,31 +98,33 @@ function SearchContent() {
         if (selectedState) params.set('state', selectedState)
         if (selectedCompany) params.set('company', selectedCompany)
 
-        const response = await fetch(`/api/search?${params.toString()}`, {
-          signal: controller.signal,
-        })
+        const response = await fetch(`/api/search?${params.toString()}`)
+
+        // Ignore if this is a stale request
+        if (currentRequestId !== requestIdRef.current) return
 
         if (!response.ok) {
-          throw new Error('Search failed')
+          setAdjusters([])
+          return
         }
 
         const data = await response.json()
         
-        if (data.error) {
-          throw new Error(data.error)
-        }
+        // Ignore if this is a stale request
+        if (currentRequestId !== requestIdRef.current) return
 
         setAdjusters(data.adjusters || [])
-        setError(null)
-      } catch (err: unknown) {
-        if (err instanceof Error && err.name === 'AbortError') {
-          return // Ignore aborted requests
-        }
+      } catch (err) {
+        // Ignore if this is a stale request
+        if (currentRequestId !== requestIdRef.current) return
+        
         console.error('Search error:', err)
-        setError('Search failed. Please try again.')
         setAdjusters([])
       } finally {
-        setLoading(false)
+        // Only update loading if this is the current request
+        if (currentRequestId === requestIdRef.current) {
+          setLoading(false)
+        }
       }
     }
 
@@ -129,7 +132,6 @@ function SearchContent() {
     
     return () => {
       clearTimeout(timer)
-      controller.abort()
     }
   }, [searchTerm, selectedState, selectedCompany, hasFilter])
 
@@ -198,13 +200,6 @@ function SearchContent() {
 
       {/* Results */}
       <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Error */}
-        {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-700">{error}</p>
-          </div>
-        )}
-
         {/* Prompt to search */}
         {!hasFilter && !loading && (
           <div className="text-center py-16">
@@ -267,7 +262,7 @@ function SearchContent() {
         )}
 
         {/* No results */}
-        {!loading && !error && hasSearched && adjusters.length === 0 && (
+        {!loading && hasSearched && adjusters.length === 0 && (
           <div className="text-center py-16">
             <div className="text-6xl mb-4">😕</div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">No adjusters found</h2>
@@ -284,7 +279,7 @@ function SearchContent() {
         )}
 
         {/* Results */}
-        {!loading && !error && adjusters.length > 0 && (
+        {!loading && adjusters.length > 0 && (
           <div className="space-y-4">
             {adjusters.map((adjuster) => (
               <Link
@@ -327,7 +322,7 @@ function SearchContent() {
         )}
 
         {/* Add adjuster CTA */}
-        {!loading && !error && adjusters.length > 0 && (
+        {!loading && adjusters.length > 0 && (
           <div className="mt-8 text-center">
             <p className="text-gray-600 mb-3">Can&apos;t find who you&apos;re looking for?</p>
             <Link
