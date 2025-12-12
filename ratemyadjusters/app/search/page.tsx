@@ -1,9 +1,24 @@
 'use client'
 
-import { useState, useEffect, Suspense, useRef } from 'react'
+import { useState, useEffect, Suspense, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
+
+// Singleton Supabase client
+let supabaseInstance: SupabaseClient | null = null
+
+function getSupabase(): SupabaseClient | null {
+  if (supabaseInstance) return supabaseInstance
+  
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  
+  if (!url || !key) return null
+  
+  supabaseInstance = createClient(url, key)
+  return supabaseInstance
+}
 
 const stateNames: { [key: string]: string } = {
   'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas',
@@ -59,17 +74,6 @@ function StarRatingDisplay({ rating }: { rating: number }) {
   )
 }
 
-function getSupabaseClient(): SupabaseClient | null {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  
-  if (!url || !key) {
-    return null
-  }
-  
-  return createClient(url, key)
-}
-
 function SearchContent() {
   const searchParams = useSearchParams()
   
@@ -85,92 +89,103 @@ function SearchContent() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [hasSearched, setHasSearched] = useState(false)
-  const [isReady, setIsReady] = useState(false)
-  
-  const supabaseRef = useRef<SupabaseClient | null>(null)
-
-  // Initialize Supabase client on mount
-  useEffect(() => {
-    supabaseRef.current = getSupabaseClient()
-    setIsReady(true)
-  }, [])
+  const [retryCount, setRetryCount] = useState(0)
 
   const hasFilter = searchTerm.trim() !== '' || selectedState !== '' || selectedCompany !== ''
 
-  useEffect(() => {
-    if (!isReady) return
-    
+  const loadAdjusters = useCallback(async (isRetry = false) => {
     if (!hasFilter) {
       setAdjusters([])
       setHasSearched(false)
       return
     }
 
-    async function loadAdjusters() {
-      const supabase = supabaseRef.current
+    // Small delay on first load to let everything initialize
+    if (!isRetry) {
+      await new Promise(resolve => setTimeout(resolve, 100))
+    }
+
+    const supabase = getSupabase()
+    
+    if (!supabase) {
+      setError('Unable to connect. Please refresh the page.')
+      return
+    }
+    
+    setLoading(true)
+    setError(null)
+    setHasSearched(true)
+
+    try {
+      let query = supabase
+        .from('adjusters')
+        .select('id, first_name, last_name, slug, company_name, state, city, avg_rating, total_reviews')
+
+      const trimmedSearch = searchTerm.trim()
+
+      if (selectedState) {
+        query = query.eq('state', selectedState)
+      }
+
+      if (selectedCompany) {
+        query = query.ilike('company_name', `%${selectedCompany}%`)
+      }
+
+      if (trimmedSearch) {
+        if (stateAbbreviations.includes(trimmedSearch.toUpperCase())) {
+          query = query.eq('state', trimmedSearch.toUpperCase())
+        } else if (trimmedSearch.includes(' ')) {
+          const parts = trimmedSearch.split(' ')
+          const firstName = parts[0]
+          const lastName = parts.slice(1).join(' ')
+          query = query
+            .ilike('first_name', `${firstName}%`)
+            .ilike('last_name', `${lastName}%`)
+        } else {
+          query = query.ilike('last_name', `${trimmedSearch}%`)
+        }
+      }
+
+      const { data, error: queryError } = await query
+        .order('total_reviews', { ascending: false, nullsFirst: false })
+        .limit(50)
+
+      if (queryError) {
+        throw new Error(queryError.message)
+      }
       
-      if (!supabase) {
-        setError('Database connection not available. Please refresh the page.')
+      setAdjusters(data || [])
+      setError(null)
+    } catch (err) {
+      console.error('Search error:', err)
+      
+      // Auto-retry once on failure
+      if (!isRetry && retryCount < 1) {
+        setRetryCount(prev => prev + 1)
+        setTimeout(() => loadAdjusters(true), 500)
         return
       }
       
-      setLoading(true)
-      setError(null)
-      setHasSearched(true)
-
-      try {
-        let query = supabase
-          .from('adjusters')
-          .select('id, first_name, last_name, slug, company_name, state, city, avg_rating, total_reviews')
-
-        const trimmedSearch = searchTerm.trim()
-
-        if (selectedState) {
-          query = query.eq('state', selectedState)
-        }
-
-        if (selectedCompany) {
-          query = query.ilike('company_name', `%${selectedCompany}%`)
-        }
-
-        if (trimmedSearch) {
-          if (stateAbbreviations.includes(trimmedSearch.toUpperCase())) {
-            query = query.eq('state', trimmedSearch.toUpperCase())
-          } else if (trimmedSearch.includes(' ')) {
-            const parts = trimmedSearch.split(' ')
-            const firstName = parts[0]
-            const lastName = parts.slice(1).join(' ')
-            query = query
-              .ilike('first_name', `${firstName}%`)
-              .ilike('last_name', `${lastName}%`)
-          } else {
-            query = query.ilike('last_name', `${trimmedSearch}%`)
-          }
-        }
-
-        const { data, error: queryError } = await query
-          .order('total_reviews', { ascending: false, nullsFirst: false })
-          .limit(50)
-
-        if (queryError) {
-          console.error('Query error:', queryError)
-          setError(`Search failed: ${queryError.message}`)
-          setAdjusters([])
-        } else {
-          setAdjusters(data || [])
-        }
-      } catch (err: unknown) {
-        console.error('Error:', err)
-        setError('Something went wrong. Please try again.')
-        setAdjusters([])
-      } finally {
-        setLoading(false)
-      }
+      setError('Search failed. Please try again.')
+      setAdjusters([])
+    } finally {
+      setLoading(false)
     }
+  }, [searchTerm, selectedState, selectedCompany, hasFilter, retryCount])
 
-    const timer = setTimeout(loadAdjusters, 300)
+  // Trigger search when filters change
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setRetryCount(0)
+      loadAdjusters()
+    }, 300)
     return () => clearTimeout(timer)
-  }, [searchTerm, selectedState, selectedCompany, hasFilter, isReady])
+  }, [searchTerm, selectedState, selectedCompany, loadAdjusters])
+
+  const handleRetry = () => {
+    setRetryCount(0)
+    loadAdjusters(true)
+  }
 
   const getInitials = (firstName: string, lastName: string) => {
     return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase()
@@ -182,25 +197,6 @@ function SearchContent() {
     if (selectedState) return `Adjusters in ${stateNames[selectedState]}`
     if (selectedCompany) return `${selectedCompany} Adjusters`
     return 'Search Insurance Adjusters'
-  }
-
-  // Show loading while initializing
-  if (!isReady) {
-    return (
-      <main className="min-h-screen bg-gray-50">
-        <div className="bg-white border-b border-gray-200">
-          <div className="max-w-6xl mx-auto px-4 py-6">
-            <div className="h-8 bg-gray-200 rounded w-64 animate-pulse" />
-          </div>
-        </div>
-        <div className="max-w-6xl mx-auto px-4 py-8">
-          <div className="text-center py-16">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="text-gray-600 mt-4">Loading...</p>
-          </div>
-        </div>
-      </main>
-    )
   }
 
   return (
@@ -256,10 +252,16 @@ function SearchContent() {
 
       {/* Results */}
       <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Error */}
+        {/* Error with retry button */}
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
             <p className="text-red-700">{error}</p>
+            <button
+              onClick={handleRetry}
+              className="ml-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+            >
+              Retry
+            </button>
           </div>
         )}
 
@@ -325,7 +327,7 @@ function SearchContent() {
         )}
 
         {/* No results */}
-        {!loading && hasSearched && adjusters.length === 0 && (
+        {!loading && !error && hasSearched && adjusters.length === 0 && (
           <div className="text-center py-16">
             <div className="text-6xl mb-4">😕</div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">No adjusters found</h2>
@@ -342,7 +344,7 @@ function SearchContent() {
         )}
 
         {/* Results */}
-        {!loading && adjusters.length > 0 && (
+        {!loading && !error && adjusters.length > 0 && (
           <div className="space-y-4">
             {adjusters.map((adjuster) => (
               <Link
@@ -385,7 +387,7 @@ function SearchContent() {
         )}
 
         {/* Add adjuster CTA */}
-        {!loading && adjusters.length > 0 && (
+        {!loading && !error && adjusters.length > 0 && (
           <div className="mt-8 text-center">
             <p className="text-gray-600 mb-3">Can&apos;t find who you&apos;re looking for?</p>
             <Link
