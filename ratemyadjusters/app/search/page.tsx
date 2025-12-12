@@ -11,10 +11,10 @@ function SearchContent() {
   const [selectedCompany, setSelectedCompany] = useState('')
   const [selectedState, setSelectedState] = useState('')
   const [adjusters, setAdjusters] = useState<any[]>([])
-  const [companies, setCompanies] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [initialized, setInitialized] = useState(false)
 
   const stateNames: { [key: string]: string } = {
     'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas',
@@ -34,7 +34,6 @@ function SearchContent() {
 
   const states = Object.keys(stateNames)
 
-  // Major insurance companies for the dropdown
   const majorCompanies = [
     'State Farm',
     'Allstate',
@@ -54,6 +53,7 @@ function SearchContent() {
     'Alacrity Solutions'
   ]
 
+  // Initialize from URL params on mount
   useEffect(() => {
     const q = searchParams.get('q')?.trim() || ''
     const stateParam = searchParams.get('state')?.trim().toUpperCase() || ''
@@ -66,125 +66,100 @@ function SearchContent() {
       setSearchTerm(q)
     }
     
-    // Initial load
-    if (!q && !stateParam) {
-      fetchAdjusters()
-    }
+    setInitialized(true)
   }, [searchParams])
 
+  // Fetch data when filters change (only after initialized)
   useEffect(() => {
-    applyFilters()
-  }, [searchTerm, selectedCompany, selectedState])
+    if (!initialized) return
+    
+    fetchAdjusters()
+  }, [initialized, searchTerm, selectedCompany, selectedState])
 
   async function fetchAdjusters() {
     setLoading(true)
     setError(null)
     
-    const { data, error } = await supabase
-      .from('adjusters')
-      .select(`
-        id,
-        first_name,
-        last_name,
-        slug,
-        company_name,
-        state,
-        city,
-        avg_rating,
-        total_reviews
-      `)
-      .order('total_reviews', { ascending: false })
-      .limit(50)
-    
-    if (error) {
-      console.error('Supabase error:', error)
-      setError('Something went wrong. Please try again.')
-      setLoading(false)
-      return
-    }
-    
-    if (data) setAdjusters(data)
-    setLoading(false)
-  }
+    try {
+      let query = supabase
+        .from('adjusters')
+        .select(`
+          id,
+          first_name,
+          last_name,
+          slug,
+          company_name,
+          state,
+          city,
+          avg_rating,
+          total_reviews
+        `)
 
-  async function applyFilters() {
-    setLoading(true)
-    setError(null)
-    
-    let query = supabase
-      .from('adjusters')
-      .select(`
-        id,
-        first_name,
-        last_name,
-        slug,
-        company_name,
-        state,
-        city,
-        avg_rating,
-        total_reviews
-      `)
-
-    // Handle search term
-    if (searchTerm) {
-      const normalized = searchTerm.trim().toLowerCase()
-      const upperTerm = searchTerm.trim().toUpperCase()
-      
-      // Check if it's a state abbreviation
-      if (states.includes(upperTerm)) {
-        query = query.eq('state', upperTerm)
-      }
-      // Check if it's a state name
-      else if (Object.values(stateNames).map(s => s.toLowerCase()).includes(normalized)) {
-        const stateAbbrev = Object.entries(stateNames).find(([_, name]) => 
-          name.toLowerCase() === normalized
-        )?.[0]
-        if (stateAbbrev) {
-          query = query.eq('state', stateAbbrev)
+      // Handle search term
+      if (searchTerm) {
+        const normalized = searchTerm.trim().toLowerCase()
+        const upperTerm = searchTerm.trim().toUpperCase()
+        
+        // Check if it's a state abbreviation
+        if (states.includes(upperTerm)) {
+          query = query.eq('state', upperTerm)
+        }
+        // Check if it's a state name
+        else if (Object.values(stateNames).map(s => s.toLowerCase()).includes(normalized)) {
+          const stateAbbrev = Object.entries(stateNames).find(([_, name]) => 
+            name.toLowerCase() === normalized
+          )?.[0]
+          if (stateAbbrev) {
+            query = query.eq('state', stateAbbrev)
+          }
+        }
+        // Check if it's a company name
+        else if (majorCompanies.some(c => c.toLowerCase().includes(normalized))) {
+          query = query.ilike('company_name', `%${searchTerm.trim()}%`)
+        }
+        // Check if it looks like a full name (has space)
+        else if (searchTerm.includes(' ')) {
+          const words = searchTerm.trim().split(/\s+/)
+          const firstName = words[0]
+          const lastName = words.slice(1).join(' ')
+          query = query
+            .ilike('first_name', `%${firstName}%`)
+            .ilike('last_name', `%${lastName}%`)
+        }
+        // Single word - search first or last name
+        else {
+          query = query.or(`first_name.ilike.%${searchTerm.trim()}%,last_name.ilike.%${searchTerm.trim()}%`)
         }
       }
-      // Check if it's a company name
-      else if (majorCompanies.some(c => c.toLowerCase().includes(normalized))) {
-        query = query.ilike('company_name', `%${searchTerm.trim()}%`)
+
+      // Apply company filter
+      if (selectedCompany) {
+        query = query.ilike('company_name', `%${selectedCompany}%`)
       }
-      // Check if it looks like a full name (has space)
-      else if (searchTerm.includes(' ')) {
-        const words = searchTerm.trim().split(/\s+/)
-        const firstName = words[0]
-        const lastName = words.slice(1).join(' ')
-        query = query
-          .ilike('first_name', `%${firstName}%`)
-          .ilike('last_name', `%${lastName}%`)
+
+      // Apply state filter
+      if (selectedState) {
+        query = query.eq('state', selectedState)
       }
-      // Single word - search first or last name
-      else {
-        query = query.or(`first_name.ilike.%${searchTerm.trim()}%,last_name.ilike.%${searchTerm.trim()}%`)
+
+      const { data, error: queryError } = await query
+        .order('total_reviews', { ascending: false })
+        .limit(50)
+
+      if (queryError) {
+        console.error('Supabase error:', queryError)
+        setError('Something went wrong. Please try again.')
+        setAdjusters([])
+      } else {
+        setAdjusters(data || [])
       }
-    }
-
-    // Apply company filter
-    if (selectedCompany) {
-      query = query.ilike('company_name', `%${selectedCompany}%`)
-    }
-
-    // Apply state filter
-    if (selectedState) {
-      query = query.eq('state', selectedState)
-    }
-
-    const { data, error } = await query
-      .order('total_reviews', { ascending: false })
-      .limit(50)
-
-    if (error) {
-      console.error('Supabase error:', error)
+    } catch (err) {
+      console.error('Fetch error:', err)
       setError('Something went wrong. Please try again.')
+      setAdjusters([])
+    } finally {
       setLoading(false)
-      return
     }
-
-    if (data) setAdjusters(data)
-    setLoading(false)
   }
 
   const getInitials = (firstName: string, lastName: string) => {
@@ -313,7 +288,7 @@ function SearchContent() {
             <p className="text-gray-500 text-lg">No adjusters found</p>
             <p className="text-gray-400 mt-2">Try a different search or adjust filters</p>
             <Link 
-              href={`/review${searchTerm ? `?name=${encodeURIComponent(searchTerm)}` : ''}`}
+              href={`/add-adjuster${searchTerm ? `?name=${encodeURIComponent(searchTerm)}` : ''}`}
               className="inline-block mt-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
             >
               Can't find your adjuster? Add them now
