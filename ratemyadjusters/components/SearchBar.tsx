@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, X } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 
 interface Adjuster {
@@ -12,7 +11,7 @@ interface Adjuster {
   last_name: string
   slug: string
   state: string
-  companies: { name: string }[] | null
+  company_name: string | null
 }
 
 interface SearchBarProps {
@@ -57,7 +56,7 @@ export default function SearchBar({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Debounced search
+  // Debounced search - use API route instead of direct Supabase
   useEffect(() => {
     if (query.length < 2) {
       setResults([])
@@ -75,39 +74,27 @@ export default function SearchBar({
   async function searchAdjusters(searchQuery: string) {
     setLoading(true)
     
-    const words = searchQuery.trim().split(/\s+/)
+    try {
+      // Use API route instead of direct Supabase query
+      const params = new URLSearchParams()
+      params.set('q', searchQuery)
+      if (selectedState) params.set('state', selectedState)
+      if (selectedCompany) params.set('company', selectedCompany)
+      
+      const response = await fetch(`/api/search?${params.toString()}`)
+      
+      if (response.ok) {
+        const data = await response.json()
+        setResults((data.adjusters || []).slice(0, 8))
+        setIsOpen(true)
+      } else {
+        setResults([])
+      }
+    } catch (error) {
+      console.error('Search error:', error)
+      setResults([])
+    }
     
-    let dbQuery = supabase
-      .from('adjusters')
-      .select(`
-        id,
-        first_name,
-        last_name,
-        slug,
-        state,
-        companies(name)
-      `)
-    
-    if (words.length >= 2) {
-      // Two words: first + last name
-      dbQuery = dbQuery
-        .filter('first_name', 'ilike', `%${words[0]}%`)
-        .filter('last_name', 'ilike', `%${words[1]}%`)
-    } else {
-      // One word: search both fields
-      dbQuery = dbQuery.or(`first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%`)
-    }
-
-    if (selectedState) {
-      dbQuery = dbQuery.eq('state', selectedState)
-    }
-
-    const { data, error } = await dbQuery.limit(8)
-
-    if (data && !error) {
-      setResults(data as Adjuster[])
-      setIsOpen(true)
-    }
     setLoading(false)
   }
 
@@ -223,7 +210,7 @@ export default function SearchBar({
                     {adjuster.first_name} {adjuster.last_name}
                   </p>
                   <p className="text-sm text-gray-500 truncate">
-                    {adjuster.companies?.[0]?.name || 'Unknown Company'} • {adjuster.state}
+                    {adjuster.company_name || 'Independent Adjuster'} • {adjuster.state}
                   </p>
                 </div>
               </Link>
