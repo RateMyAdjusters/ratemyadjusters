@@ -103,14 +103,3 @@ export async function GET() {
     },
   });
 }
-```
-
----
-
-## What is sitemap-core.xml?
-
-You already have it: `app/sitemap-core.xml/route.ts`
-
-It lists your main static pages (homepage, /login, /guides, /privacy, etc.). You can see it at:
-```
-https://ratemyadjusters.com/sitemap-core.xml
