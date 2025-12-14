@@ -221,7 +221,7 @@ function SearchContent() {
         {!hasFilter && !loading && (
           <div className="text-center py-16">
             <div className="text-6xl mb-4">🔍</div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Search 400,000+ Adjusters</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Find Your Adjuster</h2>
             <p className="text-gray-600 mb-6 max-w-md mx-auto">
               Enter an adjuster&apos;s name, select a state, or choose an insurance company to get started.
             </p>
