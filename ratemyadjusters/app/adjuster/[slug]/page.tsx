@@ -303,10 +303,12 @@ export default async function AdjusterProfile({ params }: PageProps) {
   const hasPhone = !!adjuster.phone_raw
   const hasEmail = !!adjuster.email
   
-  // Rating helpers
-  const avgRating = adjuster.avg_rating || 0
-  const totalReviews = adjuster.total_reviews || 0
-  const hasValidRating = totalReviews > 0 && avgRating > 0
+  // Rating helpers - calculate from actual reviews, not stale database
+const totalReviews = reviews.length
+const avgRating = totalReviews > 0 
+  ? reviews.reduce((sum, r) => sum + (r.overall_rating || 0), 0) / totalReviews 
+  : 0
+const hasValidRating = totalReviews > 0
 
   // Trust Score calculation
   const { score: trustScore, breakdown: trustBreakdown } = calculateTrustScore(adjuster, totalReviews)
