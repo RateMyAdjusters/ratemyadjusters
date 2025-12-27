@@ -1,20 +1,4 @@
-import { MetadataRoute } from 'next'
-
-export default function robots(): MetadataRoute.Robots {
-  return {
-    rules: {
-      userAgent: '*',
-      allow: '/',
-    },
-    sitemap: 'https://ratemyadjusters.com/sitemap-index.xml',
-  }
-}
-```
-
-**Save this to: `app/robots.ts`**
-
-This should output:
-```
 User-agent: *
 Allow: /
+
 Sitemap: https://ratemyadjusters.com/sitemap-index.xml
