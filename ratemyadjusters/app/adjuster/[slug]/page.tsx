@@ -119,6 +119,17 @@ function formatReviewDate(dateStr: string | null): string {
   }
 }
 
+function formatISODate(dateStr: string | null): string | null {
+  if (!dateStr) return null
+  try {
+    const date = new Date(dateStr)
+    if (date.getFullYear() < 1980) return null
+    return date.toISOString().split('T')[0]
+  } catch {
+    return null
+  }
+}
+
 function formatLicenseType(qualification: string | null): string {
   if (!qualification) return 'Insurance Adjuster'
   const typeMap: Record<string, string> = {
@@ -202,8 +213,16 @@ function getFAQs(fullName: string, state: string, companyName: string | null, ci
 
   return [
     {
+      question: `Who is ${fullName}?`,
+      answer: `${fullName} is a licensed ${licenseType.toLowerCase()} in ${stateName}. You can read reviews and ratings for ${fullName} on RateMyAdjusters.com, the independent website where homeowners rate and review their insurance claim adjuster.`,
+    },
+    {
       question: `What does ${fullName} do as an insurance adjuster?`,
       answer: `${fullName} is a licensed ${licenseType.toLowerCase()} in ${stateName} who evaluates property damage claims for insurance companies and policyholders. This includes inspecting damaged property, reviewing documentation, preparing repair estimates, and determining coverage amounts under the insurance policy.`,
+    },
+    {
+      question: `How do I leave a review for ${fullName}?`,
+      answer: `To leave a review for ${fullName} on RateMyAdjusters.com: click the "Leave a Review" button on this page, rate ${fullName} on communication, fairness, speed, and overall experience, and submit your review. No account is required and your review will appear immediately.`,
     },
     {
       question: `What types of claims do insurance adjusters in ${stateName} typically handle?`,
@@ -218,20 +237,12 @@ function getFAQs(fullName: string, state: string, companyName: string | null, ci
       answer: `Reading reviews helps you understand what to expect from your insurance adjuster. Past experiences from other homeowners and contractors can reveal communication styles, fairness in claim assessments, response times, and overall professionalism. This information helps you prepare for the claims process.`,
     },
     {
-      question: `How can I leave a review for ${fullName}?`,
-      answer: `Click the "Leave a Review" button on this page to share your experience. Reviews from homeowners, contractors, and public adjusters help others in ${locationText} make informed decisions about their insurance claims.`,
-    },
-    {
       question: `Who sees this page?`,
       answer: `Homeowners, contractors, and sometimes IA firms or carrier teams. This page may appear in Google searches or internal lookups. Anyone researching a claim or an adjuster can view this profile.`,
     },
     {
       question: `What does claiming a profile cost?`,
       answer: `Nothing. Claiming your profile is 100% free. No upsells. No ads. No spam. Ever. You simply verify your identity and gain control over how your professional information appears.`,
-    },
-    {
-      question: `What if something on my profile is inaccurate?`,
-      answer: `We believe in transparency and fairness. If any information or review appears incorrect or inappropriate, contact us — we review every request and will work with you to ensure accuracy.`,
     },
   ]
 }
@@ -260,21 +271,21 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   return {
     title: `${fullName} – ${locationUpper} Insurance Adjuster Reviews | RateMyAdjusters`,
-    description: `Read reviews and claim estimates for ${fullName}, a licensed ${stateName} insurance adjuster${adjuster.city ? ` based in ${adjuster.city}` : ''}. ${ratingText ? `${ratingText} rating. ` : ''}See licensing info, experience metrics, and what homeowners say.`.slice(0, 160),
+    description: `Read reviews and ratings for ${fullName}, a licensed ${stateName} insurance adjuster${adjuster.city ? ` based in ${adjuster.city}` : ''}. ${ratingText ? `${ratingText} rating. ` : ''}See licensing info and what homeowners say on RateMyAdjusters.com.`.slice(0, 160),
     alternates: {
       canonical: profileUrl,
     },
     openGraph: {
       title: `${fullName} – ${locationUpper} Insurance Adjuster Reviews`,
-      description: `See what homeowners and contractors say about ${fullName} in ${locationNormal}. Read real reviews about claim handling, communication, and fairness.`,
+      description: `See what homeowners and contractors say about ${fullName} in ${locationNormal}. Read real reviews about claim handling, communication, and fairness on RateMyAdjusters.com.`,
       type: 'profile',
       url: profileUrl,
-      siteName: 'RateMyAdjusters',
+      siteName: 'RateMyAdjusters.com',
     },
     twitter: {
       card: 'summary_large_image',
       title: `${fullName} – ${adjuster.state} Insurance Adjuster`,
-      description: `${reviewCount > 0 ? `${reviewCount} reviews` : 'No reviews yet'} for ${fullName} in ${locationNormal}. See ratings and claim experiences.`,
+      description: `${reviewCount > 0 ? `${reviewCount} reviews` : 'No reviews yet'} for ${fullName} in ${locationNormal}. See ratings and claim experiences on RateMyAdjusters.com.`,
     },
   }
 }
@@ -304,11 +315,11 @@ export default async function AdjusterProfile({ params }: PageProps) {
   const hasEmail = !!adjuster.email
   
   // Rating helpers - calculate from actual reviews, not stale database
-const totalReviews = reviews.length
-const avgRating = totalReviews > 0 
-  ? reviews.reduce((sum, r) => sum + (r.overall_rating || 0), 0) / totalReviews 
-  : 0
-const hasValidRating = totalReviews > 0
+  const totalReviews = reviews.length
+  const avgRating = totalReviews > 0 
+    ? reviews.reduce((sum, r) => sum + (r.overall_rating || 0), 0) / totalReviews 
+    : 0
+  const hasValidRating = totalReviews > 0
 
   // Trust Score calculation
   const { score: trustScore, breakdown: trustBreakdown } = calculateTrustScore(adjuster, totalReviews)
@@ -345,13 +356,23 @@ const hasValidRating = totalReviews > 0
     confidencePercentage: adjuster.confidence_percentage,
   }
 
+  // ========================================
+  // AEO-CRITICAL: Schema date handling
+  // ========================================
+  const dateModified = adjuster.updated_at ? formatISODate(adjuster.updated_at) : new Date().toISOString().split('T')[0]
+  const datePublished = adjuster.created_at ? formatISODate(adjuster.created_at) : '2025-01-01'
+
+  // ========================================
+  // AEO-CRITICAL: Person Schema with @id
+  // ========================================
   const personSchema = {
     '@context': 'https://schema.org',
     '@type': 'Person',
+    '@id': `${profileUrl}#person`,
     name: fullName,
     url: profileUrl,
-    mainEntityOfPage: profileUrl,
     jobTitle: licenseType,
+    description: `${fullName} is a licensed ${licenseType.toLowerCase()} in ${stateName}. Read reviews and ratings for ${fullName} on RateMyAdjusters.com.`,
     ...(adjuster.company_name && {
       worksFor: {
         '@type': 'Organization',
@@ -375,11 +396,15 @@ const hasValidRating = totalReviews > 0
     }),
   }
 
+  // ========================================
+  // AEO-CRITICAL: ProfessionalService Schema with @id
+  // ========================================
   const localBusinessSchema = {
     '@context': 'https://schema.org',
     '@type': 'ProfessionalService',
+    '@id': `${profileUrl}#service`,
     name: `${fullName} - Insurance Adjuster`,
-    description: `Licensed ${licenseType.toLowerCase()} handling property insurance claims in ${location}`,
+    description: `Licensed ${licenseType.toLowerCase()} handling property insurance claims in ${location}. Read reviews on RateMyAdjusters.com.`,
     url: profileUrl,
     address: {
       '@type': 'PostalAddress',
@@ -407,9 +432,13 @@ const hasValidRating = totalReviews > 0
     }),
   }
 
+  // ========================================
+  // AEO-CRITICAL: BreadcrumbList Schema with @id
+  // ========================================
   const breadcrumbSchema = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
+    '@id': `${profileUrl}#breadcrumb`,
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://ratemyadjusters.com/' },
       { '@type': 'ListItem', position: 2, name: 'Adjusters', item: 'https://ratemyadjusters.com/adjusters' },
@@ -418,22 +447,92 @@ const hasValidRating = totalReviews > 0
     ],
   }
 
+  // ========================================
+  // AEO-CRITICAL: FAQPage Schema with @id and publisher
+  // ========================================
   const faqSchema = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
+    '@id': `${profileUrl}#faq`,
     mainEntity: faqs.map((faq) => ({
       '@type': 'Question',
       name: faq.question,
       acceptedAnswer: { '@type': 'Answer', text: faq.answer },
     })),
+    publisher: {
+      '@id': 'https://ratemyadjusters.com/#organization'
+    },
   }
+
+  // ========================================
+  // AEO-CRITICAL: WebPage Schema (NEW)
+  // Ties everything together with dates
+  // ========================================
+  const webPageSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'ProfilePage',
+    '@id': `${profileUrl}#webpage`,
+    url: profileUrl,
+    name: `${fullName} – Insurance Adjuster Reviews | RateMyAdjusters.com`,
+    description: `Read reviews and ratings for ${fullName}, a licensed ${licenseType.toLowerCase()} in ${stateName}. See what homeowners say on RateMyAdjusters.com.`,
+    datePublished: datePublished,
+    dateModified: dateModified,
+    isPartOf: {
+      '@id': 'https://ratemyadjusters.com/#website'
+    },
+    publisher: {
+      '@id': 'https://ratemyadjusters.com/#organization'
+    },
+    breadcrumb: {
+      '@id': `${profileUrl}#breadcrumb`
+    },
+    mainEntity: {
+      '@id': `${profileUrl}#person`
+    },
+    inLanguage: 'en-US',
+  }
+
+  // ========================================
+  // AEO-CRITICAL: Review Schema (for individual reviews)
+  // Only included when reviews exist
+  // ========================================
+  const reviewSchemas = reviews.slice(0, 10).map((review, index) => ({
+    '@context': 'https://schema.org',
+    '@type': 'Review',
+    '@id': `${profileUrl}#review-${index}`,
+    itemReviewed: {
+      '@id': `${profileUrl}#person`
+    },
+    reviewRating: {
+      '@type': 'Rating',
+      ratingValue: review.overall_rating,
+      bestRating: '5',
+      worstRating: '1',
+    },
+    author: {
+      '@type': 'Person',
+      name: review.reviewer_display_name || 'Anonymous',
+    },
+    ...(formatISODate(review.created_at) && {
+      datePublished: formatISODate(review.created_at),
+    }),
+    reviewBody: review.review_text,
+    publisher: {
+      '@id': 'https://ratemyadjusters.com/#organization'
+    },
+  }))
 
   return (
     <>
+      {/* AEO-CRITICAL: Schema Markup */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} />
+      {reviewSchemas.map((schema, index) => (
+        <script key={index} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+      ))}
 
       <main className="min-h-screen bg-gray-50">
         
@@ -500,14 +599,14 @@ const hasValidRating = totalReviews > 0
         {/* Breadcrumb */}
         <div className="bg-white border-b">
           <div className="max-w-6xl mx-auto px-4 py-3">
-            <nav className="flex items-center gap-2 text-sm flex-wrap">
+            <nav className="flex items-center gap-2 text-sm flex-wrap" aria-label="Breadcrumb">
               <Link href="/" className="text-gray-500 hover:text-gray-700">Home</Link>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
+              <ChevronRight className="w-4 h-4 text-gray-400" aria-hidden="true" />
               <Link href="/adjusters" className="text-gray-500 hover:text-gray-700">Adjusters</Link>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
+              <ChevronRight className="w-4 h-4 text-gray-400" aria-hidden="true" />
               <Link href={`/adjusters/${stateSlug}`} className="text-gray-500 hover:text-gray-700">{stateName}</Link>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-              <span className="text-gray-900 font-medium">{displayName}</span>
+              <ChevronRight className="w-4 h-4 text-gray-400" aria-hidden="true" />
+              <span className="text-gray-900 font-medium" aria-current="page">{displayName}</span>
             </nav>
           </div>
         </div>
@@ -583,10 +682,14 @@ const hasValidRating = totalReviews > 0
                   )}
                 </div>
                 
+                {/* ========================================
+                    AEO-CRITICAL: Identity Statement
+                    This is what AI will extract for "Who is [Name]?"
+                    ======================================== */}
                 <p className="text-lg text-gray-700 mb-2">
-                  {licenseType} in <strong>{location}</strong>
+                  <strong>{fullName}</strong> is a licensed <strong>{licenseType.toLowerCase()}</strong> in <strong>{location}</strong>.
                   {tenureYears !== null && tenureYears > 0 ? (
-                    <span className="text-gray-500"> • {tenureYears}+ years experience</span>
+                    <span className="text-gray-500"> {tenureYears}+ years experience.</span>
                   ) : null}
                 </p>
                 
@@ -766,17 +869,25 @@ const hasValidRating = totalReviews > 0
                 </div>
               </div>
 
-              {/* About Section - SEO Rich */}
+              {/* ========================================
+                  AEO-CRITICAL: About Section
+                  This is THE most important section for AI
+                  "Who is [Name]?" queries will extract from here
+                  ======================================== */}
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">About {fullName}</h2>
+                
+                {/* AEO-CRITICAL: Primary identity paragraph */}
                 <p className="text-gray-700 leading-relaxed mb-4">
-                  {fullName} is a licensed <strong>{licenseType.toLowerCase()}</strong> (License #{adjuster.license_number || 'on file'}) handling property insurance claims in <strong>{location}</strong>.
+                  <strong>{fullName} is a licensed {licenseType.toLowerCase()}</strong> (License #{adjuster.license_number || 'on file'}) handling property insurance claims in <strong>{location}</strong>.
                   {tenureYears !== null && tenureYears > 0 ? (
                     <> With approximately <strong>{tenureYears} years</strong> of experience in the insurance industry, {adjuster.first_name} evaluates property damage, prepares estimates, and processes claims for policyholders.</>
                   ) : (
                     <> {adjuster.first_name} evaluates property damage, prepares estimates, and processes claims for policyholders in {stateName}.</>
                   )}
                 </p>
+                
+                {/* AEO-CRITICAL: Secondary context paragraph */}
                 <p className="text-gray-700 leading-relaxed mb-4">
                   {adjuster.company_name ? (
                     <>Working with <strong>{adjuster.company_name}</strong>, {adjuster.first_name} handles homeowners insurance claims related to {riskContext}.</>
@@ -785,11 +896,18 @@ const hasValidRating = totalReviews > 0
                   )}
                   {' '}Common claim types include roof damage, water damage, fire loss, wind and hail damage, theft, and liability claims.
                 </p>
+                
                 {hasMetrics && metrics.annualLow && metrics.annualHigh && (
                   <p className="text-gray-700 leading-relaxed mb-4">
                     Based on licensing data and {stateName} claim patterns, {adjuster.first_name} is estimated to handle approximately <strong>{metrics.annualLow}–{metrics.annualHigh} claims per year</strong>, or about {metrics.monthlyLow}–{metrics.monthlyHigh} files per month.
                   </p>
                 )}
+                
+                {/* AEO-CRITICAL: RateMyAdjusters attribution */}
+                <p className="text-gray-700 leading-relaxed mb-4">
+                  You can read reviews and ratings for {fullName} on <strong>RateMyAdjusters.com</strong>, the independent website where homeowners rate and review their insurance claim adjuster.
+                </p>
+                
                 <p className="text-gray-600 text-sm">
                   <Link href={`/adjusters/${stateSlug}`} className="text-blue-600 hover:text-blue-700 underline">
                     View all {stateName} insurance adjusters
@@ -1134,8 +1252,11 @@ const hasValidRating = totalReviews > 0
                 </div>
               </div>
 
-              {/* FAQ Section */}
-              <div className="bg-white rounded-xl shadow-sm p-6">
+              {/* ========================================
+                  AEO-CRITICAL: FAQ Section (Visible)
+                  Matches the FAQ schema for double coverage
+                  ======================================== */}
+              <div className="bg-white rounded-xl shadow-sm p-6" id="faq">
                 <div className="flex items-center gap-2 mb-6">
                   <HelpCircle className="w-5 h-5 text-purple-600" />
                   <h2 className="text-xl font-bold text-gray-900">Frequently Asked Questions</h2>
