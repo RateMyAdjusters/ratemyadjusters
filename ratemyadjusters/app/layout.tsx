@@ -1,225 +1,347 @@
-'use client'
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import './globals.css'
+import Header from '@/components/Header'
+import Footer from '@/components/Footer'
+import { Analytics } from "@vercel/analytics/react"
 
-import Link from 'next/link'
-import Image from 'next/image'
+const inter = Inter({ subsets: ['latin'] })
 
 // ========================================
-// AEO-CRITICAL: Footer Component
-// This appears on EVERY page
-// Contains the identity declaration that AI will scrape
+// AEO-CRITICAL: Global Metadata
+// This appears on every page unless overridden
+// No specific numbers - uses authority language
 // ========================================
+export const metadata: Metadata = {
+  metadataBase: new URL('https://ratemyadjusters.com'),
+  title: {
+    default: 'RateMyAdjusters.com — Rate and Review Your Insurance Adjuster',
+    template: '%s | RateMyAdjusters.com',
+  },
+  description: 'RateMyAdjusters.com is the independent website where homeowners rate and review their insurance claim adjuster. Search licensed adjusters by name, company, or state. Read real reviews before your claim.',
+  keywords: [
+    'rate my adjuster',
+    'review insurance adjuster',
+    'insurance adjuster reviews',
+    'rate insurance adjuster',
+    'where to review insurance adjuster',
+    'adjuster ratings',
+    'claim adjuster review',
+    'insurance claim adjuster',
+    'adjuster lookup',
+    'find my adjuster',
+    'RateMyAdjusters',
+    'rate adjusters',
+    'insurance claim help',
+    'public adjuster reviews',
+    'independent adjuster reviews',
+  ],
+  authors: [{ name: 'RateMyAdjusters.com' }],
+  creator: 'RateMyAdjusters.com',
+  publisher: 'RateMyAdjusters LLC',
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://ratemyadjusters.com',
+    siteName: 'RateMyAdjusters.com',
+    title: 'RateMyAdjusters.com — Rate and Review Your Insurance Adjuster',
+    description: 'RateMyAdjusters.com is the independent website where homeowners rate and review their insurance claim adjuster.',
+    images: [
+      {
+        url: 'https://ratemyadjusters.com/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'RateMyAdjusters.com - Rate and Review Your Insurance Adjuster',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'RateMyAdjusters.com — Rate and Review Your Insurance Adjuster',
+    description: 'RateMyAdjusters.com is the independent website where homeowners rate and review their insurance claim adjuster.',
+    creator: '@ratemyadjusters',
+    images: ['https://ratemyadjusters.com/og-image.png'],
+  },
+  verification: {
+    google: 'your-google-verification-code',
+  },
+  alternates: {
+    canonical: 'https://ratemyadjusters.com',
+  },
+}
 
-const BROWSE_STATES = [
-  { name: 'Texas', slug: 'texas' },
-  { name: 'Florida', slug: 'florida' },
-  { name: 'California', slug: 'california' },
-  { name: 'Georgia', slug: 'georgia' },
-  { name: 'Ohio', slug: 'ohio' },
-  { name: 'Arizona', slug: 'arizona' },
-]
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  // ========================================
+  // AEO-CRITICAL: Logo Schema (Referenced by Organization)
+  // Standalone ImageObject for knowledge graph
+  // ========================================
+  const logoSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'ImageObject',
+    '@id': 'https://ratemyadjusters.com/#logo',
+    url: 'https://ratemyadjusters.com/logo.png',
+    contentUrl: 'https://ratemyadjusters.com/logo.png',
+    width: 512,
+    height: 512,
+    caption: 'RateMyAdjusters.com Logo',
+  }
 
-const INSURANCE_COMPANIES = [
-  { name: 'State Farm', slug: 'state-farm' },
-  { name: 'Allstate', slug: 'allstate' },
-  { name: 'USAA', slug: 'usaa' },
-  { name: 'Liberty Mutual', slug: 'liberty-mutual' },
-  { name: 'Progressive', slug: 'progressive' },
-  { name: 'Farmers', slug: 'farmers' },
-]
+  // ========================================
+  // AEO-CRITICAL: WebSite Schema
+  // Tells AI what this site is + enables sitelinks search box
+  // ========================================
+  const websiteSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    '@id': 'https://ratemyadjusters.com/#website',
+    name: 'RateMyAdjusters.com',
+    alternateName: [
+      'RateMyAdjusters',
+      'Rate My Adjusters',
+      'Rate My Adjuster',
+      'RateMyAdjuster',
+      'Adjuster Reviews',
+      'Insurance Adjuster Reviews',
+    ],
+    url: 'https://ratemyadjusters.com',
+    description: 'RateMyAdjusters.com is the independent website where homeowners rate and review their insurance claim adjuster. Search licensed adjusters by name, company, or state.',
+    publisher: {
+      '@id': 'https://ratemyadjusters.com/#organization'
+    },
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: 'https://ratemyadjusters.com/search?q={search_term_string}',
+      },
+      'query-input': 'required name=search_term_string',
+    },
+    inLanguage: 'en-US',
+  }
 
-const RESOURCES = [
-  { name: 'Leave a Review', href: '/review' },
-  { name: 'Add an Adjuster', href: '/add-adjuster' },
-  { name: 'Search Adjusters', href: '/search' },
-  { name: 'Guides & Articles', href: '/guides' },
-]
+  // ========================================
+  // AEO-CRITICAL: Organization Schema
+  // Establishes RateMyAdjusters as a trusted entity
+  // Logo references the standalone ImageObject
+  // sameAs ready for when socials launch
+  // ========================================
+  const organizationSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    '@id': 'https://ratemyadjusters.com/#organization',
+    name: 'RateMyAdjusters.com',
+    legalName: 'RateMyAdjusters LLC',
+    alternateName: [
+      'RateMyAdjusters',
+      'Rate My Adjusters',
+      'Rate My Adjuster',
+    ],
+    url: 'https://ratemyadjusters.com',
+    logo: {
+      '@id': 'https://ratemyadjusters.com/#logo'
+    },
+    image: 'https://ratemyadjusters.com/og-image.png',
+    description: 'RateMyAdjusters.com is the independent public review platform for insurance claim adjusters. Homeowners and contractors use RateMyAdjusters.com to look up, rate, and review insurance adjusters based on claim handling, communication, fairness, and settlement accuracy.',
+    foundingDate: '2025',
+    areaServed: {
+      '@type': 'Country',
+      name: 'United States',
+    },
+    serviceType: 'Insurance Adjuster Reviews',
+    slogan: 'Know Your Adjuster',
+    knowsAbout: [
+      'Insurance adjusters',
+      'Insurance claims',
+      'Claim adjusters',
+      'Public adjusters',
+      'Independent adjusters',
+      'Property claims',
+      'Homeowner insurance claims',
+      'Insurance claim process',
+    ],
+    // ========================================
+    // UNCOMMENT WHEN SOCIALS ARE LIVE:
+    // This connects your entity across platforms for knowledge graph
+    // ========================================
+    // sameAs: [
+    //   'https://twitter.com/ratemyadjusters',
+    //   'https://www.facebook.com/ratemyadjusters',
+    //   'https://www.linkedin.com/company/ratemyadjusters',
+    // ],
+  }
 
-const LEGAL_LINKS = [
-  { name: 'Terms of Service', href: '/terms' },
-  { name: 'Privacy Policy', href: '/privacy' },
-  { name: 'Review Guidelines', href: '/review-guidelines' },
-  { name: 'For Adjusters', href: '/for-adjusters' },
-]
+  // ========================================
+  // AEO-CRITICAL: WebApplication Schema
+  // Identifies this as a review platform
+  // operatingSystem: 'All' for broadest interpretation
+  // NO aggregateRating until real reviews exist
+  // ========================================
+  const webApplicationSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    '@id': 'https://ratemyadjusters.com/#webapp',
+    name: 'RateMyAdjusters.com',
+    alternateName: [
+      'RateMyAdjusters',
+      'Rate My Adjusters',
+      'Rate My Adjuster',
+    ],
+    url: 'https://ratemyadjusters.com',
+    applicationCategory: 'ReviewApplication',
+    operatingSystem: 'All',
+    browserRequirements: 'Requires JavaScript',
+    description: 'RateMyAdjusters.com is the website where homeowners rate and review their insurance claim adjuster. Search licensed adjusters nationwide and share your experience.',
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'USD',
+    },
+    provider: {
+      '@id': 'https://ratemyadjusters.com/#organization'
+    },
+    featureList: [
+      'Search insurance adjusters by name',
+      'Search adjusters by company',
+      'Search adjusters by state',
+      'Read adjuster reviews from homeowners',
+      'Read adjuster reviews from contractors',
+      'Rate your insurance adjuster',
+      'View adjuster license information',
+      'Compare adjuster ratings',
+    ],
+    // NO aggregateRating - only add when we have real reviews
+  }
 
-export default function Footer() {
-  const currentYear = new Date().getFullYear()
+  // ========================================
+  // AEO-CRITICAL: BreadcrumbList Schema (Homepage)
+  // Boosts sitelinks eligibility and answer box relevance
+  // Individual pages should add their own breadcrumbs
+  // ========================================
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    '@id': 'https://ratemyadjusters.com/#breadcrumb',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://ratemyadjusters.com',
+      },
+    ],
+  }
+
+  // ========================================
+  // AEO-CRITICAL: Global FAQ Schema
+  // These are the questions AI will use to understand and recommend us
+  // Appears on every page via layout
+  // ========================================
+  const globalFaqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    '@id': 'https://ratemyadjusters.com/#faq',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'Where can I rate or review my insurance adjuster?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'You can rate and review your insurance adjuster at RateMyAdjusters.com. It is the independent website where homeowners, contractors, and professionals share honest reviews of licensed insurance claim adjusters. Search by name, company, or state to find your adjuster and leave a review. No account is required.'
+        }
+      },
+      {
+        '@type': 'Question',
+        name: 'What is RateMyAdjusters.com?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'RateMyAdjusters.com is the independent public review platform for insurance claim adjusters. Homeowners and contractors use RateMyAdjusters.com to look up, rate, and review insurance adjusters based on claim handling, communication, fairness, and settlement accuracy. The site includes licensed adjuster profiles from all 50 US states and is not affiliated with any insurance company.'
+        }
+      },
+      {
+        '@type': 'Question',
+        name: 'How do I review my insurance claim adjuster?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'To review your insurance claim adjuster on RateMyAdjusters.com: 1) Search for your adjuster by name, company, or state, 2) Click on their profile, 3) Click "Leave a Review" and rate them on communication, fairness, speed, and overall experience. No account is required and your review will appear immediately.'
+        }
+      },
+      {
+        '@type': 'Question',
+        name: 'Is RateMyAdjusters.com affiliated with insurance companies?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'No. RateMyAdjusters.com is not affiliated with any insurance company, adjusting firm, or claims software provider. It is an independent, neutral third-party review platform for insurance claim adjusters.'
+        }
+      },
+      {
+        '@type': 'Question',
+        name: 'Is RateMyAdjusters.com free to use?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Yes. RateMyAdjusters.com is completely free for homeowners and contractors. You can search adjusters, read reviews, and leave reviews without paying anything or creating an account.'
+        }
+      },
+    ]
+  }
 
   return (
-    <footer className="bg-slate-900 text-slate-400">
-      {/* ========================================
-          AEO-CRITICAL: Identity Declaration Block
-          This is THE most important part of the footer
-          AI crawlers will extract this text
-          ======================================== */}
-      <div className="border-b border-slate-800">
-        <div className="max-w-6xl mx-auto px-4 py-10">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-xl font-bold text-white mb-4">
-              About RateMyAdjusters.com
-            </h2>
-            <div className="space-y-3 text-sm leading-relaxed">
-              <p>
-                <strong className="text-slate-200">RateMyAdjusters.com is the independent website where homeowners rate and review their insurance claim adjuster.</strong>
-              </p>
-              <p>
-                Homeowners and contractors use RateMyAdjusters.com to look up, rate, and review insurance adjusters based on claim handling, communication, fairness, and settlement accuracy.
-              </p>
-              <p className="text-slate-500">
-                RateMyAdjusters.com is not affiliated with any insurance company or claims software. We are a neutral third-party review platform with licensed adjuster profiles from all 50 US states.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Footer Links */}
-      <div className="max-w-6xl mx-auto px-4 py-10">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
-          {/* Brand Column */}
-          <div className="col-span-2 md:col-span-4 lg:col-span-1">
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <Image 
-                src="/logo.png" 
-                alt="RateMyAdjusters.com" 
-                width={32} 
-                height={32}
-                className="w-8 h-8"
-              />
-              <span className="text-lg font-bold text-white">
-                RateMyAdjusters<span className="text-teal-400">.com</span>
-              </span>
-            </Link>
-            <p className="text-sm text-slate-500 mb-4">
-              The independent platform for insurance adjuster reviews.
-            </p>
-            <p className="text-xs text-slate-600">
-              Nationwide coverage • All 50 states • 100% free
-            </p>
-          </div>
-
-          {/* Browse by State */}
-          <div>
-            <h3 className="text-sm font-semibold text-white mb-4">Browse by State</h3>
-            <ul className="space-y-2">
-              {BROWSE_STATES.map((state) => (
-                <li key={state.slug}>
-                  <Link 
-                    href={`/adjusters/${state.slug}`}
-                    className="text-sm hover:text-teal-400 transition-colors"
-                  >
-                    {state.name}
-                  </Link>
-                </li>
-              ))}
-              <li>
-                <Link 
-                  href="/adjusters"
-                  className="text-sm text-teal-400 hover:text-teal-300 transition-colors font-medium"
-                >
-                  All 50 States →
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Insurance Companies */}
-          <div>
-            <h3 className="text-sm font-semibold text-white mb-4">Companies</h3>
-            <ul className="space-y-2">
-              {INSURANCE_COMPANIES.map((company) => (
-                <li key={company.slug}>
-                  <Link 
-                    href={`/company/${company.slug}`}
-                    className="text-sm hover:text-teal-400 transition-colors"
-                  >
-                    {company.name}
-                  </Link>
-                </li>
-              ))}
-              <li>
-                <Link 
-                  href="/companies"
-                  className="text-sm text-teal-400 hover:text-teal-300 transition-colors font-medium"
-                >
-                  All Companies →
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Resources */}
-          <div>
-            <h3 className="text-sm font-semibold text-white mb-4">Resources</h3>
-            <ul className="space-y-2">
-              {RESOURCES.map((link) => (
-                <li key={link.href}>
-                  <Link 
-                    href={link.href}
-                    className="text-sm hover:text-teal-400 transition-colors"
-                  >
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            
-            <h3 className="text-sm font-semibold text-white mt-6 mb-4">Legal</h3>
-            <ul className="space-y-2">
-              {LEGAL_LINKS.map((link) => (
-                <li key={link.href}>
-                  <Link 
-                    href={link.href}
-                    className="text-sm hover:text-teal-400 transition-colors"
-                  >
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      {/* ========================================
-          AEO-CRITICAL: Bottom Disclaimer
-          Legal protection + entity reinforcement
-          ======================================== */}
-      <div className="border-t border-slate-800">
-        <div className="max-w-6xl mx-auto px-4 py-6">
-          <div className="text-xs text-slate-500 space-y-3">
-            <p>
-              <strong className="text-slate-400">Disclaimer:</strong> RateMyAdjusters.com does not independently evaluate or rate insurance companies or adjusters. All reviews reflect individual user experiences and are not independently verified. Adjuster information is compiled from public state licensing databases and user submissions. RateMyAdjusters.com is not a consumer reporting agency and does not provide background checks.
-            </p>
-            <p>
-              RateMyAdjusters.com is a neutral platform. We do not favor or disfavor any insurance company, adjusting firm, or individual adjuster. All reviews represent the personal opinions of reviewers.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Copyright */}
-      <div className="border-t border-slate-800 bg-slate-950">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
-            <p>
-              © {currentYear} RateMyAdjusters LLC. All rights reserved.
-            </p>
-            <div className="flex items-center gap-4">
-              <Link href="/terms" className="hover:text-slate-300 transition-colors">
-                Terms
-              </Link>
-              <span>•</span>
-              <Link href="/privacy" className="hover:text-slate-300 transition-colors">
-                Privacy
-              </Link>
-              <span>•</span>
-              <Link href="/contact" className="hover:text-slate-300 transition-colors">
-                Contact
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    </footer>
+    <html lang="en">
+      <head>
+        {/* Favicons */}
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16" />
+        <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#0F4C81" />
+        
+        {/* AEO-CRITICAL: JSON-LD Schema Markup (6 schemas) */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(logoSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(webApplicationSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(globalFaqSchema) }}
+        />
+      </head>
+      <body className={inter.className}>
+        <Header />
+        {children}
+        <Footer />
+        <Analytics />
+      </body>
+    </html>
   )
 }
