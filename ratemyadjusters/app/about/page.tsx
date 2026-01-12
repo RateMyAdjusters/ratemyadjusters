@@ -282,27 +282,7 @@ export default function AboutPage() {
                       Links to authoritative government source
                       ======================================== */}
                   <p className="text-base text-gray-600 border-l-4 border-blue-200 pl-4 bg-blue-50/50 py-2 rounded-r">
-                    Adjuster license data is compiled from public state databases, including the{' '}
-                    <a 
-                      href="https://www.tdi.texas.gov/agent/licensee-search.html" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-700 underline inline-flex items-center gap-1"
-                    >
-                      Texas Department of Insurance
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                    ,{' '}
-                    <a 
-                      href="https://www.myfloridacfo.com/division/agents/" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-700 underline inline-flex items-center gap-1"
-                    >
-                      Florida Division of Insurance
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                    , and other state licensing authorities.
+                    Adjuster license data is compiled from public state databases, other state licensing authorities, and user generated information.
                   </p>
                 </div>
               </div>
