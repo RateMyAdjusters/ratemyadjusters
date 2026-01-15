@@ -3,9 +3,10 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Star, ChevronDown, ChevronUp, Shield, AlertTriangle, UserPlus, ChevronRight, XCircle, AlertCircle } from 'lucide-react'
+import { Star, ChevronDown, ChevronUp, Shield, AlertTriangle, UserPlus, ChevronRight, Eye } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { validateReviewContent } from '@/lib/review-validation'
+import ContentModeration, { ReviewPreview } from '@/components/ContentModeration'
+import { trackModerationEvent } from '@/lib/content-moderation'
 
 function ReviewContent() {
   const searchParams = useSearchParams()
@@ -14,10 +15,12 @@ function ReviewContent() {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [validationError, setValidationError] = useState<{ message: string; type: string } | null>(null)
   const [success, setSuccess] = useState(false)
   const [showOptionalRatings, setShowOptionalRatings] = useState(false)
   const [showGuidelines, setShowGuidelines] = useState(true)
+  const [showPreview, setShowPreview] = useState(false)
+  const [contentIsValid, setContentIsValid] = useState(true)
+  const [contentHasWarnings, setContentHasWarnings] = useState(false)
   
   const [adjusterSearch, setAdjusterSearch] = useState('')
   const [adjusterResults, setAdjusterResults] = useState<any[]>([])
@@ -57,58 +60,10 @@ function ReviewContent() {
     { value: 'pending', label: 'Still Pending' },
   ]
 
-  // Get helpful tips based on validation error type
-  const getValidationTips = (type: string): string[] => {
-    switch (type) {
-      case 'profanity':
-        return [
-          'Remove any curse words or inappropriate language',
-          'Express frustration without using profanity',
-          'Focus on describing what happened factually'
-        ]
-      case 'attack':
-        return [
-          'Focus on your experience, not the person',
-          'Describe actions and outcomes instead of character',
-          'Avoid threats or wishes of harm',
-          'Keep criticism constructive and professional'
-        ]
-      case 'phone':
-        return [
-          'Remove any phone numbers from your review',
-          'You can mention "I called them" without including the number'
-        ]
-      case 'email':
-        return [
-          'Remove any email addresses from your review',
-          'You can mention "I emailed them" without including the address'
-        ]
-      case 'address':
-        return [
-          'Remove any street addresses or zip codes',
-          'You can mention the city or general area instead'
-        ]
-      case 'ssn':
-        return [
-          'Never share Social Security Numbers online',
-          'Remove any SSN references from your review'
-        ]
-      case 'financial':
-        return [
-          'Remove any credit card or bank account numbers',
-          'Never share financial account details in reviews'
-        ]
-      case 'policy':
-        return [
-          'Remove policy or claim numbers for privacy',
-          'You can describe the claim without including the number'
-        ]
-      default:
-        return [
-          'Review our guidelines and update your text',
-          'Focus on describing your experience professionally'
-        ]
-    }
+  // Handle validation state changes from ContentModeration
+  const handleValidationChange = (isValid: boolean, hasWarnings: boolean) => {
+    setContentIsValid(isValid)
+    setContentHasWarnings(hasWarnings)
   }
 
   useEffect(() => {
@@ -132,13 +87,6 @@ function ReviewContent() {
       }
     }
   }, [searchParams])
-
-  // Clear validation error when user edits the review text
-  useEffect(() => {
-    if (validationError) {
-      setValidationError(null)
-    }
-  }, [reviewText])
 
   async function fetchAdjusterById(id: string) {
     const { data } = await supabase
@@ -183,18 +131,17 @@ function ReviewContent() {
   async function handleSubmit() {
     // Clear previous errors
     setError(null)
-    setValidationError(null)
 
     if (!selectedAdjuster) {
       setError('Please select an adjuster')
       return
     }
-    
+
     if (overallRating === 0) {
       setError('Please select a rating (1-5 stars)')
       return
     }
-    
+
     if (!reviewText.trim()) {
       setError('Please write a review')
       return
@@ -205,14 +152,10 @@ function ReviewContent() {
       return
     }
 
-    // Validate content for profanity, attacks, and personal info
-    const validation = validateReviewContent(reviewText)
-    if (!validation.isValid) {
-      setValidationError({
-        message: validation.error || 'Your review could not be submitted.',
-        type: validation.failedCheck || 'unknown'
-      })
-      // Scroll to error
+    // Content moderation is handled by the ContentModeration component
+    // If we get here with contentIsValid = false, block submission
+    if (!contentIsValid) {
+      setError('Please fix the content issues highlighted above before submitting.')
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
@@ -221,9 +164,14 @@ function ReviewContent() {
       setSuccess(true)
       return
     }
-    
+
     setLoading(true)
-    
+
+    // Track submission attempt
+    trackModerationEvent('moderation_resolved', {
+      textLength: reviewText.length,
+    })
+
     const { error: submitError } = await supabase
       .from('reviews')
       .insert({
@@ -239,16 +187,22 @@ function ReviewContent() {
         reviewer_type: reviewerType,
         status: 'approved',
       })
-    
+
     if (submitError) {
       console.error('Submit error:', submitError)
       setError('Failed to submit review. Please try again.')
       setLoading(false)
       return
     }
-    
+
     setSuccess(true)
     setLoading(false)
+  }
+
+  // Handle preview submission
+  function handlePreviewSubmit() {
+    setShowPreview(false)
+    handleSubmit()
   }
 
   const StarRatingInput = ({ rating, setRating, hover, setHover, size = 'lg' }: { rating: number; setRating: (r: number) => void; hover?: number; setHover?: (r: number) => void; size?: 'sm' | 'lg' }) => {
@@ -348,39 +302,8 @@ function ReviewContent() {
               </div>
             )}
 
-            {/* Validation Error - Styled to clearly show it's a content issue, not a website error */}
-            {validationError && (
-              <div className="mb-6 rounded-xl border-2 border-amber-300 bg-amber-50 overflow-hidden">
-                <div className="bg-amber-100 px-4 py-3 border-b border-amber-200">
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="w-5 h-5 text-amber-600" />
-                    <h3 className="font-semibold text-amber-800">Please Update Your Review</h3>
-                  </div>
-                </div>
-                <div className="px-4 py-4">
-                  <p className="text-amber-900 mb-3">{validationError.message}</p>
-                  
-                  <div className="bg-white rounded-lg p-3 border border-amber-200">
-                    <p className="text-sm font-medium text-gray-700 mb-2">How to fix this:</p>
-                    <ul className="space-y-1">
-                      {getValidationTips(validationError.type).map((tip, index) => (
-                        <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
-                          <span className="text-amber-500 mt-0.5">•</span>
-                          {tip}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  
-                  <p className="text-xs text-amber-700 mt-3">
-                    Your review has not been lost — just edit the text below and try again.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* General Error (non-validation) */}
-            {error && !validationError && (
+            {/* General Error */}
+            {error && (
               <div className="mb-6 rounded-lg bg-red-50 text-red-700 px-4 py-3 text-sm flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4" />
                 {error}
@@ -468,24 +391,15 @@ function ReviewContent() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Your Review *</label>
-                  <textarea
+                  <ContentModeration
                     value={reviewText}
-                    onChange={(e) => setReviewText(e.target.value)}
+                    onChange={setReviewText}
+                    onValidationChange={handleValidationChange}
                     placeholder="Share your experience with this adjuster. How was their communication? Were they fair? How long did the process take?"
+                    minLength={20}
+                    maxLength={2000}
                     rows={5}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 ${
-                      validationError ? 'border-amber-400 bg-amber-50' : 'border-gray-300'
-                    }`}
                   />
-                  <p className={'text-sm mt-1 ' + (reviewText.trim().length < 20 ? 'text-amber-600' : 'text-gray-500')}>
-                    {reviewText.length}/1000 {reviewText.trim().length < 20 && '(minimum 20 characters)'}
-                  </p>
-                  {validationError && (
-                    <p className="text-sm text-amber-600 mt-1 flex items-center gap-1">
-                      <AlertCircle className="w-4 h-4" />
-                      Please edit your review above to fix the issue
-                    </p>
-                  )}
                 </div>
 
                 <div className="border border-gray-200 rounded-lg">
@@ -532,18 +446,40 @@ function ReviewContent() {
                   </div>
                 </div>
 
-                <button
-                  onClick={handleSubmit}
-                  disabled={loading || overallRating === 0 || reviewText.trim().length < 20}
-                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-lg transition-colors"
-                >
-                  {loading ? 'Submitting...' : validationError ? 'Try Again' : 'Submit Review'}
-                </button>
-                
+                {/* Submit buttons */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowPreview(true)}
+                    disabled={loading || overallRating === 0 || reviewText.trim().length < 20}
+                    className="flex-1 flex items-center justify-center gap-2 border border-gray-300 hover:border-gray-400 disabled:border-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-gray-700 font-semibold py-4 px-6 rounded-lg transition-colors"
+                  >
+                    <Eye className="w-5 h-5" />
+                    Preview
+                  </button>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={loading || overallRating === 0 || reviewText.trim().length < 20 || !contentIsValid}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-lg transition-colors"
+                  >
+                    {loading ? 'Submitting...' : !contentIsValid ? 'Fix Issues to Submit' : 'Submit Review'}
+                  </button>
+                </div>
+
                 <p className="text-xs text-gray-500 text-center">
                   By submitting, you agree to our <Link href="/review-guidelines" className="text-blue-600 hover:underline">review guidelines</Link>. All reviews are moderated.
                 </p>
               </div>
+            )}
+
+            {/* Preview Modal */}
+            {showPreview && (
+              <ReviewPreview
+                value={reviewText}
+                onClose={() => setShowPreview(false)}
+                onSubmit={handlePreviewSubmit}
+                isSubmitting={loading}
+                hasIssues={!contentIsValid}
+              />
             )}
           </div>
 

@@ -3,43 +3,46 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Star, ChevronDown, ChevronUp, Shield, AlertTriangle, UserPlus, ChevronRight, AlertCircle } from 'lucide-react'
+import { Star, ChevronDown, ChevronUp, Shield, AlertTriangle, UserPlus, ChevronRight, Eye } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { validateReviewContent } from '@/lib/review-validation'
+import ContentModeration, { ReviewPreview } from '@/components/ContentModeration'
+import { trackModerationEvent } from '@/lib/content-moderation'
 
 function ReviewPublicAdjusterContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  
+
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [validationError, setValidationError] = useState<{ message: string; type: string } | null>(null)
   const [success, setSuccess] = useState(false)
   const [showOptionalRatings, setShowOptionalRatings] = useState(false)
   const [showGuidelines, setShowGuidelines] = useState(true)
-  
+  const [showPreview, setShowPreview] = useState(false)
+  const [contentIsValid, setContentIsValid] = useState(true)
+  const [contentHasWarnings, setContentHasWarnings] = useState(false)
+
   const [paSearch, setPaSearch] = useState('')
   const [paResults, setPaResults] = useState<any[]>([])
   const [selectedPA, setSelectedPA] = useState<any>(null)
   const [searchLoading, setSearchLoading] = useState(false)
-  
+
   const [overallRating, setOverallRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
   const [reviewText, setReviewText] = useState('')
-  
+
   const [communicationRating, setCommunicationRating] = useState(0)
   const [knowledgeRating, setKnowledgeRating] = useState(0)
   const [resultsRating, setResultsRating] = useState(0)
   const [professionalismRating, setProfessionalismRating] = useState(0)
-  
+
   const [claimType, setClaimType] = useState('')
   const [claimOutcome, setClaimOutcome] = useState('')
   const [settlementIncrease, setSettlementIncrease] = useState('')
   const [reviewerType, setReviewerType] = useState('homeowner')
-  
+
   const [honeypot, setHoneypot] = useState('')
-  
+
   const claimTypes = [
     { value: 'roof', label: 'Roof' },
     { value: 'water', label: 'Water Damage' },
@@ -52,7 +55,7 @@ function ReviewPublicAdjusterContent() {
     { value: 'theft', label: 'Theft' },
     { value: 'other', label: 'Other' },
   ]
-  
+
   const claimOutcomes = [
     { value: 'approved', label: 'Fully Approved' },
     { value: 'partial', label: 'Partially Approved' },
@@ -70,58 +73,25 @@ function ReviewPublicAdjusterContent() {
     { value: 'unknown', label: 'Not sure' },
   ]
 
-  const getValidationTips = (type: string): string[] => {
-    switch (type) {
-      case 'profanity':
-        return [
-          'Remove any curse words or inappropriate language',
-          'Express frustration without using profanity',
-          'Focus on describing what happened factually'
-        ]
-      case 'attack':
-        return [
-          'Focus on your experience, not the person',
-          'Describe actions and outcomes instead of character',
-          'Avoid threats or wishes of harm',
-          'Keep criticism constructive and professional'
-        ]
-      case 'phone':
-        return [
-          'Remove any phone numbers from your review',
-          'You can mention "I called them" without including the number'
-        ]
-      case 'email':
-        return [
-          'Remove any email addresses from your review',
-          'You can mention "I emailed them" without including the address'
-        ]
-      case 'address':
-        return [
-          'Remove any street addresses or zip codes',
-          'You can mention the city or general area instead'
-        ]
-      default:
-        return [
-          'Review our guidelines and update your text',
-          'Focus on describing your experience professionally'
-        ]
-    }
+  const handleValidationChange = (isValid: boolean, hasWarnings: boolean) => {
+    setContentIsValid(isValid)
+    setContentHasWarnings(hasWarnings)
   }
 
   useEffect(() => {
     const name = searchParams.get('name')
     const paId = searchParams.get('pa')
     const ratingParam = searchParams.get('rating')
-    
+
     if (name) {
       setPaSearch(name)
       searchPublicAdjusters(name)
     }
-    
+
     if (paId) {
       fetchPAById(paId)
     }
-    
+
     if (ratingParam) {
       const rating = parseInt(ratingParam)
       if (rating >= 1 && rating <= 5) {
@@ -130,19 +100,13 @@ function ReviewPublicAdjusterContent() {
     }
   }, [searchParams])
 
-  useEffect(() => {
-    if (validationError) {
-      setValidationError(null)
-    }
-  }, [reviewText])
-
   async function fetchPAById(id: string) {
     const { data } = await supabase
       .from('public_adjusters')
       .select('*')
       .eq('id', id)
       .single()
-    
+
     if (data) {
       setSelectedPA(data)
       setStep(2)
@@ -154,14 +118,14 @@ function ReviewPublicAdjusterContent() {
       setPaResults([])
       return
     }
-    
+
     setSearchLoading(true)
     const words = query.trim().split(/\s+/)
-    
+
     let dbQuery = supabase
       .from('public_adjusters')
       .select('id, first_name, last_name, slug, state, company_name')
-    
+
     if (words.length >= 2) {
       dbQuery = dbQuery
         .filter('first_name', 'ilike', '%' + words[0] + '%')
@@ -169,27 +133,26 @@ function ReviewPublicAdjusterContent() {
     } else {
       dbQuery = dbQuery.or('first_name.ilike.%' + query + '%,last_name.ilike.%' + query + '%,company_name.ilike.%' + query + '%')
     }
-    
+
     const { data } = await dbQuery.limit(10)
-    
+
     if (data) setPaResults(data)
     setSearchLoading(false)
   }
 
   async function handleSubmit() {
     setError(null)
-    setValidationError(null)
 
     if (!selectedPA) {
       setError('Please select a public adjuster')
       return
     }
-    
+
     if (overallRating === 0) {
       setError('Please select a rating (1-5 stars)')
       return
     }
-    
+
     if (!reviewText.trim()) {
       setError('Please write a review')
       return
@@ -200,12 +163,8 @@ function ReviewPublicAdjusterContent() {
       return
     }
 
-    const validation = validateReviewContent(reviewText)
-    if (!validation.isValid) {
-      setValidationError({
-        message: validation.error || 'Your review could not be submitted.',
-        type: validation.failedCheck || 'unknown'
-      })
+    if (!contentIsValid) {
+      setError('Please fix the content issues highlighted above before submitting.')
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
@@ -214,9 +173,13 @@ function ReviewPublicAdjusterContent() {
       setSuccess(true)
       return
     }
-    
+
     setLoading(true)
-    
+
+    trackModerationEvent('moderation_resolved', {
+      textLength: reviewText.length,
+    })
+
     const { error: submitError } = await supabase
       .from('public_adjuster_reviews')
       .insert({
@@ -233,22 +196,27 @@ function ReviewPublicAdjusterContent() {
         reviewer_type: reviewerType,
         status: 'approved',
       })
-    
+
     if (submitError) {
       console.error('Submit error:', submitError)
       setError('Failed to submit review. Please try again.')
       setLoading(false)
       return
     }
-    
+
     setSuccess(true)
     setLoading(false)
+  }
+
+  function handlePreviewSubmit() {
+    setShowPreview(false)
+    handleSubmit()
   }
 
   const StarRatingInput = ({ rating, setRating, hover, setHover, size = 'lg' }: { rating: number; setRating: (r: number) => void; hover?: number; setHover?: (r: number) => void; size?: 'sm' | 'lg' }) => {
     const starSize = size === 'lg' ? 'w-10 h-10' : 'w-6 h-6'
     const displayRating = hover || rating
-    
+
     return (
       <div className="flex gap-1">
         {[1, 2, 3, 4, 5].map((star) => (
@@ -347,35 +315,7 @@ function ReviewPublicAdjusterContent() {
               </div>
             )}
 
-            {validationError && (
-              <div className="mb-6 rounded-xl border-2 border-amber-300 bg-amber-50 overflow-hidden">
-                <div className="bg-amber-100 px-4 py-3 border-b border-amber-200">
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="w-5 h-5 text-amber-600" />
-                    <h3 className="font-semibold text-amber-800">Please Update Your Review</h3>
-                  </div>
-                </div>
-                <div className="px-4 py-4">
-                  <p className="text-amber-900 mb-3">{validationError.message}</p>
-                  <div className="bg-white rounded-lg p-3 border border-amber-200">
-                    <p className="text-sm font-medium text-gray-700 mb-2">How to fix this:</p>
-                    <ul className="space-y-1">
-                      {getValidationTips(validationError.type).map((tip, index) => (
-                        <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
-                          <span className="text-amber-500 mt-0.5">•</span>
-                          {tip}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <p className="text-xs text-amber-700 mt-3">
-                    Your review has not been lost — just edit the text below and try again.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {error && !validationError && (
+            {error && (
               <div className="mb-6 rounded-lg bg-red-50 text-red-700 px-4 py-3 text-sm flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4" />
                 {error}
@@ -396,9 +336,9 @@ function ReviewPublicAdjusterContent() {
                   placeholder="Search by name or company..."
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-gray-900"
                 />
-                
+
                 {searchLoading && <p className="text-gray-500 text-sm mt-2">Searching...</p>}
-                
+
                 {paResults.length > 0 && (
                   <div className="mt-3 border border-gray-200 rounded-lg divide-y">
                     {paResults.map((pa) => (
@@ -418,7 +358,7 @@ function ReviewPublicAdjusterContent() {
                     ))}
                   </div>
                 )}
-                
+
                 {paSearch.length >= 2 && paResults.length === 0 && !searchLoading && (
                   <div className="mt-4 p-4 bg-amber-50 border border-amber-100 rounded-lg">
                     <div className="flex items-start gap-3">
@@ -426,8 +366,8 @@ function ReviewPublicAdjusterContent() {
                       <div>
                         <p className="text-gray-700 text-sm font-medium">Can't find this public adjuster?</p>
                         <p className="text-gray-600 text-sm mt-1">They may not be in our database yet. You can add them and leave a review.</p>
-                        <Link 
-                          href="/add-public-adjuster" 
+                        <Link
+                          href="/add-public-adjuster"
                           className="inline-flex items-center gap-1 mt-3 bg-amber-600 hover:bg-amber-700 text-white font-medium text-sm py-2 px-4 rounded-lg transition-colors"
                         >
                           <UserPlus className="w-4 h-4" />
@@ -463,24 +403,15 @@ function ReviewPublicAdjusterContent() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Your Review *</label>
-                  <textarea
+                  <ContentModeration
                     value={reviewText}
-                    onChange={(e) => setReviewText(e.target.value)}
+                    onChange={setReviewText}
+                    onValidationChange={handleValidationChange}
                     placeholder="Share your experience with this public adjuster. How did they help with your claim? Were they responsive? Did they increase your settlement?"
+                    minLength={20}
+                    maxLength={2000}
                     rows={5}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 text-gray-900 ${
-                      validationError ? 'border-amber-400 bg-amber-50' : 'border-gray-300'
-                    }`}
                   />
-                  <p className={'text-sm mt-1 ' + (reviewText.trim().length < 20 ? 'text-amber-600' : 'text-gray-500')}>
-                    {reviewText.length}/1000 {reviewText.trim().length < 20 && '(minimum 20 characters)'}
-                  </p>
-                  {validationError && (
-                    <p className="text-sm text-amber-600 mt-1 flex items-center gap-1">
-                      <AlertCircle className="w-4 h-4" />
-                      Please edit your review above to fix the issue
-                    </p>
-                  )}
                 </div>
 
                 <div className="border border-gray-200 rounded-lg">
@@ -536,18 +467,38 @@ function ReviewPublicAdjusterContent() {
                   </div>
                 </div>
 
-                <button
-                  onClick={handleSubmit}
-                  disabled={loading || overallRating === 0 || reviewText.trim().length < 20}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-lg transition-colors"
-                >
-                  {loading ? 'Submitting...' : validationError ? 'Try Again' : 'Submit Review'}
-                </button>
-                
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowPreview(true)}
+                    disabled={loading || overallRating === 0 || reviewText.trim().length < 20}
+                    className="flex-1 flex items-center justify-center gap-2 border border-gray-300 hover:border-gray-400 disabled:border-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-gray-700 font-semibold py-4 px-6 rounded-lg transition-colors"
+                  >
+                    <Eye className="w-5 h-5" />
+                    Preview
+                  </button>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={loading || overallRating === 0 || reviewText.trim().length < 20 || !contentIsValid}
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-lg transition-colors"
+                  >
+                    {loading ? 'Submitting...' : !contentIsValid ? 'Fix Issues to Submit' : 'Submit Review'}
+                  </button>
+                </div>
+
                 <p className="text-xs text-gray-500 text-center">
                   By submitting, you agree to our <Link href="/review-guidelines" className="text-emerald-600 hover:underline">review guidelines</Link>. All reviews are moderated.
                 </p>
               </div>
+            )}
+
+            {showPreview && (
+              <ReviewPreview
+                value={reviewText}
+                onClose={() => setShowPreview(false)}
+                onSubmit={handlePreviewSubmit}
+                isSubmitting={loading}
+                hasIssues={!contentIsValid}
+              />
             )}
           </div>
 

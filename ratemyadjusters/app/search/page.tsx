@@ -64,6 +64,7 @@ function SearchContent() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedState, setSelectedState] = useState('')
   const [selectedCompany, setSelectedCompany] = useState('')
+  const [minRating, setMinRating] = useState<string>('')
   const [adjusters, setAdjusters] = useState<Adjuster[]>([])
   const [loading, setLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
@@ -99,6 +100,7 @@ function SearchContent() {
       if (searchTerm.trim()) params.set('q', searchTerm.trim())
       if (selectedState) params.set('state', selectedState)
       if (selectedCompany) params.set('company', selectedCompany)
+      if (minRating) params.set('min_rating', minRating)
 
       const response = await fetch(`/api/search?${params.toString()}`)
 
@@ -123,7 +125,7 @@ function SearchContent() {
         setLoading(false)
       }
     }
-  }, [searchTerm, selectedState, selectedCompany, hasFilter])
+  }, [searchTerm, selectedState, selectedCompany, minRating, hasFilter])
 
   // Run search when filters change (after mount)
   useEffect(() => {
@@ -210,6 +212,16 @@ function SearchContent() {
                   {company}
                 </option>
               ))}
+            </select>
+            <select
+              value={minRating}
+              onChange={(e) => setMinRating(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            >
+              <option value="">Any Rating</option>
+              <option value="4">4+ Stars</option>
+              <option value="3">3+ Stars</option>
+              <option value="2">2+ Stars</option>
             </select>
           </div>
         </div>

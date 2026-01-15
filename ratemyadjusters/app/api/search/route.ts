@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
     const searchTerm = searchParams.get('q')?.trim() || ''
     const state = searchParams.get('state')?.toUpperCase() || ''
     const company = searchParams.get('company') || ''
+    const minRating = searchParams.get('min_rating') ? parseFloat(searchParams.get('min_rating')!) : null
 
     // Must have at least one filter
     if (!searchTerm && !state && !company) {
@@ -26,9 +27,20 @@ export async function GET(request: NextRequest) {
 
     const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
+    // Use a query that fetches adjusters with their review stats computed dynamically
+    // This ensures accurate counts even if triggers haven't updated the denormalized columns
     let query = supabase
       .from('adjusters')
-      .select('id, first_name, last_name, slug, company_name, state, city, avg_rating, total_reviews')
+      .select(`
+        id,
+        first_name,
+        last_name,
+        slug,
+        company_name,
+        state,
+        city,
+        reviews!left(overall_rating, status)
+      `)
 
     // Apply state filter
     if (state && stateAbbreviations.includes(state)) {
@@ -56,16 +68,55 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const { data, error } = await query
-      .order('total_reviews', { ascending: false, nullsFirst: false })
-      .limit(50)
+    const { data, error } = await query.limit(100)
 
     if (error) {
       console.error('Supabase error:', error)
       return NextResponse.json({ adjusters: [], error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({ adjusters: data || [] })
+    // Compute review stats from the joined data
+    let adjusters = (data || []).map((adjuster: any) => {
+      // Filter to only approved reviews
+      const approvedReviews = (adjuster.reviews || []).filter(
+        (r: any) => r.status === 'approved'
+      )
+
+      const total_reviews = approvedReviews.length
+      const avg_rating = total_reviews > 0
+        ? Math.round(
+            (approvedReviews.reduce((sum: number, r: any) => sum + r.overall_rating, 0) / total_reviews) * 100
+          ) / 100
+        : null
+
+      // Return adjuster without the nested reviews array
+      const { reviews, ...adjusterData } = adjuster
+      return {
+        ...adjusterData,
+        total_reviews,
+        avg_rating,
+      }
+    })
+
+    // Apply minimum rating filter if specified
+    if (minRating !== null) {
+      adjusters = adjusters.filter(
+        (a: any) => a.avg_rating !== null && a.avg_rating >= minRating
+      )
+    }
+
+    // Sort by total_reviews descending, then by avg_rating
+    adjusters.sort((a: any, b: any) => {
+      if ((b.total_reviews || 0) !== (a.total_reviews || 0)) {
+        return (b.total_reviews || 0) - (a.total_reviews || 0)
+      }
+      return (b.avg_rating || 0) - (a.avg_rating || 0)
+    })
+
+    // Limit to 50 results
+    adjusters = adjusters.slice(0, 50)
+
+    return NextResponse.json({ adjusters })
   } catch (err) {
     console.error('API error:', err)
     return NextResponse.json({ adjusters: [], error: 'Server error' }, { status: 500 })
