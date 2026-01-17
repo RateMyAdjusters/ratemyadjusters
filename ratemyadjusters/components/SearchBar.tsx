@@ -139,6 +139,9 @@ export default function SearchBar({
         if (seen.has(key)) continue
         seen.add(key)
 
+        const companyData = adj.companies as { name: string } | { name: string }[] | null
+        const companyName = Array.isArray(companyData) ? companyData[0]?.name : companyData?.name
+
         uniqueResults.push({
           id: adj.id,
           slug: adj.slug,
@@ -147,7 +150,7 @@ export default function SearchBar({
           state: adj.state,
           avg_rating: adj.avg_rating,
           total_reviews: adj.total_reviews || 0,
-          company_name: (adj.companies as { name: string } | null)?.name || undefined
+          company_name: companyName || undefined
         })
       }
 
