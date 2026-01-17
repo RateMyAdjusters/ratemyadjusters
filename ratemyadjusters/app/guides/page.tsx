@@ -48,7 +48,7 @@ export default function GuidesPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionSchema) }} />
 
-      <main className="min-h-screen bg-gray-50">
+      <main className="min-h-screen bg-offwhite">
         {/* Breadcrumb */}
         <div className="bg-white border-b">
           <div className="max-w-4xl mx-auto px-4 py-3">
@@ -61,13 +61,13 @@ export default function GuidesPage() {
         </div>
 
         {/* Header */}
-        <div className="bg-gradient-to-b from-slate-900 to-slate-800 text-white">
+        <div className="bg-gradient-to-b from-navy-500 to-navy-600 text-white">
           <div className="max-w-4xl mx-auto px-4 py-12">
             <div className="flex items-center gap-3 mb-4">
               <BookOpen className="w-8 h-8 text-teal-400" />
               <h1 className="text-3xl md:text-4xl font-bold">Homeowner Guides & Resources</h1>
             </div>
-            <p className="text-slate-300 text-lg max-w-2xl">
+            <p className="text-white/80 text-lg max-w-2xl">
               {totalGuides}+ guides to help you understand and navigate the insurance claims process with confidence.
             </p>
           </div>
@@ -79,7 +79,7 @@ export default function GuidesPage() {
           {newGuides.length > 0 && (
             <section className="mb-12">
               <div className="flex items-center gap-3 mb-6">
-                <Sparkles className="w-6 h-6 text-purple-500" />
+                <Sparkles className="w-6 h-6 text-teal-500" />
                 <h2 className="text-2xl font-bold text-gray-900">Recently Added</h2>
               </div>
               <div className="grid md:grid-cols-2 gap-4">
@@ -87,10 +87,10 @@ export default function GuidesPage() {
                   <Link
                     key={guide.slug}
                     href={`/guides/${guide.slug}`}
-                    className="block bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl border border-purple-200 p-5 hover:border-purple-400 hover:shadow-md transition-all"
+                    className="block bg-gradient-to-br from-teal-50 to-offwhite rounded-xl border border-teal-200 p-5 hover:border-teal-400 hover:shadow-md transition-all"
                   >
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs font-bold text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full">NEW</span>
+                      <span className="text-xs font-bold text-teal-600 bg-teal-100 px-2 py-0.5 rounded-full">NEW</span>
                       <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">{guide.category}</span>
                     </div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">{guide.title}</h3>
@@ -113,14 +113,14 @@ export default function GuidesPage() {
                 <Link
                   key={guide.slug}
                   href={`/guides/${guide.slug}`}
-                  className="block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:border-blue-300 hover:shadow-md transition-all"
+                  className="block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:border-teal-300 hover:shadow-md transition-all"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs font-medium text-blue-600 uppercase tracking-wide">{guide.category}</span>
+                        <span className="text-xs font-medium text-teal-600 uppercase tracking-wide">{guide.category}</span>
                         {guide.featured && (
-                          <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Popular</span>
+                          <span className="text-xs font-medium text-warm-600 bg-warm-50 px-2 py-0.5 rounded-full">Popular</span>
                         )}
                       </div>
                       <h3 className="text-xl font-semibold text-gray-900 mb-2">{guide.title}</h3>
@@ -141,7 +141,7 @@ export default function GuidesPage() {
           {industryGuides.length > 0 && (
             <section className="mb-12">
               <div className="flex items-center gap-3 mb-6">
-                <TrendingUp className="w-6 h-6 text-indigo-500" />
+                <TrendingUp className="w-6 h-6 text-navy-500" />
                 <h2 className="text-2xl font-bold text-gray-900">Industry Deep Dives</h2>
               </div>
               <p className="text-gray-600 mb-6">
@@ -152,14 +152,14 @@ export default function GuidesPage() {
                   <Link
                     key={guide.slug}
                     href={`/guides/${guide.slug}`}
-                    className="block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:border-indigo-300 hover:shadow-md transition-all"
+                    className="block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:border-teal-300 hover:shadow-md transition-all"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="text-xs font-medium text-indigo-600 uppercase tracking-wide">{guide.category}</span>
+                          <span className="text-xs font-medium text-navy-500 uppercase tracking-wide">{guide.category}</span>
                           {guide.new && (
-                            <span className="text-xs font-bold text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full">NEW</span>
+                            <span className="text-xs font-bold text-teal-600 bg-teal-100 px-2 py-0.5 rounded-full">NEW</span>
                           )}
                         </div>
                         <h3 className="text-xl font-semibold text-gray-900 mb-2">{guide.title}</h3>
@@ -180,7 +180,7 @@ export default function GuidesPage() {
           {/* File a Complaint by State */}
           <section className="mb-12">
             <div className="flex items-center gap-3 mb-6">
-              <FileWarning className="w-6 h-6 text-orange-500" />
+              <FileWarning className="w-6 h-6 text-warm-500" />
               <h2 className="text-2xl font-bold text-gray-900">How to File a Complaint by State</h2>
             </div>
             <p className="text-gray-600 mb-6">
@@ -192,7 +192,7 @@ export default function GuidesPage() {
                   <Link
                     key={state.slug}
                     href={`/guides/file-complaint-against-insurance-adjuster-${state.slug}`}
-                    className="px-3 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    className="px-3 py-2 text-sm text-gray-700 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
                   >
                     {state.name}
                   </Link>
@@ -204,7 +204,7 @@ export default function GuidesPage() {
           {/* Best Public Adjusters by State */}
           <section className="mb-12">
             <div className="flex items-center gap-3 mb-6">
-              <MapPin className="w-6 h-6 text-green-500" />
+              <MapPin className="w-6 h-6 text-success-500" />
               <h2 className="text-2xl font-bold text-gray-900">Find Public Adjusters by State</h2>
             </div>
             <p className="text-gray-600 mb-6">
@@ -216,7 +216,7 @@ export default function GuidesPage() {
                   <Link
                     key={state.slug}
                     href={`/guides/best-public-adjusters-in-${state.slug}`}
-                    className="px-3 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    className="px-3 py-2 text-sm text-gray-700 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
                   >
                     {state.name}
                   </Link>
@@ -240,7 +240,7 @@ export default function GuidesPage() {
                   <Link
                     key={company.slug}
                     href={`/guides/${company.slug}-claim-denied-what-to-do`}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-red-50 hover:border-red-200 border border-transparent transition-all group"
+                    className="flex items-center justify-between p-4 bg-offwhite rounded-lg hover:bg-red-50 hover:border-red-200 border border-transparent transition-all group"
                   >
                     <span className="font-medium text-gray-900 group-hover:text-red-700">{company.name}</span>
                     <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-red-500" />
@@ -251,7 +251,7 @@ export default function GuidesPage() {
           </section>
 
           {/* Disclaimer */}
-          <div className="p-6 bg-gray-100 rounded-xl">
+          <div className="p-6 bg-offwhite rounded-xl">
             <h3 className="font-semibold text-gray-900 mb-2">About These Guides</h3>
             <p className="text-gray-600 text-sm leading-relaxed">
               These educational resources are provided for general informational purposes only. They do not constitute legal, 
@@ -265,33 +265,33 @@ export default function GuidesPage() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-8">
             <h3 className="font-semibold text-gray-900 mb-4">Explore More</h3>
             <div className="grid sm:grid-cols-3 gap-4">
-              <Link href="/adjusters" className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-blue-50 transition-all group">
+              <Link href="/adjusters" className="flex items-center justify-between p-4 bg-offwhite rounded-lg hover:bg-teal-50 transition-all group">
                 <div>
-                  <div className="font-medium text-gray-900 group-hover:text-blue-600">Browse Adjusters</div>
+                  <div className="font-medium text-gray-900 group-hover:text-teal-600">Browse Adjusters</div>
                   <div className="text-sm text-gray-500">Search by state</div>
                 </div>
-                <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
+                <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-teal-600" />
               </Link>
-              <Link href="/review" className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-blue-50 transition-all group">
+              <Link href="/review" className="flex items-center justify-between p-4 bg-offwhite rounded-lg hover:bg-teal-50 transition-all group">
                 <div>
-                  <div className="font-medium text-gray-900 group-hover:text-blue-600">Leave a Review</div>
+                  <div className="font-medium text-gray-900 group-hover:text-teal-600">Leave a Review</div>
                   <div className="text-sm text-gray-500">Share your experience</div>
                 </div>
-                <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
+                <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-teal-600" />
               </Link>
-              <Link href="/companies" className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-blue-50 transition-all group">
+              <Link href="/companies" className="flex items-center justify-between p-4 bg-offwhite rounded-lg hover:bg-teal-50 transition-all group">
                 <div>
-                  <div className="font-medium text-gray-900 group-hover:text-blue-600">Insurance Companies</div>
+                  <div className="font-medium text-gray-900 group-hover:text-teal-600">Insurance Companies</div>
                   <div className="text-sm text-gray-500">Browse by carrier</div>
                 </div>
-                <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
+                <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-teal-600" />
               </Link>
             </div>
           </div>
         </div>
 
         {/* Legal Disclaimer */}
-        <div className="border-t border-gray-200 bg-gray-50">
+        <div className="border-t border-gray-200 bg-offwhite">
           <div className="max-w-4xl mx-auto px-4 py-6">
             <p className="text-xs text-gray-500 text-center">
               RateMyAdjusters does not evaluate or rate insurance companies or adjusters. Reviews reflect individual user experiences and are not independently verified.

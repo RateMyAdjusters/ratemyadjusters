@@ -25,7 +25,7 @@ export default function CompaniesPage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }} />
 
-      <main className="min-h-screen bg-gray-50">
+      <main className="min-h-screen bg-offwhite">
         {/* Breadcrumb */}
         <div className="bg-white border-b">
           <div className="max-w-6xl mx-auto px-4 py-3">
@@ -38,13 +38,13 @@ export default function CompaniesPage() {
         </div>
 
         {/* Header */}
-        <div className="bg-gradient-to-b from-slate-900 to-slate-800 text-white">
+        <div className="bg-gradient-to-b from-navy-500 to-navy-600 text-white">
           <div className="max-w-6xl mx-auto px-4 py-12">
             <div className="flex items-center gap-3 mb-4">
               <Building className="w-8 h-8 text-teal-400" />
               <h1 className="text-3xl md:text-4xl font-bold">Insurance Companies</h1>
             </div>
-            <p className="text-slate-300 text-lg max-w-2xl">
+            <p className="text-white/80 text-lg max-w-2xl">
               Browse insurance adjuster reviews by company. Select a company to see adjuster ratings and homeowner experiences.
             </p>
           </div>
@@ -57,13 +57,13 @@ export default function CompaniesPage() {
               <Link
                 key={company.slug}
                 href={`/company/${company.slug}`}
-                className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:border-blue-300 hover:shadow-md transition-all group"
+                className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:border-teal-300 hover:shadow-md transition-all group"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gray-100 group-hover:bg-blue-100 rounded-full flex items-center justify-center transition-colors">
-                    <Building className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                  <div className="w-10 h-10 bg-gray-100 group-hover:bg-teal-100 rounded-full flex items-center justify-center transition-colors">
+                    <Building className="w-5 h-5 text-gray-400 group-hover:text-teal-600 transition-colors" />
                   </div>
-                  <div className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                  <div className="font-semibold text-gray-900 group-hover:text-teal-600 transition-colors">
                     {company.name}
                   </div>
                 </div>
@@ -72,29 +72,29 @@ export default function CompaniesPage() {
           </div>
 
           {/* Quick Links */}
-          <div className="bg-gray-50 rounded-xl p-6 mt-8">
+          <div className="bg-offwhite rounded-xl p-6 mt-8">
             <h3 className="font-semibold text-gray-900 mb-4">Explore More</h3>
             <div className="grid sm:grid-cols-3 gap-4">
-              <Link href="/adjusters" className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 hover:border-blue-300 transition-all group">
+              <Link href="/adjusters" className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 hover:border-teal-300 transition-all group">
                 <div>
-                  <div className="font-medium text-gray-900 group-hover:text-blue-600">Browse Adjusters</div>
+                  <div className="font-medium text-gray-900 group-hover:text-teal-600">Browse Adjusters</div>
                   <div className="text-sm text-gray-500">Search by state</div>
                 </div>
-                <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
+                <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-teal-600" />
               </Link>
-              <Link href="/review" className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 hover:border-blue-300 transition-all group">
+              <Link href="/review" className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 hover:border-teal-300 transition-all group">
                 <div>
-                  <div className="font-medium text-gray-900 group-hover:text-blue-600">Leave a Review</div>
+                  <div className="font-medium text-gray-900 group-hover:text-teal-600">Leave a Review</div>
                   <div className="text-sm text-gray-500">Share your experience</div>
                 </div>
-                <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
+                <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-teal-600" />
               </Link>
-              <Link href="/guides" className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 hover:border-blue-300 transition-all group">
+              <Link href="/guides" className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 hover:border-teal-300 transition-all group">
                 <div>
-                  <div className="font-medium text-gray-900 group-hover:text-blue-600">Guides & Resources</div>
+                  <div className="font-medium text-gray-900 group-hover:text-teal-600">Guides & Resources</div>
                   <div className="text-sm text-gray-500">Helpful articles</div>
                 </div>
-                <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
+                <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-teal-600" />
               </Link>
             </div>
           </div>

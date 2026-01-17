@@ -167,6 +167,14 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold mb-4 text-white text-sm uppercase tracking-wide">Resources</h4>
             <ul className="space-y-2 text-sm mb-6">
+              <li>
+                <Link
+                  href="/research/hurricane-ian-nicole-claims-crisis"
+                  className="text-white/70 hover:text-white transition-colors"
+                >
+                  Hurricane Ian Claims Report
+                </Link>
+              </li>
               {guides.map((guide) => (
                 <li key={guide.slug}>
                   <Link
@@ -177,6 +185,11 @@ export default function Footer() {
                   </Link>
                 </li>
               ))}
+              <li>
+                <Link href="/research" className="text-[#20A39E] hover:text-[#4CAF50] transition-colors font-medium">
+                  All Research →
+                </Link>
+              </li>
               <li>
                 <Link href="/guides" className="text-[#20A39E] hover:text-[#4CAF50] transition-colors font-medium">
                   All Guides →
