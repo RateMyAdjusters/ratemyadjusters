@@ -36,12 +36,6 @@ export default function Header() {
               Browse
             </Link>
             <Link
-              href="/research"
-              className="text-[#666666] hover:text-[#0A3D62] font-medium transition-colors"
-            >
-              Research
-            </Link>
-            <Link
               href="/review"
               className="bg-[#FF9800] hover:bg-[#F57C00] text-white font-semibold py-2 px-5 rounded-lg transition-colors shadow-sm hover:shadow-md"
             >
@@ -74,13 +68,6 @@ export default function Header() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Browse Adjusters
-              </Link>
-              <Link
-                href="/research"
-                className="text-[#666666] hover:text-[#0A3D62] font-medium"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Research
               </Link>
               <Link
                 href="/review"
