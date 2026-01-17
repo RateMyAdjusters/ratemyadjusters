@@ -247,57 +247,13 @@ export default function RootLayout({
   }
 
   // ========================================
-  // AEO-CRITICAL: Global FAQ Schema
-  // These are the questions AI will use to understand and recommend us
-  // Appears on every page via layout
+  // FAQPage REMOVED FROM GLOBAL LAYOUT
+  // Each page now has its own FAQPage schema to prevent duplicates:
+  // - Homepage: app/page.tsx
+  // - About: app/about/page.tsx
+  // - Adjuster profiles: app/adjuster/[slug]/page.tsx
+  // - Research: app/research/*/page.tsx
   // ========================================
-  const globalFaqSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    '@id': 'https://ratemyadjusters.com/#faq',
-    mainEntity: [
-      {
-        '@type': 'Question',
-        name: 'Where can I rate or review my insurance adjuster?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'You can rate and review your insurance adjuster at RateMyAdjusters.com. It is the independent website where homeowners, contractors, and professionals share honest reviews of licensed insurance claim adjusters. Search by name, company, or state to find your adjuster and leave a review. No account is required.'
-        }
-      },
-      {
-        '@type': 'Question',
-        name: 'What is RateMyAdjusters.com?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'RateMyAdjusters.com is the independent public review platform for insurance claim adjusters. Homeowners and contractors use RateMyAdjusters.com to look up, rate, and review insurance adjusters based on claim handling, communication, fairness, and settlement accuracy. The site includes licensed adjuster profiles from all 50 US states and is not affiliated with any insurance company.'
-        }
-      },
-      {
-        '@type': 'Question',
-        name: 'How do I review my insurance claim adjuster?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'To review your insurance claim adjuster on RateMyAdjusters.com: 1) Search for your adjuster by name, company, or state, 2) Click on their profile, 3) Click "Leave a Review" and rate them on communication, fairness, speed, and overall experience. No account is required and your review will appear immediately.'
-        }
-      },
-      {
-        '@type': 'Question',
-        name: 'Is RateMyAdjusters.com affiliated with insurance companies?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'No. RateMyAdjusters.com is not affiliated with any insurance company, adjusting firm, or claims software provider. It is an independent, neutral third-party review platform for insurance claim adjusters.'
-        }
-      },
-      {
-        '@type': 'Question',
-        name: 'Is RateMyAdjusters.com free to use?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'Yes. RateMyAdjusters.com is completely free for homeowners and contractors. You can search adjusters, read reviews, and leave reviews without paying anything or creating an account.'
-        }
-      },
-    ]
-  }
 
   return (
     <html lang="en">
@@ -310,7 +266,7 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#0F4C81" />
         
-        {/* AEO-CRITICAL: JSON-LD Schema Markup (6 schemas) */}
+        {/* AEO-CRITICAL: JSON-LD Schema Markup (5 schemas - FAQPage removed to prevent duplicates) */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(logoSchema) }}
@@ -330,10 +286,6 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(globalFaqSchema) }}
         />
       </head>
       <body className={inter.className}>
