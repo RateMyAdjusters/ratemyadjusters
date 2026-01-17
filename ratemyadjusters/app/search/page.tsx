@@ -49,7 +49,7 @@ function StarRating({ rating }: { rating: number }) {
       {[1, 2, 3, 4, 5].map((star) => (
         <svg
           key={star}
-          className={`w-4 h-4 ${star <= Math.round(rating) ? 'text-amber-400' : 'text-gray-200'}`}
+          className={`w-4 h-4 ${star <= Math.round(rating) ? 'text-warm-500' : 'text-gray-200'}`}
           fill="currentColor"
           viewBox="0 0 20 20"
         >
@@ -71,16 +71,16 @@ function AdjusterCard({ adjuster, rank }: { adjuster: Adjuster; rank?: number })
   return (
     <Link
       href={`/adjuster/${adjuster.slug}`}
-      className="group bg-white rounded-xl p-4 md:p-5 shadow-sm hover:shadow-lg transition-all duration-200 border border-gray-100 hover:border-blue-200 flex items-center gap-4"
+      className="group bg-white rounded-xl p-4 md:p-5 shadow-sm hover:shadow-lg transition-all duration-200 border border-gray-100 hover:border-teal-200 flex items-center gap-4"
     >
       <div className="relative">
-        <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-md group-hover:scale-105 transition-transform">
+        <div className="w-14 h-14 bg-gradient-to-br from-navy-500 to-teal-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-md group-hover:scale-105 transition-transform">
           <span className="text-white font-bold text-lg">
             {getInitials(adjuster.first_name, adjuster.last_name)}
           </span>
         </div>
         {rank && rank <= 3 && (
-          <div className="absolute -top-1 -right-1 w-5 h-5 bg-amber-400 rounded-full flex items-center justify-center text-xs font-bold text-white shadow">
+          <div className="absolute -top-1 -right-1 w-5 h-5 bg-warm-500 rounded-full flex items-center justify-center text-xs font-bold text-white shadow">
             {rank}
           </div>
         )}
@@ -88,7 +88,7 @@ function AdjusterCard({ adjuster, rank }: { adjuster: Adjuster; rank?: number })
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <h3 className="font-semibold text-gray-900 text-lg group-hover:text-blue-600 transition-colors truncate">
+          <h3 className="font-semibold text-gray-900 text-lg group-hover:text-teal-600 transition-colors truncate">
             {adjuster.first_name} {adjuster.last_name}
           </h3>
           {isTopRated && (
@@ -100,7 +100,7 @@ function AdjusterCard({ adjuster, rank }: { adjuster: Adjuster; rank?: number })
             </span>
           )}
           {isMostReviewed && !isTopRated && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-teal-100 text-teal-700 text-xs font-medium rounded-full">
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
               </svg>
@@ -133,7 +133,7 @@ function AdjusterCard({ adjuster, rank }: { adjuster: Adjuster; rank?: number })
         </div>
       </div>
 
-      <div className="hidden sm:flex items-center text-gray-300 group-hover:text-blue-500 transition-colors">
+      <div className="hidden sm:flex items-center text-gray-300 group-hover:text-teal-500 transition-colors">
         <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
@@ -164,7 +164,7 @@ function Pagination({ page, totalPages, onPageChange }: { page: number; totalPag
       <button
         onClick={() => onPageChange(page - 1)}
         disabled={page === 1}
-        className="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-offwhite disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -178,8 +178,8 @@ function Pagination({ page, totalPages, onPageChange }: { page: number; totalPag
             onClick={() => onPageChange(p)}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               p === page
-                ? 'bg-blue-600 text-white'
-                : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
+                ? 'bg-warm-500 text-white'
+                : 'border border-gray-200 text-gray-600 hover:bg-offwhite'
             }`}
           >
             {p}
@@ -192,7 +192,7 @@ function Pagination({ page, totalPages, onPageChange }: { page: number; totalPag
       <button
         onClick={() => onPageChange(page + 1)}
         disabled={page === totalPages}
-        className="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-offwhite disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -345,8 +345,8 @@ function SearchContent() {
 
   if (!mounted) {
     return (
-      <main className="min-h-screen bg-gray-50">
-        <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 py-12">
+      <main className="min-h-screen bg-offwhite">
+        <div className="bg-gradient-to-br from-navy-500 via-navy-600 to-navy-700 py-12">
           <div className="max-w-6xl mx-auto px-4">
             <div className="h-10 bg-white/20 rounded-lg w-72 animate-pulse mb-4" />
             <div className="h-6 bg-white/10 rounded w-48 animate-pulse mb-8" />
@@ -365,12 +365,12 @@ function SearchContent() {
   const topResults = data?.topResults
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-offwhite">
       {/* Hero Search Section */}
-      <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white">
+      <div className="bg-gradient-to-br from-navy-500 via-navy-600 to-navy-700 text-white">
         <div className="max-w-6xl mx-auto px-4 py-12">
           <h1 className="text-3xl md:text-4xl font-bold mb-2">Find Insurance Adjusters</h1>
-          <p className="text-blue-100 text-lg mb-8">Search adjusters nationwide by name or state</p>
+          <p className="text-white/80 text-lg mb-8">Search adjusters nationwide by name or state</p>
 
           {/* Search Box */}
           <div className="bg-white rounded-2xl p-2 shadow-2xl max-w-3xl">
@@ -393,7 +393,7 @@ function SearchContent() {
                       updateURL({ q: searchTerm, page: 1 })
                     }
                   }}
-                  className="w-full pl-12 pr-10 py-4 text-gray-900 text-lg rounded-xl border-0 focus:ring-2 focus:ring-blue-500 bg-gray-50 focus:bg-white transition-colors placeholder-gray-400"
+                  className="w-full pl-12 pr-10 py-4 text-gray-900 text-lg rounded-xl border-0 focus:ring-2 focus:ring-teal-500 bg-offwhite focus:bg-white transition-colors placeholder-gray-400"
                   autoFocus
                 />
                 {searchTerm && (
@@ -413,7 +413,7 @@ function SearchContent() {
               </div>
               <button
                 onClick={() => updateURL({ q: searchTerm, page: 1 })}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-semibold transition-colors"
+                className="bg-warm-500 hover:bg-warm-600 text-white px-8 py-4 rounded-xl font-semibold transition-colors"
               >
                 Search
               </button>
@@ -428,7 +428,7 @@ function SearchContent() {
                 onClick={() => handleFilterChange('state', selectedState === state ? '' : state)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                   selectedState === state
-                    ? 'bg-white text-blue-700 shadow-lg'
+                    ? 'bg-white text-teal-700 shadow-lg'
                     : 'bg-white/20 text-white hover:bg-white/30'
                 }`}
               >
@@ -450,7 +450,7 @@ function SearchContent() {
                 {activeFilterCount > 0 && (
                   <button
                     onClick={clearAllFilters}
-                    className="text-sm text-blue-600 hover:text-blue-700"
+                    className="text-sm text-teal-600 hover:text-teal-700"
                   >
                     Clear all
                   </button>
@@ -463,7 +463,7 @@ function SearchContent() {
                 <select
                   value={selectedState}
                   onChange={(e) => handleFilterChange('state', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-gray-700 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                 >
                   <option value="">All States</option>
                   {stateAbbreviations.map((abbr) => (
@@ -479,7 +479,7 @@ function SearchContent() {
                     type="checkbox"
                     checked={hasReviews}
                     onChange={(e) => handleFilterChange('hasReviews', e.target.checked)}
-                    className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="w-5 h-5 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
                   />
                   <span className="text-gray-700">Has reviews</span>
                 </label>
@@ -492,11 +492,11 @@ function SearchContent() {
                     type="checkbox"
                     checked={minRating}
                     onChange={(e) => handleFilterChange('minRating', e.target.checked)}
-                    className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="w-5 h-5 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
                   />
                   <span className="text-gray-700 flex items-center gap-1">
                     4+ stars
-                    <svg className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-4 h-4 text-warm-500" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
                   </span>
@@ -517,8 +517,8 @@ function SearchContent() {
                           onClick={() => handleFilterChange('state', state)}
                           className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
                             selectedState === state
-                              ? 'bg-blue-50 text-blue-700'
-                              : 'hover:bg-gray-50 text-gray-600'
+                              ? 'bg-teal-50 text-teal-700'
+                              : 'hover:bg-offwhite text-gray-600'
                           }`}
                         >
                           <span>{stateNames[state] || state}</span>
@@ -534,14 +534,14 @@ function SearchContent() {
           {/* Mobile Filter Button */}
           <button
             onClick={() => setShowMobileFilters(true)}
-            className="lg:hidden fixed bottom-4 right-4 z-40 bg-blue-600 text-white px-4 py-3 rounded-full shadow-lg flex items-center gap-2"
+            className="lg:hidden fixed bottom-4 right-4 z-40 bg-warm-500 text-white px-4 py-3 rounded-full shadow-lg flex items-center gap-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
             </svg>
             Filters
             {activeFilterCount > 0 && (
-              <span className="bg-white text-blue-600 w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center">
+              <span className="bg-white text-teal-600 w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center">
                 {activeFilterCount}
               </span>
             )}
@@ -585,7 +585,7 @@ function SearchContent() {
                       type="checkbox"
                       checked={hasReviews}
                       onChange={(e) => handleFilterChange('hasReviews', e.target.checked)}
-                      className="w-6 h-6 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="w-6 h-6 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
                     />
                     <span className="text-gray-700">Has reviews</span>
                   </label>
@@ -598,11 +598,11 @@ function SearchContent() {
                       type="checkbox"
                       checked={minRating}
                       onChange={(e) => handleFilterChange('minRating', e.target.checked)}
-                      className="w-6 h-6 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="w-6 h-6 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
                     />
                     <span className="text-gray-700 flex items-center gap-1">
                       4+ stars
-                      <svg className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                      <svg className="w-4 h-4 text-warm-500" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                       </svg>
                     </span>
@@ -621,7 +621,7 @@ function SearchContent() {
                   </button>
                   <button
                     onClick={() => setShowMobileFilters(false)}
-                    className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-medium"
+                    className="flex-1 py-3 bg-warm-500 text-white rounded-xl font-medium"
                   >
                     Apply
                   </button>
@@ -638,7 +638,7 @@ function SearchContent() {
                 <p className="text-gray-600">
                   {loading ? (
                     <span className="flex items-center gap-2">
-                      <svg className="animate-spin h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24">
+                      <svg className="animate-spin h-4 w-4 text-teal-600" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
@@ -656,7 +656,7 @@ function SearchContent() {
                 {(searchTerm || selectedState || hasReviews || minRating) && (
                   <button
                     onClick={clearAllFilters}
-                    className="text-blue-600 hover:text-blue-700 font-medium text-sm flex items-center gap-1"
+                    className="text-teal-600 hover:text-teal-700 font-medium text-sm flex items-center gap-1"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -670,8 +670,8 @@ function SearchContent() {
             {/* Initial State - No Search Yet */}
             {!hasFilter && !loading && (
               <div className="text-center py-16">
-                <div className="w-20 h-20 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                  <svg className="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-20 h-20 bg-teal-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <svg className="w-10 h-10 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                 </div>
@@ -707,8 +707,8 @@ function SearchContent() {
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="p-8 md:p-12">
                   {/* Shield Icon */}
-                  <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-16 h-16 bg-teal-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <svg className="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>
                   </div>
@@ -722,10 +722,10 @@ function SearchContent() {
                   </p>
 
                   {/* Ghost Preview */}
-                  <div className="max-w-sm mx-auto mb-8 p-4 bg-gray-50 rounded-xl border border-gray-200 border-dashed">
+                  <div className="max-w-sm mx-auto mb-8 p-4 bg-offwhite rounded-xl border border-gray-200 border-dashed">
                     <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Profile Preview</p>
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+                      <div className="w-10 h-10 bg-gradient-to-br from-navy-500 to-teal-500 rounded-full flex items-center justify-center">
                         <span className="text-white font-bold text-sm">
                           {searchTerm ? searchTerm.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) : 'JD'}
                         </span>
@@ -737,7 +737,7 @@ function SearchContent() {
                     </div>
                     <div className="flex items-center gap-1">
                       {[1, 2, 3, 4, 5].map((star) => (
-                        <svg key={star} className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <svg key={star} className="w-4 h-4 text-warm-500" fill="currentColor" viewBox="0 0 20 20">
                           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                         </svg>
                       ))}
@@ -748,7 +748,7 @@ function SearchContent() {
                   <div className="text-center">
                     <Link
                       href="/add-adjuster"
-                      className="inline-flex items-center gap-2 bg-blue-600 text-white px-8 py-4 rounded-xl font-semibold hover:bg-blue-700 transition-all hover:shadow-lg hover:scale-[1.02] text-lg"
+                      className="inline-flex items-center gap-2 bg-warm-500 text-white px-8 py-4 rounded-xl font-semibold hover:bg-warm-600 transition-all hover:shadow-lg hover:scale-[1.02] text-lg"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -761,7 +761,7 @@ function SearchContent() {
                   </div>
                 </div>
 
-                <div className="bg-gray-50 px-8 py-4 border-t border-gray-100">
+                <div className="bg-offwhite px-8 py-4 border-t border-gray-100">
                   <p className="text-sm text-gray-500 text-center">
                     Not seeing who you&apos;re looking for? Some adjusters aren&apos;t listed yet — you&apos;re early.
                   </p>
@@ -773,7 +773,7 @@ function SearchContent() {
             {!loading && topResults && topResults.length > 0 && currentPage === 1 && (
               <div className="mb-8">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <svg className="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5 text-warm-500" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                   </svg>
                   Top Results
@@ -810,7 +810,7 @@ function SearchContent() {
             {/* Bottom CTA */}
             {!loading && adjusters.length > 0 && (
               <div className="mt-12">
-                <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl p-6 md:p-8 border border-blue-100">
+                <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl p-6 md:p-8 border border-teal-100">
                   <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                     <div>
                       <p className="font-semibold text-gray-900 text-lg">Not seeing who you&apos;re looking for?</p>
@@ -818,7 +818,7 @@ function SearchContent() {
                     </div>
                     <Link
                       href="/add-adjuster"
-                      className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all hover:shadow-lg whitespace-nowrap"
+                      className="inline-flex items-center gap-2 bg-warm-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-warm-600 transition-all hover:shadow-lg whitespace-nowrap"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -840,8 +840,8 @@ export default function SearchPage() {
   return (
     <Suspense
       fallback={
-        <main className="min-h-screen bg-gray-50">
-          <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 py-12">
+        <main className="min-h-screen bg-offwhite">
+          <div className="bg-gradient-to-br from-navy-500 via-navy-600 to-navy-700 py-12">
             <div className="max-w-6xl mx-auto px-4">
               <div className="h-10 bg-white/20 rounded-lg w-72 animate-pulse mb-4" />
               <div className="h-6 bg-white/10 rounded w-48 animate-pulse mb-8" />
