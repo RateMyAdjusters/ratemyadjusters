@@ -166,17 +166,17 @@ export default function SearchBar({
     }
   }, [])
 
-  // Debounced search - fast 100ms delay
+  // Instant search - 20ms debounce
   useEffect(() => {
     const q = query.trim()
 
     if (q.length >= 2) {
-      setLoading(true) // Show loading immediately
+      setLoading(true)
     }
 
     const timer = setTimeout(() => {
       searchAdjusters(query)
-    }, 100)
+    }, 20)
 
     return () => clearTimeout(timer)
   }, [query, searchAdjusters])
