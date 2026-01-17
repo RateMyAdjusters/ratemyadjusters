@@ -102,17 +102,17 @@ export default function AddAdjusterPage() {
 
   if (success && createdAdjuster) {
     return (
-      <main className="min-h-screen bg-gray-50 py-12">
+      <main className="min-h-screen bg-offwhite py-12">
         <div className="max-w-xl mx-auto px-4">
           <div className="bg-white rounded-2xl shadow-sm p-8 text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-8 h-8 text-green-600" />
+            <div className="w-16 h-16 bg-success-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-success-600" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Profile Created!</h1>
             <p className="text-gray-600 mb-2">
               <span className="font-semibold">{createdAdjuster.first_name} {createdAdjuster.last_name}</span> has been added to our database.
             </p>
-            <p className="text-sm text-amber-600 mb-4">
+            <p className="text-sm text-warm-600 mb-4">
               This profile is marked as "Pending Verification" until confirmed.
             </p>
             <p className="text-sm text-gray-500">
@@ -125,13 +125,13 @@ export default function AddAdjusterPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 py-12">
+    <main className="min-h-screen bg-offwhite py-12">
       <div className="max-w-xl mx-auto px-4">
         <div className="bg-white rounded-2xl shadow-sm p-8">
           {/* Header */}
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-              <UserPlus className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center">
+              <UserPlus className="w-6 h-6 text-teal-600" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Add Missing Adjuster</h1>
@@ -165,7 +165,7 @@ export default function AddAdjusterPage() {
                   onChange={(e) => setFirstName(e.target.value)}
                   placeholder="John"
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 text-gray-900"
                 />
               </div>
               <div>
@@ -176,7 +176,7 @@ export default function AddAdjusterPage() {
                   onChange={(e) => setLastName(e.target.value)}
                   placeholder="Smith"
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 text-gray-900"
                 />
               </div>
             </div>
@@ -203,7 +203,7 @@ export default function AddAdjusterPage() {
                 value={company}
                 onChange={(e) => setCompany(e.target.value)}
                 placeholder="State Farm, Allstate, etc."
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 text-gray-900"
               />
             </div>
 
@@ -228,14 +228,14 @@ export default function AddAdjusterPage() {
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="License number, city, or any other details..."
                 rows={3}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 text-gray-900"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white font-semibold py-4 px-6 rounded-lg transition-colors"
+              className="w-full bg-warm-500 hover:bg-warm-600 disabled:bg-gray-300 text-white font-semibold py-4 px-6 rounded-lg transition-colors"
             >
               {loading ? 'Creating Profile...' : 'Create Profile & Write Review'}
             </button>

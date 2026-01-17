@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, X } from 'lucide-react'
+import { Search, X, User, MapPin, Star, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 interface Adjuster {
@@ -36,10 +36,11 @@ export default function SearchBar({
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [selectedState, setSelectedState] = useState('')
+  const [selectedIndex, setSelectedIndex] = useState(-1)
 
   const wrapperRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const requestIdRef = useRef(0)
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   const states = [
     'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
@@ -54,220 +55,135 @@ export default function SearchBar({
     function handleClickOutside(event: MouseEvent) {
       if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
         setOpen(false)
+        setSelectedIndex(-1)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Close dropdown on Escape key
+  // Keyboard navigation
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
+      if (!open) return
+
       if (event.key === 'Escape') {
         setOpen(false)
+        setSelectedIndex(-1)
+      } else if (event.key === 'ArrowDown') {
+        event.preventDefault()
+        setSelectedIndex(prev => Math.min(prev + 1, results.length - 1))
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault()
+        setSelectedIndex(prev => Math.max(prev - 1, -1))
+      } else if (event.key === 'Enter' && selectedIndex >= 0) {
+        event.preventDefault()
+        handleResultClick(results[selectedIndex].slug)
       }
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  }, [open, results, selectedIndex])
 
-  // Debounced search - 300ms delay
-  useEffect(() => {
-    const q = query.trim()
+  // Simplified, single-query search
+  const searchAdjusters = useCallback(async (searchQuery: string) => {
+    const q = searchQuery.trim()
 
     if (q.length < 2) {
       setResults([])
+      setTotalCount(0)
       setOpen(false)
       return
     }
 
-    const timer = setTimeout(() => {
-      searchAdjusters(q)
-    }, 300)
+    // Cancel any pending request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    abortControllerRef.current = new AbortController()
 
-    return () => clearTimeout(timer)
-  }, [query])
-
-  async function searchAdjusters(q: string) {
     setLoading(true)
-
-    // Increment request ID and capture locally
-    requestIdRef.current++
-    const currentRequestId = requestIdRef.current
 
     try {
       const parts = q.split(/\s+/).filter(Boolean)
-      let allData: any[] = []
+      let queryBuilder = supabase
+        .from("adjusters")
+        .select("id, slug, first_name, last_name, state, avg_rating, total_reviews, companies(name)")
 
-      // Two-word search: "Giovanni Odeh" -> first_name ILIKE 'Giovanni%' AND last_name ILIKE 'Odeh%'
       if (parts.length >= 2) {
-        const firstName = parts[0]
-        const lastName = parts.slice(1).join(' ')
-
-        // Exact match query
-        const exactResult = await supabase
-          .from("adjusters")
-          .select("id, slug, first_name, last_name, state, avg_rating, total_reviews, companies(name)")
-          .ilike('first_name', `${firstName}%`)
-          .ilike('last_name', `${lastName}%`)
-          .limit(20)
-
-        // Fuzzy: also try with shorter prefixes for typo tolerance (min 2 chars)
-        const fuzzyFirstName = firstName.length > 2 ? firstName.slice(0, Math.max(2, firstName.length - 1)) : firstName
-        const fuzzyLastName = lastName.length > 2 ? lastName.slice(0, Math.max(2, lastName.length - 1)) : lastName
-
-        const fuzzyResult = await supabase
-          .from("adjusters")
-          .select("id, slug, first_name, last_name, state, avg_rating, total_reviews, companies(name)")
-          .ilike('first_name', `${fuzzyFirstName}%`)
-          .ilike('last_name', `${fuzzyLastName}%`)
-          .limit(20)
-
-        allData = [...(exactResult.data || []), ...(fuzzyResult.data || [])]
-      }
-      // Single-word search
-      else {
-        // Exact prefix match on first_name and last_name
-        const firstNameResult = await supabase
-          .from("adjusters")
-          .select("id, slug, first_name, last_name, state, avg_rating, total_reviews, companies(name)")
-          .ilike('first_name', `${q}%`)
-          .limit(20)
-
-        const lastNameResult = await supabase
-          .from("adjusters")
-          .select("id, slug, first_name, last_name, state, avg_rating, total_reviews, companies(name)")
-          .ilike('last_name', `${q}%`)
-          .limit(20)
-
-        // Fuzzy: shorter prefix for typo tolerance (min 2 chars)
-        const fuzzyQ = q.length > 2 ? q.slice(0, Math.max(2, q.length - 1)) : q
-
-        const fuzzyFirstResult = await supabase
-          .from("adjusters")
-          .select("id, slug, first_name, last_name, state, avg_rating, total_reviews, companies(name)")
-          .ilike('first_name', `${fuzzyQ}%`)
-          .limit(15)
-
-        const fuzzyLastResult = await supabase
-          .from("adjusters")
-          .select("id, slug, first_name, last_name, state, avg_rating, total_reviews, companies(name)")
-          .ilike('last_name', `${fuzzyQ}%`)
-          .limit(15)
-
-        allData = [
-          ...(firstNameResult.data || []),
-          ...(lastNameResult.data || []),
-          ...(fuzzyFirstResult.data || []),
-          ...(fuzzyLastResult.data || [])
-        ]
+        // Two+ word search: first_name starts with first word, last_name starts with second
+        queryBuilder = queryBuilder
+          .ilike('first_name', `${parts[0]}%`)
+          .ilike('last_name', `${parts.slice(1).join(' ')}%`)
+      } else {
+        // Single word: search first_name OR last_name
+        queryBuilder = queryBuilder
+          .or(`first_name.ilike.${q}%,last_name.ilike.${q}%`)
       }
 
-      // Only apply results if this is still the current request
-      if (currentRequestId !== requestIdRef.current) {
-        return
-      }
+      const { data, error } = await queryBuilder
+        .order('total_reviews', { ascending: false })
+        .limit(50)
 
-      const qLower = q.toLowerCase()
-      const partsLower = parts.map(p => p.toLowerCase())
+      if (error) throw error
 
-      // Sort by total_reviews DESC before deduplication to keep the entry with reviews
-      allData.sort((a, b) => (b.total_reviews || 0) - (a.total_reviews || 0))
+      // Check if request was aborted
+      if (abortControllerRef.current?.signal.aborted) return
 
-      // Deduplicate by first_name + last_name + state (keeps first = most reviewed)
-      const seen = new Set()
-      let uniqueAdjusters = allData.filter(adj => {
+      // Process results
+      const seen = new Set<string>()
+      const uniqueResults: Adjuster[] = []
+
+      for (const adj of (data || [])) {
         const key = `${adj.first_name.toLowerCase()}-${adj.last_name.toLowerCase()}-${adj.state}`
-        if (seen.has(key)) return false
+        if (seen.has(key)) continue
         seen.add(key)
-        return true
-      }).map(adj => ({
-        ...adj,
-        company_name: (adj.companies as { name: string } | null)?.name || undefined
-      }))
 
-      // Fetch LIVE review counts from reviews table
-      if (uniqueAdjusters.length > 0) {
-        const adjusterIds = uniqueAdjusters.map(a => a.id)
-        const { data: reviewData } = await supabase
-          .from('reviews')
-          .select('adjuster_id, overall_rating')
-          .in('adjuster_id', adjusterIds)
-
-        const reviewStats: { [id: string]: { count: number; total: number } } = {}
-        for (const review of (reviewData || [])) {
-          if (!reviewStats[review.adjuster_id]) {
-            reviewStats[review.adjuster_id] = { count: 0, total: 0 }
-          }
-          reviewStats[review.adjuster_id].count++
-          reviewStats[review.adjuster_id].total += review.overall_rating
-        }
-
-        uniqueAdjusters = uniqueAdjusters.map(adj => {
-          const stats = reviewStats[adj.id]
-          if (stats) {
-            return {
-              ...adj,
-              total_reviews: stats.count,
-              avg_rating: Math.round((stats.total / stats.count) * 100) / 100
-            }
-          }
-          return adj
+        uniqueResults.push({
+          id: adj.id,
+          slug: adj.slug,
+          first_name: adj.first_name,
+          last_name: adj.last_name,
+          state: adj.state,
+          avg_rating: adj.avg_rating,
+          total_reviews: adj.total_reviews || 0,
+          company_name: (adj.companies as { name: string } | null)?.name || undefined
         })
       }
 
-      // Smart sort: exact match > starts with > has reviews > highest rated
-      uniqueAdjusters.sort((a, b) => {
-        const aFirstLower = a.first_name.toLowerCase()
-        const aLastLower = a.last_name.toLowerCase()
-        const bFirstLower = b.first_name.toLowerCase()
-        const bLastLower = b.last_name.toLowerCase()
-
-        // For two-word search, prioritize full name match
-        if (parts.length >= 2) {
-          const aFullMatch = aFirstLower.startsWith(partsLower[0]) && aLastLower.startsWith(partsLower[1])
-          const bFullMatch = bFirstLower.startsWith(partsLower[0]) && bLastLower.startsWith(partsLower[1])
-          if (aFullMatch && !bFullMatch) return -1
-          if (!aFullMatch && bFullMatch) return 1
-        }
-
-        // Exact first name match wins
-        const aFirstExact = aFirstLower === qLower || (partsLower[0] && aFirstLower === partsLower[0])
-        const bFirstExact = bFirstLower === qLower || (partsLower[0] && bFirstLower === partsLower[0])
-        if (aFirstExact && !bFirstExact) return -1
-        if (!aFirstExact && bFirstExact) return 1
-
-        // Exact last name match
-        const aLastExact = aLastLower === qLower || (partsLower[1] && aLastLower === partsLower[1])
-        const bLastExact = bLastLower === qLower || (partsLower[1] && bLastLower === partsLower[1])
-        if (aLastExact && !bLastExact) return -1
-        if (!aLastExact && bLastExact) return 1
-
-        // Then by number of reviews (most reviewed first)
-        if ((a.total_reviews || 0) !== (b.total_reviews || 0)) {
-          return (b.total_reviews || 0) - (a.total_reviews || 0)
-        }
-        // Then by rating
-        return (b.avg_rating || 0) - (a.avg_rating || 0)
+      // Sort: exact matches first, then by reviews
+      const qLower = q.toLowerCase()
+      uniqueResults.sort((a, b) => {
+        const aExact = a.first_name.toLowerCase() === qLower || a.last_name.toLowerCase() === qLower
+        const bExact = b.first_name.toLowerCase() === qLower || b.last_name.toLowerCase() === qLower
+        if (aExact && !bExact) return -1
+        if (!aExact && bExact) return 1
+        return (b.total_reviews || 0) - (a.total_reviews || 0)
       })
 
-      setTotalCount(uniqueAdjusters.length)
-      setResults(uniqueAdjusters.slice(0, 5))
+      setTotalCount(uniqueResults.length)
+      setResults(uniqueResults.slice(0, 6))
       setOpen(true)
-    } catch (error) {
-      // Only apply if still current request
-      if (currentRequestId === requestIdRef.current) {
+      setSelectedIndex(-1)
+    } catch (error: any) {
+      if (error.name !== 'AbortError') {
         console.error('Search error:', error)
         setResults([])
         setTotalCount(0)
       }
-    }
-
-    // Only update loading if still current request
-    if (currentRequestId === requestIdRef.current) {
+    } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      searchAdjusters(query)
+    }, 250)
+
+    return () => clearTimeout(timer)
+  }, [query, searchAdjusters])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -282,11 +198,13 @@ export default function SearchBar({
   function handleResultClick(slug: string) {
     router.push(`/adjuster/${slug}`)
     setOpen(false)
+    setQuery('')
   }
 
   function clearSearch() {
     setQuery('')
     setResults([])
+    setTotalCount(0)
     setOpen(false)
     inputRef.current?.focus()
   }
@@ -297,14 +215,19 @@ export default function SearchBar({
     <div ref={wrapperRef} className={`relative ${className}`}>
       <form onSubmit={handleSubmit}>
         <div className={`
-          flex items-center bg-white rounded-full border border-gray-200 shadow-sm
-          ${isLarge ? 'shadow-lg' : ''}
-          focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500
-          transition-all duration-200
+          flex items-center bg-white rounded-2xl border-2
+          ${isLarge ? 'border-white/20 shadow-2xl' : 'border-[#EEEEEE] shadow-sm'}
+          focus-within:border-[#0A3D62] focus-within:ring-4 focus-within:ring-[#0A3D62]/10
+          transition-all duration-300 ease-out
+          ${isLarge ? 'hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)]' : 'hover:shadow-md hover:border-[#0A3D62]/30'}
         `}>
           {/* Search Icon */}
-          <div className={`${isLarge ? 'pl-6' : 'pl-4'}`}>
-            <Search className={`text-gray-400 ${isLarge ? 'w-6 h-6' : 'w-5 h-5'}`} />
+          <div className={`flex items-center justify-center ${isLarge ? 'pl-6' : 'pl-4'}`}>
+            {loading ? (
+              <Loader2 className={`text-[#0A3D62] animate-spin ${isLarge ? 'w-6 h-6' : 'w-5 h-5'}`} />
+            ) : (
+              <Search className={`text-[#666666] ${isLarge ? 'w-6 h-6' : 'w-5 h-5'}`} />
+            )}
           </div>
 
           {/* Input */}
@@ -314,12 +237,13 @@ export default function SearchBar({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => query.trim().length >= 2 && results.length > 0 && setOpen(true)}
-            placeholder="Search adjuster name, company, or state..."
+            placeholder={isLarge ? "Search by adjuster name, company, or state..." : "Search adjusters..."}
             autoFocus={autoFocus}
+            autoComplete="off"
             className={`
-              flex-1 bg-transparent outline-none text-gray-900
-              ${isLarge ? 'py-5 px-4 text-lg' : 'py-3 px-3 text-base'}
-              placeholder-gray-400
+              flex-1 bg-transparent outline-none text-[#333333]
+              ${isLarge ? 'py-5 px-4 text-lg' : 'py-3.5 px-3 text-base'}
+              placeholder-[#999999]
             `}
           />
 
@@ -328,19 +252,20 @@ export default function SearchBar({
             <button
               type="button"
               onClick={clearSearch}
-              className="p-2 hover:bg-gray-100 rounded-full mr-1"
+              className="p-2 hover:bg-[#F8F9FA] rounded-full mr-1 transition-colors"
             >
-              <X className="w-4 h-4 text-gray-400" />
+              <X className="w-5 h-5 text-[#666666]" />
             </button>
           )}
 
-          {/* Filters (optional) */}
+          {/* State Filter */}
           {showFilters && (
-            <div className="hidden sm:flex items-center border-l border-gray-200 px-3 gap-2">
+            <div className="hidden sm:flex items-center border-l border-[#EEEEEE] px-3">
+              <MapPin className="w-4 h-4 text-[#999999] mr-1" />
               <select
                 value={selectedState}
                 onChange={(e) => setSelectedState(e.target.value)}
-                className="bg-transparent text-sm text-gray-600 outline-none cursor-pointer py-2"
+                className="bg-transparent text-sm text-[#666666] outline-none cursor-pointer py-2 pr-2 font-medium"
               >
                 <option value="">All States</option>
                 {states.map((state) => (
@@ -354,9 +279,9 @@ export default function SearchBar({
           <button
             type="submit"
             className={`
-              bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full
-              transition-colors
-              ${isLarge ? 'py-4 px-8 mr-2 text-lg' : 'py-2 px-5 mr-1.5 text-sm'}
+              bg-[#FF9800] hover:bg-[#F57C00] text-white font-semibold rounded-xl
+              transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]
+              ${isLarge ? 'py-4 px-8 mr-2 text-lg shadow-lg hover:shadow-xl' : 'py-2.5 px-5 mr-1.5 text-sm'}
             `}
           >
             Search
@@ -364,69 +289,107 @@ export default function SearchBar({
         </div>
       </form>
 
-      {/* Loading Spinner */}
-      {open && loading && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
-          <div className="px-5 py-6 text-center">
-            <div className="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
-          </div>
-        </div>
-      )}
-
       {/* Dropdown Results */}
-      {open && !loading && results.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
-          <div className="py-2">
-            {results.map((adjuster) => (
+      {open && (
+        <div
+          className={`
+            absolute top-full left-0 right-0 mt-3 bg-white rounded-2xl shadow-2xl
+            border border-[#EEEEEE] overflow-hidden z-50
+            animate-in fade-in slide-in-from-top-2 duration-200
+          `}
+        >
+          {/* Results List */}
+          {results.length > 0 ? (
+            <>
+              <div className="py-2 max-h-[360px] overflow-y-auto">
+                {results.map((adjuster, index) => (
+                  <button
+                    key={adjuster.id}
+                    type="button"
+                    onClick={() => handleResultClick(adjuster.slug)}
+                    onMouseEnter={() => setSelectedIndex(index)}
+                    className={`
+                      flex items-center gap-4 px-5 py-3.5 w-full text-left transition-all duration-150
+                      ${selectedIndex === index ? 'bg-[#F8F9FA]' : 'hover:bg-[#F8F9FA]'}
+                    `}
+                  >
+                    {/* Avatar */}
+                    <div className="w-12 h-12 bg-gradient-to-br from-[#0A3D62] to-[#20A39E] rounded-full flex items-center justify-center flex-shrink-0 shadow-sm">
+                      <span className="text-white font-bold text-sm">
+                        {adjuster.first_name?.[0]}{adjuster.last_name?.[0]}
+                      </span>
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-[#333333] truncate text-base">
+                        {adjuster.first_name} {adjuster.last_name}
+                      </p>
+                      <div className="flex items-center gap-2 text-sm text-[#666666]">
+                        <span className="flex items-center gap-1">
+                          <MapPin className="w-3.5 h-3.5" />
+                          {adjuster.state}
+                        </span>
+                        {adjuster.company_name && (
+                          <>
+                            <span className="text-[#CCCCCC]">•</span>
+                            <span className="truncate">{adjuster.company_name}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Rating Badge */}
+                    {adjuster.total_reviews > 0 ? (
+                      <div className="flex flex-col items-end flex-shrink-0">
+                        <div className="flex items-center gap-1 bg-[#FFF8E1] px-2.5 py-1 rounded-lg">
+                          <Star className="w-4 h-4 text-[#FF9800] fill-[#FF9800]" />
+                          <span className="font-bold text-[#333333]">{adjuster.avg_rating?.toFixed(1) || '–'}</span>
+                        </div>
+                        <span className="text-xs text-[#999999] mt-1">
+                          {adjuster.total_reviews} review{adjuster.total_reviews !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-[#999999] bg-[#F8F9FA] px-2.5 py-1.5 rounded-lg">
+                        No reviews yet
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {/* View All Results */}
+              {totalCount > 6 && (
+                <div className="border-t border-[#EEEEEE]">
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    className="w-full px-5 py-4 text-sm text-[#0A3D62] hover:bg-[#F8F9FA] font-semibold transition-colors flex items-center justify-center gap-2"
+                  >
+                    View all {totalCount} results for "{query}"
+                    <span className="text-[#0A3D62]">→</span>
+                  </button>
+                </div>
+              )}
+            </>
+          ) : query.trim().length >= 2 && !loading ? (
+            /* No Results */
+            <div className="px-6 py-10 text-center">
+              <div className="w-16 h-16 bg-[#F8F9FA] rounded-full flex items-center justify-center mx-auto mb-4">
+                <User className="w-8 h-8 text-[#CCCCCC]" />
+              </div>
+              <p className="text-[#333333] font-medium mb-1">No adjusters found</p>
+              <p className="text-sm text-[#666666]">Try a different name or check your spelling</p>
               <button
-                key={adjuster.id}
                 type="button"
-                onClick={() => handleResultClick(adjuster.slug)}
-                className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50 transition-colors w-full text-left"
+                onClick={handleSubmit}
+                className="mt-4 text-sm text-[#0A3D62] hover:underline font-medium"
               >
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-blue-600 font-semibold text-sm">
-                    {adjuster.first_name?.[0]}{adjuster.last_name?.[0]}
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 truncate">
-                    {adjuster.first_name} {adjuster.last_name}
-                    <span className="text-gray-500 font-normal">
-                      {' '}({adjuster.state}{adjuster.company_name ? ` – ${adjuster.company_name}` : ''})
-                    </span>
-                  </p>
-                  {adjuster.total_reviews > 0 && (
-                    <p className="text-sm text-gray-500 truncate flex items-center gap-1">
-                      <span className="text-yellow-500">★</span>
-                      {adjuster.avg_rating?.toFixed(1) || '–'} · {adjuster.total_reviews} review{adjuster.total_reviews !== 1 ? 's' : ''}
-                    </p>
-                  )}
-                </div>
+                Search all results →
               </button>
-            ))}
-          </div>
-
-          {/* View All Results */}
-          <div className="border-t border-gray-100">
-            <button
-              type="button"
-              onClick={handleSubmit}
-              className="w-full px-5 py-3 text-sm text-blue-600 hover:bg-blue-50 font-medium transition-colors flex items-center justify-center gap-1"
-            >
-              View all {totalCount > 5 ? totalCount : ''} results for "{query}" →
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* No Results */}
-      {open && !loading && query.trim().length >= 2 && results.length === 0 && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
-          <div className="px-5 py-8 text-center">
-            <p className="text-gray-500">No matches</p>
-            <p className="text-sm text-gray-400 mt-1">Try a different name or spelling</p>
-          </div>
+            </div>
+          ) : null}
         </div>
       )}
     </div>
