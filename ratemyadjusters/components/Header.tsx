@@ -8,20 +8,20 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <header className="bg-white border-b border-[#EEEEEE] sticky top-0 z-50">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center gap-2">
-              <Image 
-                src="/logo.png" 
-                alt="RateMyAdjusters" 
-                width={36} 
-                height={36} 
+              <Image
+                src="/logo.png"
+                alt="RateMyAdjusters"
+                width={36}
+                height={36}
                 className="w-9 h-9"
               />
-              <span className="font-bold text-xl text-gray-900">
+              <span className="font-bold text-xl text-[#0A3D62]">
                 RateMyAdjusters
               </span>
             </Link>
@@ -29,15 +29,15 @@ export default function Header() {
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-6">
-            <Link 
-              href="/search" 
-              className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+            <Link
+              href="/search"
+              className="text-[#666666] hover:text-[#0A3D62] font-medium transition-colors"
             >
               Browse
             </Link>
-            <Link 
-              href="/review" 
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+            <Link
+              href="/review"
+              className="bg-[#FF9800] hover:bg-[#F57C00] text-white font-semibold py-2 px-5 rounded-lg transition-colors shadow-sm hover:shadow-md"
             >
               Write a Review
             </Link>
@@ -47,7 +47,7 @@ export default function Header() {
           <div className="md:hidden flex items-center">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="text-gray-600 hover:text-gray-900 p-2"
+              className="text-[#666666] hover:text-[#0A3D62] p-2"
             >
               {mobileMenuOpen ? (
                 <X className="w-6 h-6" />
@@ -60,18 +60,18 @@ export default function Header() {
 
         {/* Mobile Nav */}
         {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gray-100">
+          <div className="md:hidden py-4 border-t border-[#EEEEEE]">
             <div className="flex flex-col gap-4">
-              <Link 
-                href="/search" 
-                className="text-gray-600 hover:text-gray-900 font-medium"
+              <Link
+                href="/search"
+                className="text-[#666666] hover:text-[#0A3D62] font-medium"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Browse Adjusters
               </Link>
-              <Link 
-                href="/review" 
-                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg text-center"
+              <Link
+                href="/review"
+                className="bg-[#FF9800] hover:bg-[#F57C00] text-white font-semibold py-2 px-4 rounded-lg text-center shadow-sm"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Write a Review

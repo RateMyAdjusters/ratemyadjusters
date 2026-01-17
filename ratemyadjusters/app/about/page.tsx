@@ -289,6 +289,29 @@ export default function AboutPage() {
             </div>
           </section>
 
+          {/* Data Coverage */}
+          <section className="py-12 px-4">
+            <div className="max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+                Data Coverage
+              </h2>
+              <div className="grid md:grid-cols-3 gap-6 text-center">
+                <div className="p-6 bg-slate-50 rounded-xl border border-slate-200">
+                  <p className="text-3xl font-bold text-blue-600 mb-2">100,000+</p>
+                  <p className="text-gray-700 font-medium">Licensed Adjusters</p>
+                </div>
+                <div className="p-6 bg-slate-50 rounded-xl border border-slate-200">
+                  <p className="text-3xl font-bold text-blue-600 mb-2">50</p>
+                  <p className="text-gray-700 font-medium">US States</p>
+                </div>
+                <div className="p-6 bg-slate-50 rounded-xl border border-slate-200">
+                  <p className="text-3xl font-bold text-blue-600 mb-2">20+</p>
+                  <p className="text-gray-700 font-medium">Major Insurance Carriers</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
           {/* How It Works */}
           <section className="py-12 px-4">
             <div className="max-w-4xl mx-auto">

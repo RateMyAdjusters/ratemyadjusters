@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { Shield, Check, X } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
 
 interface ClaimProfileFormProps {
   adjusterId: string
@@ -28,15 +27,27 @@ export default function ClaimProfileForm({ adjusterId, adjusterName, isClaimed }
 
     setLoading(true)
     try {
-      await supabase.from('profile_claims').insert({
-        adjuster_id: adjusterId,
-        email,
-        phone: phone || null,
-        message: message || null,
+      const response = await fetch('/api/claim-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adjusterId,
+          adjusterName,
+          adjusterState: '',
+          email: email.trim(),
+          phone: phone.trim() || null,
+          message: message.trim() || null,
+        }),
       })
+
+      if (!response.ok) {
+        throw new Error('Failed to submit claim')
+      }
+
       setSubmitted(true)
     } catch (error) {
       console.error('Claim failed:', error)
+      alert('Failed to submit. Please try again.')
     }
     setLoading(false)
   }

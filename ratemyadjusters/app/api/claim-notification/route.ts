@@ -9,17 +9,20 @@ const supabase = createClient(
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { adjusterName, adjusterState, adjusterSlug, adjusterId, email, phone } = body
+    const { adjusterName, adjusterState, adjusterSlug, adjusterId, email, phone, message } = body
 
-    // Save to database
+    console.log('=== CLAIM REQUEST RECEIVED ===')
+    console.log('Body:', JSON.stringify(body, null, 2))
+
     const { data, error } = await supabase
       .from('claim_requests')
       .insert({
         adjuster_id: adjusterId || null,
-        adjuster_name: adjusterName,
-        adjuster_state: adjusterState,
+        adjuster_name: adjusterName || 'Unknown',
+        adjuster_state: adjusterState || null,
         email: email,
         phone: phone || null,
+        message: message || null,
         status: 'pending',
       })
       .select()
@@ -27,20 +30,16 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Database error:', error)
-      return NextResponse.json({ success: false, error: 'Failed to save request' }, { status: 500 })
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 })
     }
 
     console.log('=== CLAIM REQUEST SAVED ===')
     console.log(`ID: ${data.id}`)
-    console.log(`Adjuster: ${adjusterName} (${adjusterState})`)
-    console.log(`Email: ${email}`)
-    console.log(`Phone: ${phone || 'Not provided'}`)
-    console.log('===========================')
 
     return NextResponse.json({ success: true, id: data.id })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Claim notification error:', error)
-    return NextResponse.json({ success: false, error: 'Failed to process' }, { status: 500 })
+    return NextResponse.json({ success: false, error: error.message || 'Failed to process' }, { status: 500 })
   }
 }

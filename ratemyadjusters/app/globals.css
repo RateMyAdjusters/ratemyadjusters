@@ -3,33 +3,51 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-rgb: 255, 255, 255;
+  /* Color Psychology Palette */
+  --navy: #0A3D62;
+  --navy-light: #0E4A75;
+  --navy-dark: #072C49;
+  --offwhite: #F8F9FA;
+  --success: #4CAF50;
+  --success-light: #66BB6A;
+  --teal: #20A39E;
+  --warm: #FF9800;
+  --warm-hover: #F57C00;
+  --alert: #D32F2F;
+  --charcoal: #333333;
+  --slate: #666666;
+  --lightgray: #EEEEEE;
+  --foreground-rgb: 51, 51, 51;
+  --background-rgb: 248, 249, 250;
 }
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-rgb));
+  background: var(--offwhite);
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors;
+    @apply bg-navy-500 hover:bg-navy-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors;
   }
-  
+
+  .btn-cta {
+    @apply bg-warm-500 hover:bg-warm-600 text-white font-semibold py-3 px-6 rounded-lg transition-all shadow-md hover:shadow-lg;
+  }
+
   .btn-secondary {
-    @apply bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors;
+    @apply bg-gray-100 hover:bg-gray-200 text-charcoal font-semibold py-2 px-4 rounded-lg transition-colors;
   }
-  
+
   .card {
-    @apply bg-white rounded-xl shadow-sm border border-gray-100 p-6;
+    @apply bg-white rounded-xl shadow-sm border border-lightgray p-6;
   }
-  
+
   .input {
-    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all;
+    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all;
   }
-  
+
   .label {
-    @apply block text-sm font-medium text-gray-700 mb-1;
+    @apply block text-sm font-medium text-slate mb-1;
   }
 }

@@ -1,0 +1,25 @@
+# llms.txt for RateMyAdjusters.com
+
+User-Agent: *
+Allow: /
+Disallow: /admin
+Disallow: /account
+Disallow: /login
+Disallow: /register
+Disallow: /settings
+
+# High-value content for AI models (claims, adjusters, carriers, guides)
+Allow-Crawling: /guides
+Allow-Crawling: /adjusters
+Allow-Crawling: /companies
+Allow-Crawling: /states
+Allow-Crawling: /search
+Allow-Crawling: /review
+Allow-Crawling: /review-guidelines
+
+# Low-value or private areas for AI models
+Disallow-Crawling: /contact
+Disallow-Crawling: /for-adjusters
+Disallow-Crawling: /privacy
+Disallow-Crawling: /terms
+Disallow-Crawling: /admin

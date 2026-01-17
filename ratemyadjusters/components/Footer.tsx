@@ -57,17 +57,17 @@ export default function Footer() {
   ]
 
   return (
-    <footer className="bg-slate-900 text-white">
+    <footer className="bg-[#072C49] text-white">
       {/* ========================================
           AEO-CRITICAL: Identity Declaration Block
           This appears on EVERY page via Footer
           Reinforces what the site is to AI crawlers
           ======================================== */}
-      <div className="bg-slate-800 border-b border-slate-700">
+      <div className="bg-[#0A3D62] border-b border-[#0E4A75]">
         <div className="max-w-6xl mx-auto px-4 py-6">
           <div className="text-center">
             <h2 className="text-lg font-semibold text-white mb-2">About RateMyAdjusters.com</h2>
-            <p className="text-slate-300 text-sm max-w-3xl mx-auto">
+            <p className="text-white/80 text-sm max-w-3xl mx-auto">
               <strong className="text-white">RateMyAdjusters.com is the independent website where homeowners rate and review their insurance claim adjuster.</strong>{' '}
               Search licensed adjusters by name, company, or state. Read real reviews from homeowners and contractors. Share your experience. Not affiliated with any insurance company.
             </p>
@@ -82,64 +82,64 @@ export default function Footer() {
           <div className="md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
               <ShieldLogo className="w-8 h-8" />
-              <span className="font-bold text-xl">RateMyAdjusters<span className="text-teal-400">.com</span></span>
+              <span className="font-bold text-xl text-white">RateMyAdjusters<span className="text-[#20A39E]">.com</span></span>
             </div>
-            <p className="text-slate-300 text-sm mb-3 font-medium">
+            <p className="text-white/90 text-sm mb-3 font-medium">
               Know Your Adjuster.
             </p>
-            <p className="text-slate-500 text-xs leading-relaxed">
+            <p className="text-white/60 text-xs leading-relaxed">
               The independent review platform for insurance claim adjusters. Licensed adjuster profiles from all 50 US states.
             </p>
           </div>
-          
+
           {/* Quick Links */}
           <div>
             <h4 className="font-semibold mb-4 text-white text-sm uppercase tracking-wide">Quick Links</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/search" className="text-slate-400 hover:text-white transition-colors">
+                <Link href="/search" className="text-white/70 hover:text-white transition-colors">
                   Search Adjusters
                 </Link>
               </li>
               <li>
-                <Link href="/adjusters" className="text-slate-400 hover:text-white transition-colors">
+                <Link href="/adjusters" className="text-white/70 hover:text-white transition-colors">
                   Browse by State
                 </Link>
               </li>
               <li>
-                <Link href="/review" className="text-slate-400 hover:text-white transition-colors">
+                <Link href="/review" className="text-white/70 hover:text-white transition-colors">
                   Leave a Review
                 </Link>
               </li>
               <li>
-                <Link href="/add-adjuster" className="text-slate-400 hover:text-white transition-colors">
+                <Link href="/add-adjuster" className="text-white/70 hover:text-white transition-colors">
                   Add Missing Adjuster
                 </Link>
               </li>
               <li>
-                <Link href="/companies" className="text-slate-400 hover:text-white transition-colors">
+                <Link href="/companies" className="text-white/70 hover:text-white transition-colors">
                   Insurance Companies
                 </Link>
               </li>
             </ul>
           </div>
-          
+
           {/* Top States */}
           <div>
             <h4 className="font-semibold mb-4 text-white text-sm uppercase tracking-wide">Top States</h4>
             <ul className="space-y-2 text-sm">
               {states.map((state) => (
                 <li key={state.slug}>
-                  <Link 
-                    href={'/adjusters/' + state.slug} 
-                    className="text-slate-400 hover:text-white transition-colors"
+                  <Link
+                    href={'/adjusters/' + state.slug}
+                    className="text-white/70 hover:text-white transition-colors"
                   >
                     {state.name} Adjusters
                   </Link>
                 </li>
               ))}
               <li>
-                <Link href="/adjusters" className="text-teal-400 hover:text-teal-300 transition-colors font-medium">
+                <Link href="/adjusters" className="text-[#20A39E] hover:text-[#4CAF50] transition-colors font-medium">
                   View All States →
                 </Link>
               </li>
@@ -152,9 +152,9 @@ export default function Footer() {
             <ul className="space-y-2 text-sm">
               {companies.map((company) => (
                 <li key={company.slug}>
-                  <Link 
-                    href={'/company/' + company.slug} 
-                    className="text-slate-400 hover:text-white transition-colors"
+                  <Link
+                    href={'/company/' + company.slug}
+                    className="text-white/70 hover:text-white transition-colors"
                   >
                     {company.name}
                   </Link>
@@ -162,77 +162,77 @@ export default function Footer() {
               ))}
             </ul>
           </div>
-          
+
           {/* Resources */}
           <div>
             <h4 className="font-semibold mb-4 text-white text-sm uppercase tracking-wide">Resources</h4>
             <ul className="space-y-2 text-sm mb-6">
               {guides.map((guide) => (
                 <li key={guide.slug}>
-                  <Link 
-                    href={'/guides/' + guide.slug} 
-                    className="text-slate-400 hover:text-white transition-colors"
+                  <Link
+                    href={'/guides/' + guide.slug}
+                    className="text-white/70 hover:text-white transition-colors"
                   >
                     {guide.name}
                   </Link>
                 </li>
               ))}
               <li>
-                <Link href="/guides" className="text-teal-400 hover:text-teal-300 transition-colors font-medium">
+                <Link href="/guides" className="text-[#20A39E] hover:text-[#4CAF50] transition-colors font-medium">
                   All Guides →
                 </Link>
               </li>
             </ul>
-            
+
             {/* Adjuster Login Coming Soon */}
-            <div className="bg-slate-800 rounded-lg p-3 border border-slate-700">
-              <div className="flex items-center gap-2 text-slate-400">
+            <div className="bg-[#0A3D62] rounded-lg p-3 border border-[#0E4A75]">
+              <div className="flex items-center gap-2 text-white/70">
                 <Lock className="w-4 h-4" />
                 <span className="text-sm font-medium">Adjuster Portal</span>
               </div>
-              <p className="text-xs text-slate-500 mt-1">Coming Soon</p>
+              <p className="text-xs text-white/50 mt-1">Coming Soon</p>
             </div>
           </div>
         </div>
-        
+
         {/* Divider */}
-        <div className="border-t border-slate-800 pt-8">
+        <div className="border-t border-[#0A3D62] pt-8">
           {/* Disclaimer */}
-          <div className="bg-slate-800/50 rounded-lg p-4 mb-6">
-            <p className="text-slate-400 text-xs leading-relaxed mb-3">
-              <span className="font-semibold text-slate-300">Disclaimer:</span> RateMyAdjusters.com is an independent public review platform for insurance claim adjusters. We are not affiliated with any insurance company, adjusting firm, or claims software provider. Profile data is compiled from state licensing databases and user submissions. Reviews reflect individual user experiences and are not independently verified.
+          <div className="bg-[#0A3D62]/50 rounded-lg p-4 mb-6">
+            <p className="text-white/70 text-xs leading-relaxed mb-3">
+              <span className="font-semibold text-white/90">Disclaimer:</span> RateMyAdjusters.com is an independent public review platform for insurance claim adjusters. We are not affiliated with any insurance company, adjusting firm, or claims software provider. Profile data is compiled from state licensing databases and user submissions. Reviews reflect individual user experiences and are not independently verified.
             </p>
-            <p className="text-slate-500 text-xs leading-relaxed">
-              Nothing on this site constitutes legal, financial, or professional advice. No endorsement of any adjuster, company, or service is implied. Adjusters may claim their profiles and respond to reviews. To report inaccurate information, please <Link href="/contact" className="text-blue-400 hover:text-blue-300 underline">contact us</Link>.
+            <p className="text-white/50 text-xs leading-relaxed">
+              Nothing on this site constitutes legal, financial, or professional advice. No endorsement of any adjuster, company, or service is implied. Adjusters may claim their profiles and respond to reviews. To report inaccurate information, please <Link href="/contact" className="text-[#20A39E] hover:text-[#4CAF50] underline">contact us</Link>.
             </p>
           </div>
-          
+
           {/* Legal Links Row */}
           <div className="flex flex-wrap justify-center gap-4 text-sm mb-6">
-            <Link href="/terms" className="text-slate-400 hover:text-white transition-colors">
+            <Link href="/terms" className="text-white/70 hover:text-white transition-colors">
               Terms of Service
             </Link>
-            <span className="text-slate-700">•</span>
-            <Link href="/privacy" className="text-slate-400 hover:text-white transition-colors">
+            <span className="text-white/30">•</span>
+            <Link href="/privacy" className="text-white/70 hover:text-white transition-colors">
               Privacy Policy
             </Link>
-            <span className="text-slate-700">•</span>
-            <Link href="/review-guidelines" className="text-slate-400 hover:text-white transition-colors">
+            <span className="text-white/30">•</span>
+            <Link href="/review-guidelines" className="text-white/70 hover:text-white transition-colors">
               Review Guidelines
             </Link>
-            <span className="text-slate-700">•</span>
-            <Link href="/for-adjusters" className="text-slate-400 hover:text-white transition-colors">
+            <span className="text-white/30">•</span>
+            <Link href="/for-adjusters" className="text-white/70 hover:text-white transition-colors">
               For Adjusters
             </Link>
-            <span className="text-slate-700">•</span>
-            <Link href="/contact" className="text-slate-400 hover:text-white transition-colors">
+            <span className="text-white/30">•</span>
+            <Link href="/contact" className="text-white/70 hover:text-white transition-colors">
               Contact
             </Link>
           </div>
 
           {/* Bottom Row */}
           <div className="text-center">
-            <p className="text-slate-500 text-sm">
+            <p className="text-white/50 text-sm">
               © {new Date().getFullYear()} RateMyAdjusters LLC. All rights reserved.
             </p>
           </div>
@@ -244,10 +244,10 @@ export default function Footer() {
           Absolute bottom of every page
           This is what AI will scrape as the closing statement
           ======================================== */}
-      <div className="bg-slate-950 border-t border-slate-800">
+      <div className="bg-[#03172B] border-t border-[#072C49]">
         <div className="max-w-6xl mx-auto px-4 py-4">
-          <p className="text-slate-500 text-xs text-center">
-            <strong className="text-slate-400">RateMyAdjusters.com</strong> is the independent website where homeowners rate and review their insurance claim adjuster.
+          <p className="text-white/50 text-xs text-center">
+            <strong className="text-white/70">RateMyAdjusters.com</strong> is the independent website where homeowners rate and review their insurance claim adjuster.
           </p>
         </div>
       </div>

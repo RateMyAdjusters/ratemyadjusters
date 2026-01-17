@@ -3,142 +3,190 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Star, ChevronDown, ChevronUp, Shield, AlertTriangle, UserPlus, ChevronRight, XCircle, AlertCircle } from 'lucide-react'
+import { Star, ChevronRight, Shield, AlertTriangle, UserPlus, CheckCircle, AlertCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { validateReviewContent } from '@/lib/review-validation'
+
+const carriers = [
+  'Allstate', 'American Family', 'Amica', 'Auto-Owners', 'Citizens', 'Chubb',
+  'Erie Insurance', 'Farmers', 'GEICO', 'Hartford', 'Liberty Mutual', 'Mercury',
+  'MetLife', 'Nationwide', 'Progressive', 'Safeco', 'State Farm', 'Travelers',
+  'USAA', 'Other'
+]
+
+const states = [
+  'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FL', 'GA',
+  'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+  'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
+  'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+  'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
+]
+
+const propertyTypes = [
+  { value: 'single_family', label: 'Single-family home' },
+  { value: 'condo', label: 'Condo' },
+  { value: 'multi_unit', label: 'Multi-unit' },
+  { value: 'mobile', label: 'Mobile home' },
+  { value: 'commercial', label: 'Commercial' },
+  { value: 'other', label: 'Other' },
+]
+
+const perils = [
+  { value: 'wind_hail', label: 'Wind / Hail' },
+  { value: 'fire', label: 'Fire / Lightning' },
+  { value: 'water', label: 'Water (sudden/accidental)' },
+  { value: 'flood', label: 'Flood' },
+  { value: 'theft', label: 'Theft / Vandalism' },
+  { value: 'liability', label: 'Liability' },
+  { value: 'other', label: 'Other' },
+]
+
+const claimAmounts = [
+  { value: 'under_5k', label: 'Under $5K' },
+  { value: '5k_20k', label: '$5K – $20K' },
+  { value: '20k_50k', label: '$20K – $50K' },
+  { value: '50k_100k', label: '$50K – $100K' },
+  { value: 'over_100k', label: '$100K+' },
+  { value: 'unknown', label: "I don't know" },
+]
+
+const reportTiming = [
+  { value: 'same_week', label: 'Same week' },
+  { value: 'few_weeks', label: 'A few weeks later' },
+  { value: '1_2_months', label: '1–2 months later' },
+  { value: '2_plus_months', label: '2+ months later' },
+]
+
+const finalStatuses = [
+  { value: 'paid_full', label: 'Paid in full' },
+  { value: 'paid_partial', label: 'Paid partially (less than expected)' },
+  { value: 'denied', label: 'Denied' },
+  { value: 'pending', label: 'Still open / pending' },
+]
+
+const payoutComparisons = [
+  { value: 'way_too_low', label: 'Way too low (under 50%)' },
+  { value: 'somewhat_low', label: 'Somewhat low (50–80%)' },
+  { value: 'fair', label: 'Fair / as expected (80–100%)' },
+  { value: 'more_than_expected', label: 'More than expected (100%+)' },
+  { value: 'no_comparison', label: "Didn't have a comparison estimate" },
+]
+
+const escalationOptions = [
+  { value: 'none', label: 'No, accepted initial offer' },
+  { value: 'pushed_back', label: 'Yes, I pushed back myself' },
+  { value: 'contractor', label: 'Hired a contractor' },
+  { value: 'public_adjuster', label: 'Hired a public adjuster' },
+  { value: 'attorney', label: 'Hired an attorney' },
+  { value: 'appraisal', label: 'Went to appraisal' },
+  { value: 'litigation', label: 'Litigation' },
+]
+
+const timeToDecision = [
+  { value: 'under_1_month', label: 'Under 1 month' },
+  { value: '1_3_months', label: '1–3 months' },
+  { value: '3_6_months', label: '3–6 months' },
+  { value: '6_12_months', label: '6–12 months' },
+  { value: 'over_1_year', label: 'Over 1 year' },
+  { value: 'still_waiting', label: 'Still waiting' },
+]
+
+const frustrationOptions = [
+  { value: 'slow_response', label: 'Adjuster was slow to respond' },
+  { value: 'hard_to_reach', label: 'Hard to get them on the phone' },
+  { value: 'no_explanation', label: "Didn't explain their reasoning" },
+  { value: 'pressured', label: 'Pressured me to accept low offer' },
+  { value: 'ignored_estimate', label: "Ignored my contractor's estimate" },
+  { value: 'misstated_coverage', label: 'Misstated what my policy covered' },
+  { value: 'responsive_fair', label: 'Was responsive & fair' },
+  { value: 'explained_clearly', label: 'Took time to explain things clearly' },
+]
+
+const premiumImpacts = [
+  { value: 'no_change', label: 'No change' },
+  { value: 'went_up', label: 'Premium went up' },
+  { value: 'threatened_nonrenewal', label: 'Threatened non-renewal' },
+  { value: 'nonrenewed', label: 'Non-renewed' },
+  { value: 'unknown', label: "Don't know yet" },
+]
+
+const roleOptions = [
+  { value: 'homeowner', label: 'Homeowner / policyholder' },
+  { value: 'public_adjuster', label: 'Public adjuster' },
+  { value: 'attorney', label: 'Attorney' },
+  { value: 'contractor', label: 'Contractor' },
+  { value: 'other', label: 'Other' },
+]
+
+function generateMonthOptions() {
+  const options = []
+  const now = new Date()
+  for (let i = 0; i < 36; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const label = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    options.push({ value, label })
+  }
+  return options
+}
 
 function ReviewContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  
+  const monthOptions = generateMonthOptions()
+
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [validationError, setValidationError] = useState<{ message: string; type: string } | null>(null)
   const [success, setSuccess] = useState(false)
-  const [showOptionalRatings, setShowOptionalRatings] = useState(false)
-  const [showGuidelines, setShowGuidelines] = useState(true)
-  
-  const [adjusterSearch, setAdjusterSearch] = useState('')
+
+  // Step 1: The Vent
+  const [adjusterName, setAdjusterName] = useState('')
+  const [carrierName, setCarrierName] = useState('')
+  const [carrierOther, setCarrierOther] = useState('')
+  const [whatHappened, setWhatHappened] = useState('')
+  const [overallRating, setOverallRating] = useState(0)
+  const [hoverRating, setHoverRating] = useState(0)
+  const [whatWentWellPoorly, setWhatWentWellPoorly] = useState('')
+
+  // Step 2: The Data
+  const [claimState, setClaimState] = useState('')
+  const [zipCode, setZipCode] = useState('')
+  const [propertyType, setPropertyType] = useState('')
+  const [peril, setPeril] = useState('')
+  const [claimAmount, setClaimAmount] = useState('')
+  const [lossDate, setLossDate] = useState('')
+  const [reportDate, setReportDate] = useState('')
+
+  // Step 3: The Outcome
+  const [finalStatus, setFinalStatus] = useState('')
+  const [payoutComparison, setPayoutComparison] = useState('')
+  const [escalation, setEscalation] = useState('')
+  const [decisionTime, setDecisionTime] = useState('')
+  const [frustrations, setFrustrations] = useState<string[]>([])
+  const [frustrationOther, setFrustrationOther] = useState('')
+  const [premiumImpact, setPremiumImpact] = useState('')
+
+  // Step 4: Contact
+  const [email, setEmail] = useState('')
+  const [role, setRole] = useState('')
+  const [optIn, setOptIn] = useState(false)
+  const [firstName, setFirstName] = useState('')
+
+  // Honeypot
+  const [honeypot, setHoneypot] = useState('')
+
+  // Adjuster search/selection
   const [adjusterResults, setAdjusterResults] = useState<any[]>([])
   const [selectedAdjuster, setSelectedAdjuster] = useState<any>(null)
   const [searchLoading, setSearchLoading] = useState(false)
-  
-  const [overallRating, setOverallRating] = useState(0)
-  const [hoverRating, setHoverRating] = useState(0)
-  const [reviewText, setReviewText] = useState('')
-  
-  const [communicationRating, setCommunicationRating] = useState(0)
-  const [fairnessRating, setFairnessRating] = useState(0)
-  const [speedRating, setSpeedRating] = useState(0)
-  const [professionalismRating, setProfessionalismRating] = useState(0)
-  
-  const [claimType, setClaimType] = useState('')
-  const [claimOutcome, setClaimOutcome] = useState('')
-  const [reviewerType, setReviewerType] = useState('homeowner')
-  
-  const [honeypot, setHoneypot] = useState('')
-  
-  const claimTypes = [
-    { value: 'roof', label: 'Roof' },
-    { value: 'water', label: 'Water Damage' },
-    { value: 'fire', label: 'Fire' },
-    { value: 'wind', label: 'Wind' },
-    { value: 'hail', label: 'Hail' },
-    { value: 'theft', label: 'Theft' },
-    { value: 'flood', label: 'Flood' },
-    { value: 'other', label: 'Other' },
-  ]
-  
-  const claimOutcomes = [
-    { value: 'approved', label: 'Fully Approved' },
-    { value: 'partial', label: 'Partially Approved' },
-    { value: 'denied', label: 'Denied' },
-    { value: 'pending', label: 'Still Pending' },
-  ]
-
-  // Get helpful tips based on validation error type
-  const getValidationTips = (type: string): string[] => {
-    switch (type) {
-      case 'profanity':
-        return [
-          'Remove any curse words or inappropriate language',
-          'Express frustration without using profanity',
-          'Focus on describing what happened factually'
-        ]
-      case 'attack':
-        return [
-          'Focus on your experience, not the person',
-          'Describe actions and outcomes instead of character',
-          'Avoid threats or wishes of harm',
-          'Keep criticism constructive and professional'
-        ]
-      case 'phone':
-        return [
-          'Remove any phone numbers from your review',
-          'You can mention "I called them" without including the number'
-        ]
-      case 'email':
-        return [
-          'Remove any email addresses from your review',
-          'You can mention "I emailed them" without including the address'
-        ]
-      case 'address':
-        return [
-          'Remove any street addresses or zip codes',
-          'You can mention the city or general area instead'
-        ]
-      case 'ssn':
-        return [
-          'Never share Social Security Numbers online',
-          'Remove any SSN references from your review'
-        ]
-      case 'financial':
-        return [
-          'Remove any credit card or bank account numbers',
-          'Never share financial account details in reviews'
-        ]
-      case 'policy':
-        return [
-          'Remove policy or claim numbers for privacy',
-          'You can describe the claim without including the number'
-        ]
-      default:
-        return [
-          'Review our guidelines and update your text',
-          'Focus on describing your experience professionally'
-        ]
-    }
-  }
+  const [showAdjusterDropdown, setShowAdjusterDropdown] = useState(false)
 
   useEffect(() => {
-    const name = searchParams.get('name')
     const adjusterId = searchParams.get('adjuster')
-    const ratingParam = searchParams.get('rating')
-    
-    if (name) {
-      setAdjusterSearch(name)
-      searchAdjusters(name)
-    }
-    
     if (adjusterId) {
       fetchAdjusterById(adjusterId)
     }
-    
-    if (ratingParam) {
-      const rating = parseInt(ratingParam)
-      if (rating >= 1 && rating <= 5) {
-        setOverallRating(rating)
-      }
-    }
   }, [searchParams])
-
-  // Clear validation error when user edits the review text
-  useEffect(() => {
-    if (validationError) {
-      setValidationError(null)
-    }
-  }, [reviewText])
 
   async function fetchAdjusterById(id: string) {
     const { data } = await supabase
@@ -146,115 +194,176 @@ function ReviewContent() {
       .select('*')
       .eq('id', id)
       .single()
-    
     if (data) {
       setSelectedAdjuster(data)
-      setStep(2)
+      setAdjusterName(`${data.first_name} ${data.last_name}`)
+      if (data.state) setClaimState(data.state)
     }
   }
 
   async function searchAdjusters(query: string) {
     if (query.length < 2) {
       setAdjusterResults([])
+      setShowAdjusterDropdown(false)
       return
     }
-    
     setSearchLoading(true)
     const words = query.trim().split(/\s+/)
-    
-    let dbQuery = supabase
-      .from('adjusters')
-      .select('id, first_name, last_name, slug, state')
-    
+    let dbQuery = supabase.from('adjusters').select('id, first_name, last_name, slug, state')
     if (words.length >= 2) {
-      dbQuery = dbQuery
-        .filter('first_name', 'ilike', '%' + words[0] + '%')
-        .filter('last_name', 'ilike', '%' + words[1] + '%')
+      dbQuery = dbQuery.ilike('first_name', `${words[0]}%`).ilike('last_name', `${words[1]}%`)
     } else {
-      dbQuery = dbQuery.or('first_name.ilike.%' + query + '%,last_name.ilike.%' + query + '%')
+      dbQuery = dbQuery.or(`first_name.ilike.${query}%,last_name.ilike.${query}%`)
     }
-    
-    const { data } = await dbQuery.limit(10)
-    
-    if (data) setAdjusterResults(data)
+    const { data } = await dbQuery.limit(8)
+    if (data) {
+      setAdjusterResults(data)
+      setShowAdjusterDropdown(true)
+    }
     setSearchLoading(false)
   }
 
-  async function handleSubmit() {
-    // Clear previous errors
+  function handleAdjusterNameChange(value: string) {
+    setAdjusterName(value)
+    setSelectedAdjuster(null)
+    searchAdjusters(value)
+  }
+
+  function selectAdjuster(adj: any) {
+    setSelectedAdjuster(adj)
+    setAdjusterName(`${adj.first_name} ${adj.last_name}`)
+    if (adj.state) setClaimState(adj.state)
+    setShowAdjusterDropdown(false)
+    setAdjusterResults([])
+  }
+
+  function toggleFrustration(value: string) {
+    setFrustrations(prev =>
+      prev.includes(value) ? prev.filter(f => f !== value) : [...prev, value]
+    )
+  }
+
+  function validateStep(stepNum: number): boolean {
     setError(null)
-    setValidationError(null)
+    if (stepNum === 1) {
+      if (!adjusterName.trim()) { setError('Please enter the adjuster\'s name'); return false }
+      if (!carrierName) { setError('Please select a carrier'); return false }
+      if (carrierName === 'Other' && !carrierOther.trim()) { setError('Please enter the carrier name'); return false }
+      if (!whatHappened.trim() || whatHappened.trim().length < 20) { setError('Please describe what happened (at least 20 characters)'); return false }
+      if (overallRating === 0) { setError('Please select a star rating'); return false }
+    }
+    if (stepNum === 2) {
+      if (!claimState) { setError('Please select a state'); return false }
+      if (!propertyType) { setError('Please select property type'); return false }
+      if (!peril) { setError('Please select type of loss'); return false }
+      if (!claimAmount) { setError('Please select claim amount range'); return false }
+      if (!lossDate) { setError('Please select when the loss occurred'); return false }
+      if (!reportDate) { setError('Please select when you reported the claim'); return false }
+    }
+    if (stepNum === 3) {
+      if (!finalStatus) { setError('Please select the final status'); return false }
+      if (!payoutComparison) { setError('Please select how payout compared to estimate'); return false }
+      if (!escalation) { setError('Please select if you escalated'); return false }
+      if (!decisionTime) { setError('Please select time to decision'); return false }
+    }
+    return true
+  }
 
-    if (!selectedAdjuster) {
-      setError('Please select an adjuster')
-      return
-    }
-    
-    if (overallRating === 0) {
-      setError('Please select a rating (1-5 stars)')
-      return
-    }
-    
-    if (!reviewText.trim()) {
-      setError('Please write a review')
-      return
-    }
-
-    if (reviewText.trim().length < 20) {
-      setError('Please write at least 20 characters in your review')
-      return
-    }
-
-    // Validate content for profanity, attacks, and personal info
-    const validation = validateReviewContent(reviewText)
-    if (!validation.isValid) {
-      setValidationError({
-        message: validation.error || 'Your review could not be submitted.',
-        type: validation.failedCheck || 'unknown'
-      })
-      // Scroll to error
+  function nextStep() {
+    if (validateStep(step)) {
+      setStep(step + 1)
       window.scrollTo({ top: 0, behavior: 'smooth' })
-      return
     }
+  }
 
-    if (honeypot) {
-      setSuccess(true)
-      return
-    }
-    
+  function prevStep() {
+    setError(null)
+    setStep(step - 1)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  async function handleSubmit() {
+    if (honeypot) { setSuccess(true); return }
     setLoading(true)
-    
-    const { error: submitError } = await supabase
-      .from('reviews')
-      .insert({
-        adjuster_id: selectedAdjuster.id,
-        overall_rating: overallRating,
-        communication_rating: communicationRating || null,
-        fairness_rating: fairnessRating || null,
-        timeliness_rating: speedRating || null,
-        professionalism_rating: professionalismRating || null,
-        review_text: reviewText.trim(),
-        claim_type: claimType || null,
-        claim_outcome: claimOutcome || null,
-        reviewer_type: reviewerType,
-        status: 'approved',
-      })
-    
-    if (submitError) {
-      console.error('Submit error:', submitError)
-      setError('Failed to submit review. Please try again.')
-      setLoading(false)
-      return
+    setError(null)
+
+    try {
+      // Create adjuster if not selected from DB
+      let adjusterId = selectedAdjuster?.id
+      if (!adjusterId && adjusterName.trim()) {
+        const nameParts = adjusterName.trim().split(/\s+/)
+        const firstName = nameParts[0] || ''
+        const lastName = nameParts.slice(1).join(' ') || 'Unknown'
+        const slug = `${firstName}-${lastName}-${claimState}-${Date.now()}`.toLowerCase().replace(/[^a-z0-9-]/g, '-')
+
+        const { data: newAdj, error: adjError } = await supabase
+          .from('adjusters')
+          .insert({
+            first_name: firstName,
+            last_name: lastName,
+            state: claimState,
+            slug: slug,
+          })
+          .select()
+          .single()
+
+        if (adjError) {
+          console.error('Adjuster insert error:', adjError)
+          setError('Failed to create adjuster profile')
+          setLoading(false)
+          return
+        }
+        adjusterId = newAdj.id
+      }
+
+      // Insert review with all fields
+      const { error: reviewError } = await supabase
+        .from('reviews')
+        .insert({
+          adjuster_id: adjusterId,
+          overall_rating: overallRating,
+          review_text: whatHappened.trim(),
+          claim_type: peril || null,
+          claim_outcome: finalStatus || null,
+          reviewer_type: role || 'homeowner',
+          status: 'approved',
+          // New extended fields
+          carrier_name: carrierName !== 'Other' ? carrierName : null,
+          carrier_other: carrierName === 'Other' ? carrierOther : null,
+          zip_code: zipCode || null,
+          property_type: propertyType || null,
+          claim_amount: claimAmount || null,
+          loss_date: lossDate || null,
+          report_timing: reportDate || null,
+          payout_comparison: payoutComparison || null,
+          escalation: escalation || null,
+          decision_time: decisionTime || null,
+          frustrations: frustrations.length > 0 ? frustrations : null,
+          frustration_other: frustrationOther || null,
+          premium_impact: premiumImpact || null,
+          what_went_well_poorly: whatWentWellPoorly || null,
+          reviewer_email: email || null,
+          reviewer_first_name: firstName || null,
+          reviewer_opt_in: optIn,
+        })
+
+      if (reviewError) {
+        console.error('Review insert error:', reviewError)
+        setError('Failed to submit review. Please try again.')
+        setLoading(false)
+        return
+      }
+
+      setSuccess(true)
+    } catch (err) {
+      console.error('Submit error:', err)
+      setError('Something went wrong. Please try again.')
     }
-    
-    setSuccess(true)
     setLoading(false)
   }
 
-  const StarRatingInput = ({ rating, setRating, hover, setHover, size = 'lg' }: { rating: number; setRating: (r: number) => void; hover?: number; setHover?: (r: number) => void; size?: 'sm' | 'lg' }) => {
-    const starSize = size === 'lg' ? 'w-10 h-10' : 'w-6 h-6'
+  const StarRatingInput = ({ rating, setRating, hover, setHover }: { rating: number; setRating: (r: number) => void; hover: number; setHover: (r: number) => void }) => {
     const displayRating = hover || rating
-    
     return (
       <div className="flex gap-1">
         {[1, 2, 3, 4, 5].map((star) => (
@@ -262,23 +371,18 @@ function ReviewContent() {
             key={star}
             type="button"
             onClick={() => setRating(star)}
-            onMouseEnter={() => setHover && setHover(star)}
-            onMouseLeave={() => setHover && setHover(0)}
-            className="focus:outline-none"
+            onMouseEnter={() => setHover(star)}
+            onMouseLeave={() => setHover(0)}
+            className="focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
           >
-            <Star className={starSize + ' transition-colors ' + (star <= displayRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300')} />
+            <Star className={`w-10 h-10 transition-colors ${star <= displayRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
           </button>
         ))}
-      </div>
-    )
-  }
-
-  const MiniStarRating = ({ label, rating, setRating }: { label: string; rating: number; setRating: (r: number) => void }) => {
-    const [hover, setHover] = useState(0)
-    return (
-      <div className="flex items-center justify-between py-2">
-        <span className="text-gray-700 text-sm">{label}</span>
-        <StarRatingInput rating={rating} setRating={setRating} hover={hover} setHover={setHover} size="sm" />
+        {rating > 0 && (
+          <span className="ml-3 text-gray-600 self-center">
+            {['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'][rating]}
+          </span>
+        )}
       </div>
     )
   }
@@ -289,13 +393,12 @@ function ReviewContent() {
         <div className="max-w-2xl mx-auto px-4">
           <div className="bg-white rounded-2xl shadow-sm p-8 text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Star className="w-8 h-8 text-green-600 fill-green-600" />
+              <CheckCircle className="w-8 h-8 text-green-600" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Thank You!</h1>
-            <p className="text-gray-600 mb-6">Your review has been submitted successfully.</p>
+            <p className="text-gray-600 mb-6">Your review has been submitted successfully. You're helping thousands of homeowners make better decisions.</p>
             <div className="flex gap-4 justify-center">
-              <button onClick={() => router.push('/adjuster/' + selectedAdjuster.slug)} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg">View Profile</button>
-              <button onClick={() => router.push('/')} className="border border-gray-300 text-gray-700 font-semibold py-2 px-6 rounded-lg">Home</button>
+              <button onClick={() => router.push('/')} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg">Back to Home</button>
             </div>
           </div>
         </div>
@@ -303,21 +406,13 @@ function ReviewContent() {
     )
   }
 
-  const breadcrumbData = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://ratemyadjusters.com/' },
-      { '@type': 'ListItem', position: 2, name: 'Leave a Review', item: 'https://ratemyadjusters.com/review' },
-    ],
-  }
+  const progressPercent = ((step - 1) / 3) * 100
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }} />
-
+      {/* Breadcrumb */}
       <div className="bg-white border-b">
-        <div className="max-w-6xl mx-auto px-4 py-3">
+        <div className="max-w-3xl mx-auto px-4 py-3">
           <nav className="flex items-center gap-2 text-sm">
             <Link href="/" className="text-gray-500 hover:text-gray-700">Home</Link>
             <ChevronRight className="w-4 h-4 text-gray-400" />
@@ -326,243 +421,477 @@ function ReviewContent() {
         </div>
       </div>
 
-      <main className="min-h-screen bg-gray-50 py-12">
+      <main className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-2xl mx-auto px-4">
-          <div className="bg-white rounded-2xl shadow-sm p-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Write a Review</h1>
-            <p className="text-gray-600 mb-6">Help others by sharing your experience</p>
+          {/* Progress Bar */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700">Step {step} of 4</span>
+              <span className="text-sm text-gray-500">
+                {step === 1 && 'Tell us about the claim'}
+                {step === 2 && 'Claim details'}
+                {step === 3 && 'How it turned out'}
+                {step === 4 && 'Almost done'}
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${progressPercent + 25}%` }}
+              />
+            </div>
+          </div>
 
-            {showGuidelines && (
-              <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-6">
-                <div className="flex items-start gap-3">
-                  <Shield className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-gray-900 text-sm">Review Guidelines</h3>
-                      <button onClick={() => setShowGuidelines(false)} className="text-gray-400 hover:text-gray-600 text-sm">Dismiss</button>
-                    </div>
-                    <p className="text-gray-600 text-sm mt-1">Be truthful • No personal attacks • Focus on claim experience • No policy numbers or private info</p>
-                    <Link href="/review-guidelines" className="text-blue-600 hover:text-blue-700 text-sm font-medium mt-2 inline-block">Read full guidelines →</Link>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Validation Error - Styled to clearly show it's a content issue, not a website error */}
-            {validationError && (
-              <div className="mb-6 rounded-xl border-2 border-amber-300 bg-amber-50 overflow-hidden">
-                <div className="bg-amber-100 px-4 py-3 border-b border-amber-200">
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="w-5 h-5 text-amber-600" />
-                    <h3 className="font-semibold text-amber-800">Please Update Your Review</h3>
-                  </div>
-                </div>
-                <div className="px-4 py-4">
-                  <p className="text-amber-900 mb-3">{validationError.message}</p>
-                  
-                  <div className="bg-white rounded-lg p-3 border border-amber-200">
-                    <p className="text-sm font-medium text-gray-700 mb-2">How to fix this:</p>
-                    <ul className="space-y-1">
-                      {getValidationTips(validationError.type).map((tip, index) => (
-                        <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
-                          <span className="text-amber-500 mt-0.5">•</span>
-                          {tip}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  
-                  <p className="text-xs text-amber-700 mt-3">
-                    Your review has not been lost — just edit the text below and try again.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* General Error (non-validation) */}
-            {error && !validationError && (
-              <div className="mb-6 rounded-lg bg-red-50 text-red-700 px-4 py-3 text-sm flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4" />
-                {error}
-              </div>
-            )}
-
+          <div className="bg-white rounded-2xl shadow-sm p-6 md:p-8">
+            {/* Honeypot */}
             <div className="absolute left-[-9999px]" aria-hidden="true">
               <input type="text" name="website" value={honeypot} onChange={(e) => setHoneypot(e.target.value)} tabIndex={-1} autoComplete="off" />
             </div>
 
-            {step === 1 && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Who is your adjuster?</label>
-                <input
-                  type="text"
-                  value={adjusterSearch}
-                  onChange={(e) => { setAdjusterSearch(e.target.value); searchAdjusters(e.target.value) }}
-                  placeholder="Search by name..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                />
-                
-                {searchLoading && <p className="text-gray-500 text-sm mt-2">Searching...</p>}
-                
-                {adjusterResults.length > 0 && (
-                  <div className="mt-3 border border-gray-200 rounded-lg divide-y">
-                    {adjusterResults.map((adj) => (
-                      <button
-                        key={adj.id}
-                        onClick={() => { setSelectedAdjuster(adj); setStep(2) }}
-                        className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3"
-                      >
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-blue-600 font-semibold text-sm">{adj.first_name?.[0]}{adj.last_name?.[0]}</span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900">{adj.first_name} {adj.last_name}</p>
-                          <p className="text-sm text-gray-500">{adj.state}</p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-                
-                {adjusterSearch.length >= 2 && adjusterResults.length === 0 && !searchLoading && (
-                  <div className="mt-4 p-4 bg-amber-50 border border-amber-100 rounded-lg">
-                    <div className="flex items-start gap-3">
-                      <UserPlus className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-gray-700 text-sm font-medium">Can't find your adjuster?</p>
-                        <p className="text-gray-600 text-sm mt-1">They may not be in our database yet. You can add them and leave a review.</p>
-                        <Link 
-                          href="/add-adjuster" 
-                          className="inline-flex items-center gap-1 mt-3 bg-amber-600 hover:bg-amber-700 text-white font-medium text-sm py-2 px-4 rounded-lg transition-colors"
-                        >
-                          <UserPlus className="w-4 h-4" />
-                          Add a new adjuster
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                )}
+            {/* Error */}
+            {error && (
+              <div className="mb-6 rounded-lg bg-red-50 text-red-700 px-4 py-3 text-sm flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                {error}
               </div>
             )}
 
-            {step === 2 && selectedAdjuster && (
+            {/* STEP 1: The Vent */}
+            {step === 1 && (
               <div className="space-y-6">
-                <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-blue-600 font-semibold">{selectedAdjuster.first_name?.[0]}{selectedAdjuster.last_name?.[0]}</span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900">{selectedAdjuster.first_name} {selectedAdjuster.last_name}</p>
-                    <p className="text-sm text-gray-600">{selectedAdjuster.state}</p>
-                  </div>
-                  <button onClick={() => { setSelectedAdjuster(null); setStep(1) }} className="text-blue-600 hover:text-blue-700 text-sm font-medium">Change</button>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-1">Tell us about the claim</h2>
+                  <p className="text-gray-600 text-sm">We're building the most complete review platform for insurance adjusters. Share your honest experience—it helps thousands of homeowners and contractors make better decisions.</p>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">Overall Rating *</label>
-                  <div className="flex items-center gap-4">
-                    <StarRatingInput rating={overallRating} setRating={setOverallRating} hover={hoverRating} setHover={setHoverRating} size="lg" />
-                    {overallRating > 0 && <span className="text-gray-600">{['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'][overallRating]}</span>}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Your Review *</label>
-                  <textarea
-                    value={reviewText}
-                    onChange={(e) => setReviewText(e.target.value)}
-                    placeholder="Share your experience with this adjuster. How was their communication? Were they fair? How long did the process take?"
-                    rows={5}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 ${
-                      validationError ? 'border-amber-400 bg-amber-50' : 'border-gray-300'
-                    }`}
+                {/* Adjuster Name */}
+                <div className="relative">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Adjuster Name <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    value={adjusterName}
+                    onChange={(e) => handleAdjusterNameChange(e.target.value)}
+                    onFocus={() => adjusterResults.length > 0 && setShowAdjusterDropdown(true)}
+                    placeholder="e.g. John Smith"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                   />
-                  <p className={'text-sm mt-1 ' + (reviewText.trim().length < 20 ? 'text-amber-600' : 'text-gray-500')}>
-                    {reviewText.length}/1000 {reviewText.trim().length < 20 && '(minimum 20 characters)'}
-                  </p>
-                  {validationError && (
-                    <p className="text-sm text-amber-600 mt-1 flex items-center gap-1">
-                      <AlertCircle className="w-4 h-4" />
-                      Please edit your review above to fix the issue
+                  {searchLoading && <p className="text-gray-500 text-xs mt-1">Searching...</p>}
+                  {showAdjusterDropdown && adjusterResults.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto">
+                      {adjusterResults.map((adj) => (
+                        <button
+                          key={adj.id}
+                          type="button"
+                          onClick={() => selectAdjuster(adj)}
+                          className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 border-b border-gray-100 last:border-0"
+                        >
+                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-blue-600 font-semibold text-xs">{adj.first_name?.[0]}{adj.last_name?.[0]}</span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900 text-sm">{adj.first_name} {adj.last_name}</p>
+                            <p className="text-xs text-gray-500">{adj.state}</p>
+                          </div>
+                        </button>
+                      ))}
+                      <Link
+                        href="/add-adjuster"
+                        className="w-full px-4 py-3 text-left hover:bg-amber-50 flex items-center gap-3 text-amber-700 bg-amber-50"
+                      >
+                        <UserPlus className="w-5 h-5" />
+                        <span className="text-sm font-medium">Add new adjuster</span>
+                      </Link>
+                    </div>
+                  )}
+                  {selectedAdjuster && (
+                    <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" /> Matched to existing profile
                     </p>
                   )}
                 </div>
 
-                <div className="border border-gray-200 rounded-lg">
-                  <button type="button" onClick={() => setShowOptionalRatings(!showOptionalRatings)} className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-gray-50">
-                    <span className="font-medium text-gray-700">Rate specific qualities (optional)</span>
-                    {showOptionalRatings ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
-                  </button>
-                  {showOptionalRatings && (
-                    <div className="px-4 pb-4 border-t border-gray-200">
-                      <MiniStarRating label="Communication" rating={communicationRating} setRating={setCommunicationRating} />
-                      <MiniStarRating label="Fairness" rating={fairnessRating} setRating={setFairnessRating} />
-                      <MiniStarRating label="Speed" rating={speedRating} setRating={setSpeedRating} />
-                      <MiniStarRating label="Professionalism" rating={professionalismRating} setRating={setProfessionalismRating} />
-                    </div>
+                {/* Carrier */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Insurance Carrier <span className="text-red-500">*</span></label>
+                  <select
+                    value={carrierName}
+                    onChange={(e) => setCarrierName(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select carrier...</option>
+                    {carriers.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  {carrierName === 'Other' && (
+                    <input
+                      type="text"
+                      value={carrierOther}
+                      onChange={(e) => setCarrierOther(e.target.value)}
+                      placeholder="Enter carrier name"
+                      className="w-full mt-2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    />
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Claim Type</label>
-                    <select value={claimType} onChange={(e) => setClaimType(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900">
-                      <option value="">Select...</option>
-                      {claimTypes.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Claim Outcome</label>
-                    <select value={claimOutcome} onChange={(e) => setClaimOutcome(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900">
-                      <option value="">Select...</option>
-                      {claimOutcomes.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
-                  </div>
+                {/* What Happened */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">What happened? <span className="text-red-500">*</span></label>
+                  <textarea
+                    value={whatHappened}
+                    onChange={(e) => setWhatHappened(e.target.value.slice(0, 500))}
+                    placeholder="Example: Water damage from burst pipe, adjuster approved initial $8K estimate but then cut it to $4.5K saying some wasn't covered. Felt rushed and not heard."
+                    rows={4}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  />
+                  <p className={`text-xs mt-1 ${whatHappened.length < 20 ? 'text-amber-600' : 'text-gray-500'}`}>
+                    {whatHappened.length}/500 {whatHappened.length < 20 && '(minimum 20 characters)'}
+                  </p>
                 </div>
 
+                {/* Star Rating */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">I am a...</label>
-                  <div className="flex gap-4">
-                    {[{ value: 'homeowner', label: 'Homeowner' }, { value: 'contractor', label: 'Contractor' }, { value: 'public_adjuster', label: 'Public Adjuster' }].map((t) => (
-                      <label key={t.value} className={'flex-1 text-center py-3 px-4 rounded-lg border cursor-pointer transition-colors ' + (reviewerType === t.value ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700 hover:border-gray-400')}>
-                        <input type="radio" name="reviewerType" value={t.value} checked={reviewerType === t.value} onChange={(e) => setReviewerType(e.target.value)} className="sr-only" />
-                        {t.label}
-                      </label>
-                    ))}
-                  </div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Overall, how would you rate this adjuster? <span className="text-red-500">*</span></label>
+                  <StarRatingInput rating={overallRating} setRating={setOverallRating} hover={hoverRating} setHover={setHoverRating} />
+                </div>
+
+                {/* What went well/poorly (optional) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Briefly, what went well or poorly? <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <textarea
+                    value={whatWentWellPoorly}
+                    onChange={(e) => setWhatWentWellPoorly(e.target.value.slice(0, 300))}
+                    placeholder="Example: Responsive but didn't explain his reasoning. Never got a copy of his report."
+                    rows={2}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">{whatWentWellPoorly.length}/300</p>
                 </div>
 
                 <button
-                  onClick={handleSubmit}
-                  disabled={loading || overallRating === 0 || reviewText.trim().length < 20}
-                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-lg transition-colors"
+                  type="button"
+                  onClick={nextStep}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg transition-colors"
                 >
-                  {loading ? 'Submitting...' : validationError ? 'Try Again' : 'Submit Review'}
+                  Continue
                 </button>
-                
+              </div>
+            )}
+
+            {/* STEP 2: The Data */}
+            {step === 2 && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-1">Claim details</h2>
+                  <p className="text-gray-600 text-sm">Just a bit more context about your claim. This helps us identify patterns.</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {/* State */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">State <span className="text-red-500">*</span></label>
+                    <select
+                      value={claimState}
+                      onChange={(e) => setClaimState(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select...</option>
+                      {states.map((s) => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+
+                  {/* ZIP (optional) */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">ZIP Code <span className="text-gray-400 font-normal">(optional)</span></label>
+                    <input
+                      type="text"
+                      value={zipCode}
+                      onChange={(e) => setZipCode(e.target.value.slice(0, 5))}
+                      placeholder="12345"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Helps us see regional patterns</p>
+                  </div>
+                </div>
+
+                {/* Property Type */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Property Type <span className="text-red-500">*</span></label>
+                  <select
+                    value={propertyType}
+                    onChange={(e) => setPropertyType(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select...</option>
+                    {propertyTypes.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  </select>
+                </div>
+
+                {/* Peril */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Type of Loss / Peril <span className="text-red-500">*</span></label>
+                  <select
+                    value={peril}
+                    onChange={(e) => setPeril(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select...</option>
+                    {perils.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+                  </select>
+                </div>
+
+                {/* Claim Amount */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Claim Amount (approximate) <span className="text-red-500">*</span></label>
+                  <select
+                    value={claimAmount}
+                    onChange={(e) => setClaimAmount(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select...</option>
+                    {claimAmounts.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">We don't need exact amounts</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Loss Date */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">When did loss occur? <span className="text-red-500">*</span></label>
+                    <select
+                      value={lossDate}
+                      onChange={(e) => setLossDate(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select...</option>
+                      {monthOptions.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+                    </select>
+                  </div>
+
+                  {/* Report Timing */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">When did you report? <span className="text-red-500">*</span></label>
+                    <select
+                      value={reportDate}
+                      onChange={(e) => setReportDate(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select...</option>
+                      {reportTiming.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button type="button" onClick={prevStep} className="flex-1 border border-gray-300 text-gray-700 font-semibold py-4 px-6 rounded-lg hover:bg-gray-50 transition-colors">
+                    Back
+                  </button>
+                  <button type="button" onClick={nextStep} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg transition-colors">
+                    Continue
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 3: The Outcome */}
+            {step === 3 && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-1">How did the claim turn out?</h2>
+                  <p className="text-gray-600 text-sm">Finally, how things ended. This is where we spot trends in carrier behavior.</p>
+                </div>
+
+                {/* Final Status */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">What was the final status? <span className="text-red-500">*</span></label>
+                  <select
+                    value={finalStatus}
+                    onChange={(e) => setFinalStatus(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select...</option>
+                    {finalStatuses.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+                  </select>
+                </div>
+
+                {/* Payout vs Estimate */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Did payout match your/contractor's estimate? <span className="text-red-500">*</span></label>
+                  <select
+                    value={payoutComparison}
+                    onChange={(e) => setPayoutComparison(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select...</option>
+                    {payoutComparisons.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+                  </select>
+                </div>
+
+                {/* Escalation */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Did you escalate this claim? <span className="text-red-500">*</span></label>
+                  <select
+                    value={escalation}
+                    onChange={(e) => setEscalation(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select...</option>
+                    {escalationOptions.map((e) => <option key={e.value} value={e.value}>{e.label}</option>)}
+                  </select>
+                </div>
+
+                {/* Time to Decision */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">How long from loss to final decision? <span className="text-red-500">*</span></label>
+                  <select
+                    value={decisionTime}
+                    onChange={(e) => setDecisionTime(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select...</option>
+                    {timeToDecision.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  </select>
+                </div>
+
+                {/* Frustrations/Impressions (checkboxes) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">What frustrated or impressed you? <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {frustrationOptions.map((f) => (
+                      <label key={f.value} className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${frustrations.includes(f.value) ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                        <input
+                          type="checkbox"
+                          checked={frustrations.includes(f.value)}
+                          onChange={() => toggleFrustration(f.value)}
+                          className="w-4 h-4 text-blue-600 rounded"
+                        />
+                        <span className="text-sm text-gray-700">{f.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <input
+                    type="text"
+                    value={frustrationOther}
+                    onChange={(e) => setFrustrationOther(e.target.value)}
+                    placeholder="Other (optional)"
+                    className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 text-sm"
+                  />
+                </div>
+
+                {/* Premium Impact (optional) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Has your premium gone up or non-renewal? <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <select
+                    value={premiumImpact}
+                    onChange={(e) => setPremiumImpact(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select...</option>
+                    {premiumImpacts.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+                  </select>
+                </div>
+
+                <div className="flex gap-3">
+                  <button type="button" onClick={prevStep} className="flex-1 border border-gray-300 text-gray-700 font-semibold py-4 px-6 rounded-lg hover:bg-gray-50 transition-colors">
+                    Back
+                  </button>
+                  <button type="button" onClick={nextStep} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg transition-colors">
+                    Continue
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 4: Contact */}
+            {step === 4 && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-1">Last step</h2>
+                  <p className="text-gray-600 text-sm">Your email is optional—but if you share it, we'll:</p>
+                  <ul className="text-sm text-gray-600 mt-2 space-y-1">
+                    <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" /> Show you how your claim compares to others in your area (is it fair?)</li>
+                    <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" /> Connect you with verified professionals (PAs, attorneys, contractors) who can help if needed</li>
+                    <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" /> Keep you updated on carrier behavior trends that affect you</li>
+                  </ul>
+                  <p className="text-xs text-gray-500 mt-2">We don't spam. Promise.</p>
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="yourname@email.com"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  />
+                </div>
+
+                {/* Role (conditional on email) */}
+                {email && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">I am a...</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {roleOptions.map((r) => (
+                        <label key={r.value} className={`flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors text-center ${role === r.value ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-700 hover:border-gray-300'}`}>
+                          <input
+                            type="radio"
+                            name="role"
+                            value={r.value}
+                            checked={role === r.value}
+                            onChange={(e) => setRole(e.target.value)}
+                            className="sr-only"
+                          />
+                          <span className="text-sm">{r.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Opt-in */}
+                {email && (
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={optIn}
+                      onChange={(e) => setOptIn(e.target.checked)}
+                      className="w-5 h-5 text-blue-600 rounded mt-0.5"
+                    />
+                    <span className="text-sm text-gray-700">Yes, I want to hear about PAs, attorneys, or contractors in my area.</span>
+                  </label>
+                )}
+
+                {/* First Name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">First Name <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="First name only is fine"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <button type="button" onClick={prevStep} className="flex-1 border border-gray-300 text-gray-700 font-semibold py-4 px-6 rounded-lg hover:bg-gray-50 transition-colors">
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={loading}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white font-semibold py-4 px-6 rounded-lg transition-colors"
+                  >
+                    {loading ? 'Submitting...' : 'Submit My Review'}
+                  </button>
+                </div>
+
                 <p className="text-xs text-gray-500 text-center">
-                  By submitting, you agree to our <Link href="/review-guidelines" className="text-blue-600 hover:underline">review guidelines</Link>. All reviews are moderated.
+                  By submitting, you agree to our <Link href="/review-guidelines" className="text-blue-600 hover:underline">review guidelines</Link>.
                 </p>
               </div>
             )}
-          </div>
-
-          <div className="bg-gray-50 rounded-xl p-6 mt-8">
-            <h3 className="font-semibold text-gray-900 mb-4">Explore More</h3>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <Link href="/adjusters" className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 hover:border-blue-300 transition-all group">
-                <div>
-                  <div className="font-medium text-gray-900 group-hover:text-blue-600">Browse Adjusters</div>
-                  <div className="text-sm text-gray-500">Search by state</div>
-                </div>
-              </Link>
-              <Link href="/guides" className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 hover:border-blue-300 transition-all group">
-                <div>
-                  <div className="font-medium text-gray-900 group-hover:text-blue-600">Guides & Resources</div>
-                  <div className="text-sm text-gray-500">Helpful articles</div>
-                </div>
-              </Link>
-            </div>
           </div>
         </div>
       </main>
