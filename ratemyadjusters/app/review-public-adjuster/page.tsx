@@ -3,138 +3,124 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Star, ChevronDown, ChevronUp, Shield, AlertTriangle, UserPlus, ChevronRight, AlertCircle } from 'lucide-react'
+import { Star, ChevronRight, Shield, AlertTriangle, UserPlus, CheckCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { validateReviewContent } from '@/lib/review-validation'
+
+const states = [
+  'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FL', 'GA',
+  'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+  'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
+  'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+  'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
+]
+
+const claimTypes = [
+  { value: 'wind_hail', label: 'Wind / Hail' },
+  { value: 'fire', label: 'Fire / Lightning' },
+  { value: 'water', label: 'Water (sudden/accidental)' },
+  { value: 'flood', label: 'Flood' },
+  { value: 'hurricane', label: 'Hurricane' },
+  { value: 'roof', label: 'Roof' },
+  { value: 'mold', label: 'Mold' },
+  { value: 'theft', label: 'Theft / Vandalism' },
+  { value: 'other', label: 'Other' },
+]
+
+const claimAmounts = [
+  { value: 'under_5k', label: 'Under $5K' },
+  { value: '5k_20k', label: '$5K – $20K' },
+  { value: '20k_50k', label: '$20K – $50K' },
+  { value: '50k_100k', label: '$50K – $100K' },
+  { value: 'over_100k', label: '$100K+' },
+  { value: 'unknown', label: "I don't know" },
+]
+
+const claimOutcomes = [
+  { value: 'paid_full', label: 'Paid in full' },
+  { value: 'paid_partial', label: 'Paid partially' },
+  { value: 'denied', label: 'Denied' },
+  { value: 'reopened', label: 'Claim reopened' },
+  { value: 'pending', label: 'Still pending' },
+]
+
+const settlementOptions = [
+  { value: 'none', label: 'No increase' },
+  { value: '1_25', label: '1-25% increase' },
+  { value: '26_50', label: '26-50% increase' },
+  { value: '51_100', label: '51-100% increase' },
+  { value: 'over_100', label: 'Over 100% increase' },
+  { value: 'unknown', label: 'Not sure' },
+]
+
+const impressionOptions = [
+  { value: 'responsive', label: 'Very responsive' },
+  { value: 'knowledgeable', label: 'Knowledgeable about policies' },
+  { value: 'fought_hard', label: 'Fought hard for my claim' },
+  { value: 'great_results', label: 'Got great results' },
+  { value: 'slow', label: 'Slow to respond' },
+  { value: 'poor_communication', label: 'Poor communication' },
+  { value: 'didnt_help', label: "Didn't help much" },
+  { value: 'professional', label: 'Very professional' },
+]
+
+const roleOptions = [
+  { value: 'homeowner', label: 'Homeowner' },
+  { value: 'contractor', label: 'Contractor' },
+  { value: 'attorney', label: 'Attorney' },
+  { value: 'other', label: 'Other' },
+]
 
 function ReviewPublicAdjusterContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  
+
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [validationError, setValidationError] = useState<{ message: string; type: string } | null>(null)
   const [success, setSuccess] = useState(false)
-  const [showOptionalRatings, setShowOptionalRatings] = useState(false)
-  const [showGuidelines, setShowGuidelines] = useState(true)
-  
-  const [paSearch, setPaSearch] = useState('')
+
+  // Step 1: The Vent
+  const [paName, setPaName] = useState('')
+  const [companyName, setCompanyName] = useState('')
+  const [whatHappened, setWhatHappened] = useState('')
+  const [overallRating, setOverallRating] = useState(0)
+  const [hoverRating, setHoverRating] = useState(0)
+  const [whatWentWellPoorly, setWhatWentWellPoorly] = useState('')
+
+  // Step 2: The Data
+  const [paState, setPaState] = useState('')
+  const [claimType, setClaimType] = useState('')
+  const [claimAmount, setClaimAmount] = useState('')
+  const [initialOffer, setInitialOffer] = useState('')
+
+  // Step 3: The Outcome
+  const [claimOutcome, setClaimOutcome] = useState('')
+  const [settlementIncrease, setSettlementIncrease] = useState('')
+  const [impressions, setImpressions] = useState<string[]>([])
+  const [impressionOther, setImpressionOther] = useState('')
+  const [wouldRecommend, setWouldRecommend] = useState('')
+
+  // Step 4: Contact
+  const [email, setEmail] = useState('')
+  const [role, setRole] = useState('')
+  const [optIn, setOptIn] = useState(false)
+  const [firstName, setFirstName] = useState('')
+
+  // Honeypot
+  const [honeypot, setHoneypot] = useState('')
+
+  // PA search/selection
   const [paResults, setPaResults] = useState<any[]>([])
   const [selectedPA, setSelectedPA] = useState<any>(null)
   const [searchLoading, setSearchLoading] = useState(false)
-  
-  const [overallRating, setOverallRating] = useState(0)
-  const [hoverRating, setHoverRating] = useState(0)
-  const [reviewText, setReviewText] = useState('')
-  
-  const [communicationRating, setCommunicationRating] = useState(0)
-  const [knowledgeRating, setKnowledgeRating] = useState(0)
-  const [resultsRating, setResultsRating] = useState(0)
-  const [professionalismRating, setProfessionalismRating] = useState(0)
-  
-  const [claimType, setClaimType] = useState('')
-  const [claimOutcome, setClaimOutcome] = useState('')
-  const [settlementIncrease, setSettlementIncrease] = useState('')
-  const [reviewerType, setReviewerType] = useState('homeowner')
-  
-  const [honeypot, setHoneypot] = useState('')
-  
-  const claimTypes = [
-    { value: 'roof', label: 'Roof' },
-    { value: 'water', label: 'Water Damage' },
-    { value: 'fire', label: 'Fire' },
-    { value: 'wind', label: 'Wind' },
-    { value: 'hail', label: 'Hail' },
-    { value: 'hurricane', label: 'Hurricane' },
-    { value: 'flood', label: 'Flood' },
-    { value: 'mold', label: 'Mold' },
-    { value: 'theft', label: 'Theft' },
-    { value: 'other', label: 'Other' },
-  ]
-  
-  const claimOutcomes = [
-    { value: 'approved', label: 'Fully Approved' },
-    { value: 'partial', label: 'Partially Approved' },
-    { value: 'denied', label: 'Denied' },
-    { value: 'reopened', label: 'Claim Reopened' },
-    { value: 'pending', label: 'Still Pending' },
-  ]
-
-  const settlementOptions = [
-    { value: 'none', label: 'No increase' },
-    { value: '1-25%', label: '1-25% increase' },
-    { value: '26-50%', label: '26-50% increase' },
-    { value: '51-100%', label: '51-100% increase' },
-    { value: '100%+', label: 'Over 100% increase' },
-    { value: 'unknown', label: 'Not sure' },
-  ]
-
-  const getValidationTips = (type: string): string[] => {
-    switch (type) {
-      case 'profanity':
-        return [
-          'Remove any curse words or inappropriate language',
-          'Express frustration without using profanity',
-          'Focus on describing what happened factually'
-        ]
-      case 'attack':
-        return [
-          'Focus on your experience, not the person',
-          'Describe actions and outcomes instead of character',
-          'Avoid threats or wishes of harm',
-          'Keep criticism constructive and professional'
-        ]
-      case 'phone':
-        return [
-          'Remove any phone numbers from your review',
-          'You can mention "I called them" without including the number'
-        ]
-      case 'email':
-        return [
-          'Remove any email addresses from your review',
-          'You can mention "I emailed them" without including the address'
-        ]
-      case 'address':
-        return [
-          'Remove any street addresses or zip codes',
-          'You can mention the city or general area instead'
-        ]
-      default:
-        return [
-          'Review our guidelines and update your text',
-          'Focus on describing your experience professionally'
-        ]
-    }
-  }
+  const [showPADropdown, setShowPADropdown] = useState(false)
 
   useEffect(() => {
-    const name = searchParams.get('name')
     const paId = searchParams.get('pa')
-    const ratingParam = searchParams.get('rating')
-    
-    if (name) {
-      setPaSearch(name)
-      searchPublicAdjusters(name)
-    }
-    
     if (paId) {
       fetchPAById(paId)
     }
-    
-    if (ratingParam) {
-      const rating = parseInt(ratingParam)
-      if (rating >= 1 && rating <= 5) {
-        setOverallRating(rating)
-      }
-    }
   }, [searchParams])
-
-  useEffect(() => {
-    if (validationError) {
-      setValidationError(null)
-    }
-  }, [reviewText])
 
   async function fetchPAById(id: string) {
     const { data } = await supabase
@@ -142,113 +128,162 @@ function ReviewPublicAdjusterContent() {
       .select('*')
       .eq('id', id)
       .single()
-    
     if (data) {
       setSelectedPA(data)
-      setStep(2)
+      setPaName(`${data.first_name} ${data.last_name}`)
+      if (data.state) setPaState(data.state)
+      if (data.company_name) setCompanyName(data.company_name)
     }
   }
 
-  async function searchPublicAdjusters(query: string) {
+  async function searchPAs(query: string) {
     if (query.length < 2) {
       setPaResults([])
+      setShowPADropdown(false)
       return
     }
-    
     setSearchLoading(true)
     const words = query.trim().split(/\s+/)
-    
-    let dbQuery = supabase
-      .from('public_adjusters')
-      .select('id, first_name, last_name, slug, state, company_name')
-    
+    let dbQuery = supabase.from('public_adjusters').select('id, first_name, last_name, slug, state, company_name')
     if (words.length >= 2) {
-      dbQuery = dbQuery
-        .filter('first_name', 'ilike', '%' + words[0] + '%')
-        .filter('last_name', 'ilike', '%' + words[1] + '%')
+      dbQuery = dbQuery.ilike('first_name', `${words[0]}%`).ilike('last_name', `${words[1]}%`)
     } else {
-      dbQuery = dbQuery.or('first_name.ilike.%' + query + '%,last_name.ilike.%' + query + '%,company_name.ilike.%' + query + '%')
+      dbQuery = dbQuery.or(`first_name.ilike.${query}%,last_name.ilike.${query}%,company_name.ilike.${query}%`)
     }
-    
-    const { data } = await dbQuery.limit(10)
-    
-    if (data) setPaResults(data)
+    const { data } = await dbQuery.limit(8)
+    if (data) {
+      setPaResults(data)
+      setShowPADropdown(true)
+    }
     setSearchLoading(false)
   }
 
-  async function handleSubmit() {
+  function handlePANameChange(value: string) {
+    setPaName(value)
+    setSelectedPA(null)
+    searchPAs(value)
+  }
+
+  function selectPA(pa: any) {
+    setSelectedPA(pa)
+    setPaName(`${pa.first_name} ${pa.last_name}`)
+    if (pa.state) setPaState(pa.state)
+    if (pa.company_name) setCompanyName(pa.company_name)
+    setShowPADropdown(false)
+    setPaResults([])
+  }
+
+  function toggleImpression(value: string) {
+    setImpressions(prev =>
+      prev.includes(value) ? prev.filter(f => f !== value) : [...prev, value]
+    )
+  }
+
+  function validateStep(stepNum: number): boolean {
     setError(null)
-    setValidationError(null)
+    if (stepNum === 1) {
+      if (!paName.trim()) { setError('Please enter the public adjuster\'s name'); return false }
+      if (!whatHappened.trim() || whatHappened.trim().length < 20) { setError('Please describe your experience (at least 20 characters)'); return false }
+      if (overallRating === 0) { setError('Please select a star rating'); return false }
+    }
+    if (stepNum === 2) {
+      if (!paState) { setError('Please select a state'); return false }
+      if (!claimType) { setError('Please select claim type'); return false }
+    }
+    if (stepNum === 3) {
+      if (!claimOutcome) { setError('Please select the claim outcome'); return false }
+      if (!wouldRecommend) { setError('Please select if you would recommend'); return false }
+    }
+    return true
+  }
 
-    if (!selectedPA) {
-      setError('Please select a public adjuster')
-      return
-    }
-    
-    if (overallRating === 0) {
-      setError('Please select a rating (1-5 stars)')
-      return
-    }
-    
-    if (!reviewText.trim()) {
-      setError('Please write a review')
-      return
-    }
-
-    if (reviewText.trim().length < 20) {
-      setError('Please write at least 20 characters in your review')
-      return
-    }
-
-    const validation = validateReviewContent(reviewText)
-    if (!validation.isValid) {
-      setValidationError({
-        message: validation.error || 'Your review could not be submitted.',
-        type: validation.failedCheck || 'unknown'
-      })
+  function nextStep() {
+    if (validateStep(step)) {
+      setStep(step + 1)
       window.scrollTo({ top: 0, behavior: 'smooth' })
-      return
     }
+  }
 
-    if (honeypot) {
-      setSuccess(true)
-      return
-    }
-    
+  function prevStep() {
+    setError(null)
+    setStep(step - 1)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  async function handleSubmit() {
+    if (honeypot) { setSuccess(true); return }
     setLoading(true)
-    
-    const { error: submitError } = await supabase
-      .from('public_adjuster_reviews')
-      .insert({
-        public_adjuster_id: selectedPA.id,
-        overall_rating: overallRating,
-        communication_rating: communicationRating || null,
-        knowledge_rating: knowledgeRating || null,
-        results_rating: resultsRating || null,
-        professionalism_rating: professionalismRating || null,
-        review_text: reviewText.trim(),
-        claim_type: claimType || null,
-        claim_outcome: claimOutcome || null,
-        settlement_increase: settlementIncrease || null,
-        reviewer_type: reviewerType,
-        status: 'approved',
-      })
-    
-    if (submitError) {
-      console.error('Submit error:', submitError)
-      setError('Failed to submit review. Please try again.')
-      setLoading(false)
-      return
+    setError(null)
+
+    try {
+      let paId = selectedPA?.id
+      if (!paId && paName.trim()) {
+        const nameParts = paName.trim().split(/\s+/)
+        const first = nameParts[0] || ''
+        const last = nameParts.slice(1).join(' ') || 'Unknown'
+        const slug = `${first}-${last}-${paState}-${Date.now()}`.toLowerCase().replace(/[^a-z0-9-]/g, '-')
+
+        const { data: newPA, error: paError } = await supabase
+          .from('public_adjusters')
+          .insert({
+            first_name: first,
+            last_name: last,
+            state: paState,
+            slug: slug,
+            company_name: companyName || null,
+          })
+          .select()
+          .single()
+
+        if (paError) {
+          console.error('PA insert error:', paError)
+          setError('Failed to create profile')
+          setLoading(false)
+          return
+        }
+        paId = newPA.id
+      }
+
+      const { error: reviewError } = await supabase
+        .from('public_adjuster_reviews')
+        .insert({
+          public_adjuster_id: paId,
+          overall_rating: overallRating,
+          review_text: whatHappened.trim(),
+          reviewer_type: role || 'homeowner',
+          status: 'approved',
+          company_name: companyName || null,
+          claim_type: claimType || null,
+          claim_amount: claimAmount || null,
+          initial_offer: initialOffer || null,
+          claim_outcome: claimOutcome || null,
+          settlement_increase: settlementIncrease || null,
+          would_recommend: wouldRecommend === 'yes',
+          impressions: impressions.length > 0 ? impressions : null,
+          impression_other: impressionOther || null,
+          what_went_well_poorly: whatWentWellPoorly || null,
+          reviewer_email: email || null,
+          reviewer_first_name: firstName || null,
+          reviewer_opt_in: optIn,
+        })
+
+      if (reviewError) {
+        console.error('Review insert error:', reviewError)
+        setError('Failed to submit review. Please try again.')
+        setLoading(false)
+        return
+      }
+
+      setSuccess(true)
+    } catch (err) {
+      console.error('Submit error:', err)
+      setError('Something went wrong. Please try again.')
     }
-    
-    setSuccess(true)
     setLoading(false)
   }
 
-  const StarRatingInput = ({ rating, setRating, hover, setHover, size = 'lg' }: { rating: number; setRating: (r: number) => void; hover?: number; setHover?: (r: number) => void; size?: 'sm' | 'lg' }) => {
-    const starSize = size === 'lg' ? 'w-10 h-10' : 'w-6 h-6'
+  const StarRatingInput = ({ rating, setRating, hover, setHover }: { rating: number; setRating: (r: number) => void; hover: number; setHover: (r: number) => void }) => {
     const displayRating = hover || rating
-    
     return (
       <div className="flex gap-1">
         {[1, 2, 3, 4, 5].map((star) => (
@@ -256,23 +291,18 @@ function ReviewPublicAdjusterContent() {
             key={star}
             type="button"
             onClick={() => setRating(star)}
-            onMouseEnter={() => setHover && setHover(star)}
-            onMouseLeave={() => setHover && setHover(0)}
-            className="focus:outline-none"
+            onMouseEnter={() => setHover(star)}
+            onMouseLeave={() => setHover(0)}
+            className="focus:outline-none focus:ring-2 focus:ring-emerald-500 rounded"
           >
-            <Star className={starSize + ' transition-colors ' + (star <= displayRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300')} />
+            <Star className={`w-10 h-10 transition-colors ${star <= displayRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
           </button>
         ))}
-      </div>
-    )
-  }
-
-  const MiniStarRating = ({ label, rating, setRating }: { label: string; rating: number; setRating: (r: number) => void }) => {
-    const [hover, setHover] = useState(0)
-    return (
-      <div className="flex items-center justify-between py-2">
-        <span className="text-gray-700 text-sm">{label}</span>
-        <StarRatingInput rating={rating} setRating={setRating} hover={hover} setHover={setHover} size="sm" />
+        {rating > 0 && (
+          <span className="ml-3 text-gray-600 self-center">
+            {['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'][rating]}
+          </span>
+        )}
       </div>
     )
   }
@@ -282,14 +312,14 @@ function ReviewPublicAdjusterContent() {
       <main className="min-h-screen bg-gray-50 py-12">
         <div className="max-w-2xl mx-auto px-4">
           <div className="bg-white rounded-2xl shadow-sm p-8 text-center">
-            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Star className="w-8 h-8 text-emerald-600 fill-emerald-600" />
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-green-600" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Thank You!</h1>
             <p className="text-gray-600 mb-6">Your review has been submitted successfully.</p>
             <div className="flex gap-4 justify-center">
-              <button onClick={() => router.push('/public-adjuster/' + selectedPA.slug)} className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-6 rounded-lg">View Profile</button>
-              <button onClick={() => router.push('/public-adjusters')} className="border border-gray-300 text-gray-700 font-semibold py-2 px-6 rounded-lg">Browse More</button>
+              <button onClick={() => router.push('/public-adjusters')} className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-6 rounded-lg">Browse PAs</button>
+              <button onClick={() => router.push('/')} className="border border-gray-300 text-gray-700 font-semibold py-2 px-6 rounded-lg">Home</button>
             </div>
           </div>
         </div>
@@ -297,22 +327,12 @@ function ReviewPublicAdjusterContent() {
     )
   }
 
-  const breadcrumbData = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://ratemyadjusters.com/' },
-      { '@type': 'ListItem', position: 2, name: 'Public Adjusters', item: 'https://ratemyadjusters.com/public-adjusters' },
-      { '@type': 'ListItem', position: 3, name: 'Review', item: 'https://ratemyadjusters.com/review-public-adjuster' },
-    ],
-  }
+  const progressPercent = ((step - 1) / 3) * 100
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }} />
-
       <div className="bg-white border-b">
-        <div className="max-w-6xl mx-auto px-4 py-3">
+        <div className="max-w-3xl mx-auto px-4 py-3">
           <nav className="flex items-center gap-2 text-sm">
             <Link href="/" className="text-gray-500 hover:text-gray-700">Home</Link>
             <ChevronRight className="w-4 h-4 text-gray-400" />
@@ -323,250 +343,354 @@ function ReviewPublicAdjusterContent() {
         </div>
       </div>
 
-      <main className="min-h-screen bg-gray-50 py-12">
+      <main className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-2xl mx-auto px-4">
-          <div className="bg-white rounded-2xl shadow-sm p-8">
-            <div className="flex items-center gap-3 mb-2">
-              <Shield className="w-6 h-6 text-emerald-600" />
-              <h1 className="text-2xl font-bold text-gray-900">Review a Public Adjuster</h1>
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700">Step {step} of 4</span>
+              <span className="text-sm text-gray-500">
+                {step === 1 && 'Tell us about your experience'}
+                {step === 2 && 'Claim details'}
+                {step === 3 && 'Results'}
+                {step === 4 && 'Almost done'}
+              </span>
             </div>
-            <p className="text-gray-600 mb-6">Help others by sharing your experience</p>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="bg-emerald-600 h-2 rounded-full transition-all duration-300" style={{ width: `${progressPercent + 25}%` }} />
+            </div>
+          </div>
 
-            {showGuidelines && (
-              <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-4 mb-6">
-                <div className="flex items-start gap-3">
-                  <Shield className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-gray-900 text-sm">Review Guidelines</h3>
-                      <button onClick={() => setShowGuidelines(false)} className="text-gray-400 hover:text-gray-600 text-sm">Dismiss</button>
-                    </div>
-                    <p className="text-gray-600 text-sm mt-1">Be truthful • Focus on your claim experience • Include settlement results if possible • No personal attacks</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {validationError && (
-              <div className="mb-6 rounded-xl border-2 border-amber-300 bg-amber-50 overflow-hidden">
-                <div className="bg-amber-100 px-4 py-3 border-b border-amber-200">
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="w-5 h-5 text-amber-600" />
-                    <h3 className="font-semibold text-amber-800">Please Update Your Review</h3>
-                  </div>
-                </div>
-                <div className="px-4 py-4">
-                  <p className="text-amber-900 mb-3">{validationError.message}</p>
-                  <div className="bg-white rounded-lg p-3 border border-amber-200">
-                    <p className="text-sm font-medium text-gray-700 mb-2">How to fix this:</p>
-                    <ul className="space-y-1">
-                      {getValidationTips(validationError.type).map((tip, index) => (
-                        <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
-                          <span className="text-amber-500 mt-0.5">•</span>
-                          {tip}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <p className="text-xs text-amber-700 mt-3">
-                    Your review has not been lost — just edit the text below and try again.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {error && !validationError && (
-              <div className="mb-6 rounded-lg bg-red-50 text-red-700 px-4 py-3 text-sm flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4" />
-                {error}
-              </div>
-            )}
-
+          <div className="bg-white rounded-2xl shadow-sm p-6 md:p-8">
             <div className="absolute left-[-9999px]" aria-hidden="true">
               <input type="text" name="website" value={honeypot} onChange={(e) => setHoneypot(e.target.value)} tabIndex={-1} autoComplete="off" />
             </div>
 
-            {step === 1 && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Search for a public adjuster</label>
-                <input
-                  type="text"
-                  value={paSearch}
-                  onChange={(e) => { setPaSearch(e.target.value); searchPublicAdjusters(e.target.value) }}
-                  placeholder="Search by name or company..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-gray-900"
-                />
-                
-                {searchLoading && <p className="text-gray-500 text-sm mt-2">Searching...</p>}
-                
-                {paResults.length > 0 && (
-                  <div className="mt-3 border border-gray-200 rounded-lg divide-y">
-                    {paResults.map((pa) => (
-                      <button
-                        key={pa.id}
-                        onClick={() => { setSelectedPA(pa); setStep(2) }}
-                        className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3"
-                      >
-                        <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
-                          <span className="text-emerald-600 font-semibold text-sm">{pa.first_name?.[0]}{pa.last_name?.[0]}</span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900">{pa.first_name} {pa.last_name}</p>
-                          <p className="text-sm text-gray-500">{pa.company_name ? `${pa.company_name} • ` : ''}{pa.state}</p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-                
-                {paSearch.length >= 2 && paResults.length === 0 && !searchLoading && (
-                  <div className="mt-4 p-4 bg-amber-50 border border-amber-100 rounded-lg">
-                    <div className="flex items-start gap-3">
-                      <UserPlus className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-gray-700 text-sm font-medium">Can't find this public adjuster?</p>
-                        <p className="text-gray-600 text-sm mt-1">They may not be in our database yet. You can add them and leave a review.</p>
-                        <Link 
-                          href="/add-public-adjuster" 
-                          className="inline-flex items-center gap-1 mt-3 bg-amber-600 hover:bg-amber-700 text-white font-medium text-sm py-2 px-4 rounded-lg transition-colors"
-                        >
-                          <UserPlus className="w-4 h-4" />
-                          Add a Public Adjuster
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                )}
+            {error && (
+              <div className="mb-6 rounded-lg bg-red-50 text-red-700 px-4 py-3 text-sm flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                {error}
               </div>
             )}
 
-            {step === 2 && selectedPA && (
+            {step === 1 && (
               <div className="space-y-6">
-                <div className="flex items-center gap-3 p-4 bg-emerald-50 rounded-lg">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
-                    <span className="text-emerald-600 font-semibold">{selectedPA.first_name?.[0]}{selectedPA.last_name?.[0]}</span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900">{selectedPA.first_name} {selectedPA.last_name}</p>
-                    <p className="text-sm text-gray-600">{selectedPA.company_name ? `${selectedPA.company_name} • ` : ''}{selectedPA.state}</p>
-                  </div>
-                  <button onClick={() => { setSelectedPA(null); setStep(1) }} className="text-emerald-600 hover:text-emerald-700 text-sm font-medium">Change</button>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">Overall Rating *</label>
-                  <div className="flex items-center gap-4">
-                    <StarRatingInput rating={overallRating} setRating={setOverallRating} hover={hoverRating} setHover={setHoverRating} size="lg" />
-                    {overallRating > 0 && <span className="text-gray-600">{['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'][overallRating]}</span>}
+                <div className="flex items-center gap-3 mb-2">
+                  <Shield className="w-6 h-6 text-emerald-600" />
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">Tell us about your experience</h2>
+                    <p className="text-gray-600 text-sm">Help others by sharing your experience with this public adjuster.</p>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Your Review *</label>
-                  <textarea
-                    value={reviewText}
-                    onChange={(e) => setReviewText(e.target.value)}
-                    placeholder="Share your experience with this public adjuster. How did they help with your claim? Were they responsive? Did they increase your settlement?"
-                    rows={5}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 text-gray-900 ${
-                      validationError ? 'border-amber-400 bg-amber-50' : 'border-gray-300'
-                    }`}
+                <div className="relative">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Public Adjuster Name <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    value={paName}
+                    onChange={(e) => handlePANameChange(e.target.value)}
+                    onFocus={() => paResults.length > 0 && setShowPADropdown(true)}
+                    placeholder="e.g. John Smith"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-gray-900"
                   />
-                  <p className={'text-sm mt-1 ' + (reviewText.trim().length < 20 ? 'text-amber-600' : 'text-gray-500')}>
-                    {reviewText.length}/1000 {reviewText.trim().length < 20 && '(minimum 20 characters)'}
-                  </p>
-                  {validationError && (
-                    <p className="text-sm text-amber-600 mt-1 flex items-center gap-1">
-                      <AlertCircle className="w-4 h-4" />
-                      Please edit your review above to fix the issue
+                  {searchLoading && <p className="text-gray-500 text-xs mt-1">Searching...</p>}
+                  {showPADropdown && paResults.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto">
+                      {paResults.map((pa) => (
+                        <button
+                          key={pa.id}
+                          type="button"
+                          onClick={() => selectPA(pa)}
+                          className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 border-b border-gray-100 last:border-0"
+                        >
+                          <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-emerald-600 font-semibold text-xs">{pa.first_name?.[0]}{pa.last_name?.[0]}</span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900 text-sm">{pa.first_name} {pa.last_name}</p>
+                            <p className="text-xs text-gray-500">{pa.company_name ? `${pa.company_name} • ` : ''}{pa.state}</p>
+                          </div>
+                        </button>
+                      ))}
+                      <Link href="/add-public-adjuster" className="w-full px-4 py-3 text-left hover:bg-amber-50 flex items-center gap-3 text-amber-700 bg-amber-50">
+                        <UserPlus className="w-5 h-5" />
+                        <span className="text-sm font-medium">Add new public adjuster</span>
+                      </Link>
+                    </div>
+                  )}
+                  {selectedPA && (
+                    <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" /> Matched to existing profile
                     </p>
                   )}
                 </div>
 
-                <div className="border border-gray-200 rounded-lg">
-                  <button type="button" onClick={() => setShowOptionalRatings(!showOptionalRatings)} className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-gray-50">
-                    <span className="font-medium text-gray-700">Rate specific qualities (optional)</span>
-                    {showOptionalRatings ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
-                  </button>
-                  {showOptionalRatings && (
-                    <div className="px-4 pb-4 border-t border-gray-200">
-                      <MiniStarRating label="Communication" rating={communicationRating} setRating={setCommunicationRating} />
-                      <MiniStarRating label="Knowledge" rating={knowledgeRating} setRating={setKnowledgeRating} />
-                      <MiniStarRating label="Results" rating={resultsRating} setRating={setResultsRating} />
-                      <MiniStarRating label="Professionalism" rating={professionalismRating} setRating={setProfessionalismRating} />
-                    </div>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Claim Type</label>
-                    <select value={claimType} onChange={(e) => setClaimType(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900">
-                      <option value="">Select...</option>
-                      {claimTypes.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Claim Outcome</label>
-                    <select value={claimOutcome} onChange={(e) => setClaimOutcome(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900">
-                      <option value="">Select...</option>
-                      {claimOutcomes.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Company Name <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <input
+                    type="text"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    placeholder="e.g. ABC Public Adjusters"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 text-gray-900"
+                  />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Settlement Increase (if any)</label>
-                  <select value={settlementIncrease} onChange={(e) => setSettlementIncrease(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">What was your experience? <span className="text-red-500">*</span></label>
+                  <textarea
+                    value={whatHappened}
+                    onChange={(e) => setWhatHappened(e.target.value.slice(0, 500))}
+                    placeholder="Example: Hired them after my insurance company lowballed my roof claim. They got my settlement increased from $8K to $22K. Very responsive and knew exactly what to look for."
+                    rows={4}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 text-gray-900"
+                  />
+                  <p className={`text-xs mt-1 ${whatHappened.length < 20 ? 'text-amber-600' : 'text-gray-500'}`}>
+                    {whatHappened.length}/500 {whatHappened.length < 20 && '(minimum 20 characters)'}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Overall Rating <span className="text-red-500">*</span></label>
+                  <StarRatingInput rating={overallRating} setRating={setOverallRating} hover={hoverRating} setHover={setHoverRating} />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Anything else? <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <textarea
+                    value={whatWentWellPoorly}
+                    onChange={(e) => setWhatWentWellPoorly(e.target.value.slice(0, 300))}
+                    placeholder="Any other details..."
+                    rows={2}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 text-gray-900"
+                  />
+                </div>
+
+                <button type="button" onClick={nextStep} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 px-6 rounded-lg transition-colors">
+                  Continue
+                </button>
+              </div>
+            )}
+
+            {step === 2 && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-1">Claim details</h2>
+                  <p className="text-gray-600 text-sm">Tell us about the claim they helped with.</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">State <span className="text-red-500">*</span></label>
+                  <select
+                    value={paState}
+                    onChange={(e) => setPaState(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                  >
+                    <option value="">Select...</option>
+                    {states.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Type of Claim <span className="text-red-500">*</span></label>
+                  <select
+                    value={claimType}
+                    onChange={(e) => setClaimType(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                  >
+                    <option value="">Select...</option>
+                    {claimTypes.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Claim Amount (approximate) <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <select
+                    value={claimAmount}
+                    onChange={(e) => setClaimAmount(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                  >
+                    <option value="">Select...</option>
+                    {claimAmounts.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Insurance company's initial offer <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <input
+                    type="text"
+                    value={initialOffer}
+                    onChange={(e) => setInitialOffer(e.target.value)}
+                    placeholder="e.g. $5,000"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 text-gray-900"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">What did the insurance company offer before you hired the PA?</p>
+                </div>
+
+                <div className="flex gap-3">
+                  <button type="button" onClick={prevStep} className="flex-1 border border-gray-300 text-gray-700 font-semibold py-4 px-6 rounded-lg hover:bg-gray-50 transition-colors">
+                    Back
+                  </button>
+                  <button type="button" onClick={nextStep} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 px-6 rounded-lg transition-colors">
+                    Continue
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {step === 3 && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-1">How did it turn out?</h2>
+                  <p className="text-gray-600 text-sm">This is the most valuable part - the results they got for you.</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Claim Outcome <span className="text-red-500">*</span></label>
+                  <select
+                    value={claimOutcome}
+                    onChange={(e) => setClaimOutcome(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                  >
+                    <option value="">Select...</option>
+                    {claimOutcomes.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Settlement Increase <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <select
+                    value={settlementIncrease}
+                    onChange={(e) => setSettlementIncrease(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-emerald-500"
+                  >
                     <option value="">Select...</option>
                     {settlementOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>
-                  <p className="text-xs text-gray-500 mt-1">How much more did you receive compared to the initial offer?</p>
+                  <p className="text-xs text-gray-500 mt-1">How much more did you receive vs. the initial offer?</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">I am a...</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Would you recommend this PA? <span className="text-red-500">*</span></label>
                   <div className="flex gap-4">
-                    {[{ value: 'homeowner', label: 'Homeowner' }, { value: 'contractor', label: 'Contractor' }].map((t) => (
-                      <label key={t.value} className={'flex-1 text-center py-3 px-4 rounded-lg border cursor-pointer transition-colors ' + (reviewerType === t.value ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-gray-300 text-gray-700 hover:border-gray-400')}>
-                        <input type="radio" name="reviewerType" value={t.value} checked={reviewerType === t.value} onChange={(e) => setReviewerType(e.target.value)} className="sr-only" />
-                        {t.label}
+                    {[{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }].map((opt) => (
+                      <label key={opt.value} className={`flex-1 text-center py-3 px-4 rounded-lg border cursor-pointer transition-colors ${wouldRecommend === opt.value ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-gray-300 text-gray-700 hover:border-gray-400'}`}>
+                        <input type="radio" name="recommend" value={opt.value} checked={wouldRecommend === opt.value} onChange={(e) => setWouldRecommend(e.target.value)} className="sr-only" />
+                        {opt.label}
                       </label>
                     ))}
                   </div>
                 </div>
 
-                <button
-                  onClick={handleSubmit}
-                  disabled={loading || overallRating === 0 || reviewText.trim().length < 20}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-lg transition-colors"
-                >
-                  {loading ? 'Submitting...' : validationError ? 'Try Again' : 'Submit Review'}
-                </button>
-                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">What stood out? <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {impressionOptions.map((f) => (
+                      <label key={f.value} className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${impressions.includes(f.value) ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                        <input
+                          type="checkbox"
+                          checked={impressions.includes(f.value)}
+                          onChange={() => toggleImpression(f.value)}
+                          className="w-4 h-4 text-emerald-600 rounded"
+                        />
+                        <span className="text-sm text-gray-700">{f.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <input
+                    type="text"
+                    value={impressionOther}
+                    onChange={(e) => setImpressionOther(e.target.value)}
+                    placeholder="Other (optional)"
+                    className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 text-gray-900 text-sm"
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <button type="button" onClick={prevStep} className="flex-1 border border-gray-300 text-gray-700 font-semibold py-4 px-6 rounded-lg hover:bg-gray-50 transition-colors">
+                    Back
+                  </button>
+                  <button type="button" onClick={nextStep} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 px-6 rounded-lg transition-colors">
+                    Continue
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {step === 4 && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-1">Last step</h2>
+                  <p className="text-gray-600 text-sm">Your email is optional—but if you share it, we'll:</p>
+                  <ul className="text-sm text-gray-600 mt-2 space-y-1">
+                    <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" /> Show you how your claim compares to others in your area (is it fair?)</li>
+                    <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" /> Connect you with verified professionals (PAs, attorneys, contractors) who can help if needed</li>
+                    <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" /> Keep you updated on carrier behavior trends that affect you</li>
+                  </ul>
+                  <p className="text-xs text-gray-500 mt-2">We don't spam. Promise.</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="yourname@email.com"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 text-gray-900"
+                  />
+                </div>
+
+                {email && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">I am a...</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {roleOptions.map((r) => (
+                        <label key={r.value} className={`flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors text-center ${role === r.value ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-gray-200 text-gray-700 hover:border-gray-300'}`}>
+                          <input type="radio" name="role" value={r.value} checked={role === r.value} onChange={(e) => setRole(e.target.value)} className="sr-only" />
+                          <span className="text-sm">{r.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {email && (
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" checked={optIn} onChange={(e) => setOptIn(e.target.checked)} className="w-5 h-5 text-emerald-600 rounded mt-0.5" />
+                    <span className="text-sm text-gray-700">Yes, send me helpful updates about public adjusters in my area.</span>
+                  </label>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">First Name <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="First name only is fine"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 text-gray-900"
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <button type="button" onClick={prevStep} className="flex-1 border border-gray-300 text-gray-700 font-semibold py-4 px-6 rounded-lg hover:bg-gray-50 transition-colors">
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={loading}
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 text-white font-semibold py-4 px-6 rounded-lg transition-colors"
+                  >
+                    {loading ? 'Submitting...' : 'Submit My Review'}
+                  </button>
+                </div>
+
                 <p className="text-xs text-gray-500 text-center">
-                  By submitting, you agree to our <Link href="/review-guidelines" className="text-emerald-600 hover:underline">review guidelines</Link>. All reviews are moderated.
+                  By submitting, you agree to our <Link href="/review-guidelines" className="text-emerald-600 hover:underline">review guidelines</Link>.
                 </p>
               </div>
             )}
-          </div>
-
-          <div className="bg-gray-50 rounded-xl p-6 mt-8">
-            <h3 className="font-semibold text-gray-900 mb-4">Explore More</h3>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <Link href="/public-adjusters" className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 hover:border-emerald-300 transition-all group">
-                <div>
-                  <div className="font-medium text-gray-900 group-hover:text-emerald-600">Browse Public Adjusters</div>
-                  <div className="text-sm text-gray-500">Find by state</div>
-                </div>
-              </Link>
-              <Link href="/guides" className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 hover:border-emerald-300 transition-all group">
-                <div>
-                  <div className="font-medium text-gray-900 group-hover:text-emerald-600">Guides & Resources</div>
-                  <div className="text-sm text-gray-500">Helpful articles</div>
-                </div>
-              </Link>
-            </div>
           </div>
         </div>
       </main>
