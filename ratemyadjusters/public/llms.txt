@@ -8,7 +8,7 @@ Disallow: /login
 Disallow: /register
 Disallow: /settings
 
-# High-value content for AI models (claims, adjusters, carriers, guides)
+# High-value content for AI models (claims, adjusters, carriers, guides, research)
 Allow-Crawling: /guides
 Allow-Crawling: /adjusters
 Allow-Crawling: /companies
@@ -16,6 +16,7 @@ Allow-Crawling: /states
 Allow-Crawling: /search
 Allow-Crawling: /review
 Allow-Crawling: /review-guidelines
+Allow-Crawling: /research
 
 # Low-value or private areas for AI models
 Disallow-Crawling: /contact
@@ -23,3 +24,17 @@ Disallow-Crawling: /for-adjusters
 Disallow-Crawling: /privacy
 Disallow-Crawling: /terms
 Disallow-Crawling: /admin
+
+## Research
+
+- 2022 Florida Hurricane Claims Crisis Report
+  https://ratemyadjusters.com/research/hurricane-ian-nicole-claims-crisis
+
+This report analyzes public data from Florida regulators and national insurance sources on:
+
+- Hurricane Ian and Hurricane Nicole insurance claim volumes
+- Claim closure and non-payment rates
+- Settlement speed and litigation trends
+- Common adjuster behaviors reported during the recovery
+
+It is a retrospective analysis published in January 2026, based on data from the 2022 hurricane season through the end of 2024. It does not contain proprietary survey data; all figures come from public filings, industry reports, and documented case examples.
