@@ -301,9 +301,9 @@ function ReviewInsuranceAgentContent() {
             onClick={() => setRating(star)}
             onMouseEnter={() => setHover(star)}
             onMouseLeave={() => setHover(0)}
-            className="focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded"
+            className="focus:outline-none focus:ring-2 focus:ring-teal-500 rounded"
           >
-            <Star className={`w-10 h-10 transition-colors ${star <= displayRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
+            <Star className={`w-10 h-10 transition-colors ${star <= displayRating ? 'text-warm-500 fill-warm-500' : 'text-gray-300'}`} />
           </button>
         ))}
         {rating > 0 && (
@@ -317,17 +317,17 @@ function ReviewInsuranceAgentContent() {
 
   if (success) {
     return (
-      <main className="min-h-screen bg-gray-50 py-12">
+      <main className="min-h-screen bg-offwhite py-12">
         <div className="max-w-2xl mx-auto px-4">
           <div className="bg-white rounded-2xl shadow-sm p-8 text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-8 h-8 text-green-600" />
+            <div className="w-16 h-16 bg-success-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-success-500" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Thank You!</h1>
-            <p className="text-gray-600 mb-6">Your review has been submitted successfully.</p>
+            <h1 className="text-2xl font-bold text-navy-500 mb-2">Thank You!</h1>
+            <p className="text-slate mb-6">Your review has been submitted successfully.</p>
             <div className="flex gap-4 justify-center">
-              <button onClick={() => router.push('/insurance-agents')} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg">Browse Agents</button>
-              <button onClick={() => router.push('/')} className="border border-gray-300 text-gray-700 font-semibold py-2 px-6 rounded-lg">Home</button>
+              <button onClick={() => router.push('/insurance-agents')} className="bg-warm-500 hover:bg-warm-600 text-white font-semibold py-2 px-6 rounded-lg transition-colors">Browse Agents</button>
+              <button onClick={() => router.push('/')} className="border border-lightgray text-charcoal font-semibold py-2 px-6 rounded-lg hover:bg-offwhite transition-colors">Home</button>
             </div>
           </div>
         </div>
@@ -351,20 +351,20 @@ function ReviewInsuranceAgentContent() {
         </div>
       </div>
 
-      <main className="min-h-screen bg-gray-50 py-8">
+      <main className="min-h-screen bg-offwhite py-8">
         <div className="max-w-2xl mx-auto px-4">
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">Step {step} of 4</span>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm font-medium text-charcoal">Step {step} of 4</span>
+              <span className="text-sm text-slate">
                 {step === 1 && 'Tell us about your experience'}
                 {step === 2 && 'Details'}
                 {step === 3 && 'Your impression'}
                 {step === 4 && 'Almost done'}
               </span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div className="bg-indigo-600 h-2 rounded-full transition-all duration-300" style={{ width: `${progressPercent + 25}%` }} />
+            <div className="w-full bg-lightgray rounded-full h-2">
+              <div className="h-2 rounded-full transition-all duration-300" style={{ width: `${progressPercent + 25}%`, background: `linear-gradient(to right, #0A3D62, ${step >= 3 ? '#4CAF50' : '#20A39E'})` }} />
             </div>
           </div>
 
@@ -383,54 +383,54 @@ function ReviewInsuranceAgentContent() {
             {step === 1 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-1">Tell us about your experience</h2>
-                  <p className="text-gray-600 text-sm">Share your experience with this insurance agent to help others.</p>
+                  <h2 className="text-xl font-bold text-navy-500 mb-1">Tell us about your experience</h2>
+                  <p className="text-slate text-sm">Share your experience with this insurance agent to help others.</p>
                 </div>
 
                 <div className="relative">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Agent Name <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-1">Agent Name <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     value={agentName}
                     onChange={(e) => handleAgentNameChange(e.target.value)}
                     onFocus={() => agentResults.length > 0 && setShowAgentDropdown(true)}
                     placeholder="e.g. John Smith"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                    className="w-full px-4 py-3 border border-lightgray rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-charcoal"
                   />
-                  {searchLoading && <p className="text-gray-500 text-xs mt-1">Searching...</p>}
+                  {searchLoading && <p className="text-slate text-xs mt-1">Searching...</p>}
                   {showAgentDropdown && agentResults.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto">
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-lightgray rounded-lg shadow-lg max-h-60 overflow-auto">
                       {agentResults.map((agent) => (
                         <button
                           key={agent.id}
                           type="button"
                           onClick={() => selectAgent(agent)}
-                          className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 border-b border-gray-100 last:border-0"
+                          className="w-full px-4 py-3 text-left hover:bg-offwhite flex items-center gap-3 border-b border-lightgray last:border-0"
                         >
-                          <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
-                            <span className="text-indigo-600 font-semibold text-xs">{agent.first_name?.[0]}{agent.last_name?.[0]}</span>
+                          <div className="w-8 h-8 bg-navy-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-navy-500 font-semibold text-xs">{agent.first_name?.[0]}{agent.last_name?.[0]}</span>
                           </div>
                           <div>
-                            <p className="font-medium text-gray-900 text-sm">{agent.first_name} {agent.last_name}</p>
-                            <p className="text-xs text-gray-500">{agent.company_name ? `${agent.company_name} • ` : ''}{agent.state}</p>
+                            <p className="font-medium text-charcoal text-sm">{agent.first_name} {agent.last_name}</p>
+                            <p className="text-xs text-slate">{agent.company_name ? `${agent.company_name} • ` : ''}{agent.state}</p>
                           </div>
                         </button>
                       ))}
                     </div>
                   )}
                   {selectedAgent && (
-                    <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                    <p className="text-xs text-success-500 mt-1 flex items-center gap-1">
                       <CheckCircle className="w-3 h-3" /> Matched to existing profile
                     </p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Insurance Company <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-1">Insurance Company <span className="text-red-500">*</span></label>
                   <select
                     value={carrierName}
                     onChange={(e) => setCarrierName(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-3 border border-lightgray rounded-lg bg-white text-charcoal focus:ring-2 focus:ring-teal-500"
                   >
                     <option value="">Select company...</option>
                     {carriers.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -441,42 +441,42 @@ function ReviewInsuranceAgentContent() {
                       value={carrierOther}
                       onChange={(e) => setCarrierOther(e.target.value)}
                       placeholder="Enter company name"
-                      className="w-full mt-2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-gray-900"
+                      className="w-full mt-2 px-4 py-3 border border-lightgray rounded-lg focus:ring-2 focus:ring-teal-500 text-charcoal"
                     />
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">What was your experience? <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-1">What was your experience? <span className="text-red-500">*</span></label>
                   <textarea
                     value={whatHappened}
                     onChange={(e) => setWhatHappened(e.target.value.slice(0, 500))}
                     placeholder="Example: Helped me find a great homeowners policy at a competitive rate. Very responsive and explained everything clearly."
                     rows={4}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-gray-900"
+                    className="w-full px-4 py-3 border border-lightgray rounded-lg focus:ring-2 focus:ring-teal-500 text-charcoal"
                   />
-                  <p className={`text-xs mt-1 ${whatHappened.length < 20 ? 'text-amber-600' : 'text-gray-500'}`}>
+                  <p className={`text-xs mt-1 ${whatHappened.length < 20 ? 'text-warm-600' : 'text-slate'}`}>
                     {whatHappened.length}/500 {whatHappened.length < 20 && '(minimum 20 characters)'}
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Overall Rating <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-2">Overall Rating <span className="text-red-500">*</span></label>
                   <StarRatingInput rating={overallRating} setRating={setOverallRating} hover={hoverRating} setHover={setHoverRating} />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Anything else? <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-1">Anything else? <span className="text-slate font-normal">(optional)</span></label>
                   <textarea
                     value={whatWentWellPoorly}
                     onChange={(e) => setWhatWentWellPoorly(e.target.value.slice(0, 300))}
                     placeholder="Any other details about your experience..."
                     rows={2}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-gray-900"
+                    className="w-full px-4 py-3 border border-lightgray rounded-lg focus:ring-2 focus:ring-teal-500 text-charcoal"
                   />
                 </div>
 
-                <button type="button" onClick={nextStep} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 px-6 rounded-lg transition-colors">
+                <button type="button" onClick={nextStep} className="w-full bg-warm-500 hover:bg-warm-600 text-white font-semibold py-4 px-6 rounded-lg transition-colors">
                   Continue
                 </button>
               </div>
@@ -485,16 +485,16 @@ function ReviewInsuranceAgentContent() {
             {step === 2 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-1">A few more details</h2>
-                  <p className="text-gray-600 text-sm">This helps us provide better insights.</p>
+                  <h2 className="text-xl font-bold text-navy-500 mb-1">A few more details</h2>
+                  <p className="text-slate text-sm">This helps us provide better insights.</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">State <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-1">State <span className="text-red-500">*</span></label>
                   <select
                     value={agentState}
                     onChange={(e) => setAgentState(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-3 border border-lightgray rounded-lg bg-white text-charcoal focus:ring-2 focus:ring-teal-500"
                   >
                     <option value="">Select...</option>
                     {states.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -502,11 +502,11 @@ function ReviewInsuranceAgentContent() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Type of Insurance <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-1">Type of Insurance <span className="text-red-500">*</span></label>
                   <select
                     value={insuranceType}
                     onChange={(e) => setInsuranceType(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-3 border border-lightgray rounded-lg bg-white text-charcoal focus:ring-2 focus:ring-teal-500"
                   >
                     <option value="">Select...</option>
                     {insuranceTypes.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
@@ -514,11 +514,11 @@ function ReviewInsuranceAgentContent() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">What did you need help with? <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-1">What did you need help with? <span className="text-red-500">*</span></label>
                   <select
                     value={experienceType}
                     onChange={(e) => setExperienceType(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-3 border border-lightgray rounded-lg bg-white text-charcoal focus:ring-2 focus:ring-teal-500"
                   >
                     <option value="">Select...</option>
                     {experienceTypes.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
@@ -526,11 +526,11 @@ function ReviewInsuranceAgentContent() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">How quickly did they respond? <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-1">How quickly did they respond? <span className="text-slate font-normal">(optional)</span></label>
                   <select
                     value={responseTime}
                     onChange={(e) => setResponseTime(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-3 border border-lightgray rounded-lg bg-white text-charcoal focus:ring-2 focus:ring-teal-500"
                   >
                     <option value="">Select...</option>
                     {responseTimeOptions.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
@@ -538,10 +538,10 @@ function ReviewInsuranceAgentContent() {
                 </div>
 
                 <div className="flex gap-3">
-                  <button type="button" onClick={prevStep} className="flex-1 border border-gray-300 text-gray-700 font-semibold py-4 px-6 rounded-lg hover:bg-gray-50 transition-colors">
+                  <button type="button" onClick={prevStep} className="flex-1 border border-lightgray text-charcoal font-semibold py-4 px-6 rounded-lg hover:bg-offwhite transition-colors">
                     Back
                   </button>
-                  <button type="button" onClick={nextStep} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 px-6 rounded-lg transition-colors">
+                  <button type="button" onClick={nextStep} className="flex-1 bg-warm-500 hover:bg-warm-600 text-white font-semibold py-4 px-6 rounded-lg transition-colors">
                     Continue
                   </button>
                 </div>
@@ -551,16 +551,16 @@ function ReviewInsuranceAgentContent() {
             {step === 3 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-1">Your overall impression</h2>
-                  <p className="text-gray-600 text-sm">Help others know what to expect.</p>
+                  <h2 className="text-xl font-bold text-navy-500 mb-1">Your overall impression</h2>
+                  <p className="text-slate text-sm">Help others know what to expect.</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">How satisfied were you? <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-1">How satisfied were you? <span className="text-red-500">*</span></label>
                   <select
                     value={satisfaction}
                     onChange={(e) => setSatisfaction(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-3 border border-lightgray rounded-lg bg-white text-charcoal focus:ring-2 focus:ring-teal-500"
                   >
                     <option value="">Select...</option>
                     {satisfactionLevels.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
@@ -568,10 +568,10 @@ function ReviewInsuranceAgentContent() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Would you recommend this agent? <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-2">Would you recommend this agent? <span className="text-red-500">*</span></label>
                   <div className="flex gap-4">
                     {[{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }].map((opt) => (
-                      <label key={opt.value} className={`flex-1 text-center py-3 px-4 rounded-lg border cursor-pointer transition-colors ${wouldRecommend === opt.value ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-300 text-gray-700 hover:border-gray-400'}`}>
+                      <label key={opt.value} className={`flex-1 text-center py-3 px-4 rounded-lg border cursor-pointer transition-colors ${wouldRecommend === opt.value ? 'border-teal-500 bg-teal-50 text-teal-700' : 'border-lightgray text-charcoal hover:border-slate'}`}>
                         <input type="radio" name="recommend" value={opt.value} checked={wouldRecommend === opt.value} onChange={(e) => setWouldRecommend(e.target.value)} className="sr-only" />
                         {opt.label}
                       </label>
@@ -580,17 +580,17 @@ function ReviewInsuranceAgentContent() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">What stood out? <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-2">What stood out? <span className="text-slate font-normal">(optional)</span></label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {impressionOptions.map((f) => (
-                      <label key={f.value} className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${impressions.includes(f.value) ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                      <label key={f.value} className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${impressions.includes(f.value) ? 'border-teal-500 bg-teal-50' : 'border-lightgray hover:border-slate'}`}>
                         <input
                           type="checkbox"
                           checked={impressions.includes(f.value)}
                           onChange={() => toggleImpression(f.value)}
-                          className="w-4 h-4 text-indigo-600 rounded"
+                          className="w-4 h-4 text-teal-500 rounded"
                         />
-                        <span className="text-sm text-gray-700">{f.label}</span>
+                        <span className="text-sm text-charcoal">{f.label}</span>
                       </label>
                     ))}
                   </div>
@@ -599,15 +599,15 @@ function ReviewInsuranceAgentContent() {
                     value={impressionOther}
                     onChange={(e) => setImpressionOther(e.target.value)}
                     placeholder="Other (optional)"
-                    className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-gray-900 text-sm"
+                    className="w-full mt-2 px-4 py-2 border border-lightgray rounded-lg focus:ring-2 focus:ring-teal-500 text-charcoal text-sm"
                   />
                 </div>
 
                 <div className="flex gap-3">
-                  <button type="button" onClick={prevStep} className="flex-1 border border-gray-300 text-gray-700 font-semibold py-4 px-6 rounded-lg hover:bg-gray-50 transition-colors">
+                  <button type="button" onClick={prevStep} className="flex-1 border border-lightgray text-charcoal font-semibold py-4 px-6 rounded-lg hover:bg-offwhite transition-colors">
                     Back
                   </button>
-                  <button type="button" onClick={nextStep} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 px-6 rounded-lg transition-colors">
+                  <button type="button" onClick={nextStep} className="flex-1 bg-warm-500 hover:bg-warm-600 text-white font-semibold py-4 px-6 rounded-lg transition-colors">
                     Continue
                   </button>
                 </div>
@@ -617,33 +617,33 @@ function ReviewInsuranceAgentContent() {
             {step === 4 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-1">Last step</h2>
-                  <p className="text-gray-600 text-sm">Your email is optional—but if you share it, we'll:</p>
-                  <ul className="text-sm text-gray-600 mt-2 space-y-1">
-                    <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" /> Show you how your agent compares to others in your area</li>
-                    <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" /> Connect you with top-rated agents if you're looking for better service</li>
-                    <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" /> Keep you updated on agent ratings and reviews</li>
+                  <h2 className="text-xl font-bold text-navy-500 mb-1">Last step</h2>
+                  <p className="text-slate text-sm">Your email is optional—but if you share it, we'll:</p>
+                  <ul className="text-sm text-slate mt-2 space-y-1">
+                    <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-success-500 mt-0.5 flex-shrink-0" /> Show you how your agent compares to others in your area</li>
+                    <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-success-500 mt-0.5 flex-shrink-0" /> Connect you with top-rated agents if you're looking for better service</li>
+                    <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-success-500 mt-0.5 flex-shrink-0" /> Keep you updated on agent ratings and reviews</li>
                   </ul>
-                  <p className="text-xs text-gray-500 mt-2">We don't spam. Promise.</p>
+                  <p className="text-xs text-slate mt-2">We don't spam. Promise.</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-1">Email <span className="text-slate font-normal">(optional)</span></label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="yourname@email.com"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-gray-900"
+                    className="w-full px-4 py-3 border border-lightgray rounded-lg focus:ring-2 focus:ring-teal-500 text-charcoal"
                   />
                 </div>
 
                 {email && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">I am a...</label>
+                    <label className="block text-sm font-medium text-charcoal mb-2">I am a...</label>
                     <div className="grid grid-cols-2 gap-2">
                       {roleOptions.map((r) => (
-                        <label key={r.value} className={`flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors text-center ${role === r.value ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-700 hover:border-gray-300'}`}>
+                        <label key={r.value} className={`flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors text-center ${role === r.value ? 'border-teal-500 bg-teal-50 text-teal-700' : 'border-lightgray text-charcoal hover:border-slate'}`}>
                           <input type="radio" name="role" value={r.value} checked={role === r.value} onChange={(e) => setRole(e.target.value)} className="sr-only" />
                           <span className="text-sm">{r.label}</span>
                         </label>
@@ -654,38 +654,38 @@ function ReviewInsuranceAgentContent() {
 
                 {email && (
                   <label className="flex items-start gap-3 cursor-pointer">
-                    <input type="checkbox" checked={optIn} onChange={(e) => setOptIn(e.target.checked)} className="w-5 h-5 text-indigo-600 rounded mt-0.5" />
-                    <span className="text-sm text-gray-700">Yes, send me helpful updates about insurance agents in my area.</span>
+                    <input type="checkbox" checked={optIn} onChange={(e) => setOptIn(e.target.checked)} className="w-5 h-5 text-teal-500 rounded mt-0.5" />
+                    <span className="text-sm text-charcoal">Yes, send me helpful updates about insurance agents in my area.</span>
                   </label>
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">First Name <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-1">First Name <span className="text-slate font-normal">(optional)</span></label>
                   <input
                     type="text"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     placeholder="First name only is fine"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-gray-900"
+                    className="w-full px-4 py-3 border border-lightgray rounded-lg focus:ring-2 focus:ring-teal-500 text-charcoal"
                   />
                 </div>
 
                 <div className="flex gap-3">
-                  <button type="button" onClick={prevStep} className="flex-1 border border-gray-300 text-gray-700 font-semibold py-4 px-6 rounded-lg hover:bg-gray-50 transition-colors">
+                  <button type="button" onClick={prevStep} className="flex-1 border border-lightgray text-charcoal font-semibold py-4 px-6 rounded-lg hover:bg-offwhite transition-colors">
                     Back
                   </button>
                   <button
                     type="button"
                     onClick={handleSubmit}
                     disabled={loading}
-                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white font-semibold py-4 px-6 rounded-lg transition-colors"
+                    className="flex-1 bg-warm-500 hover:bg-warm-600 disabled:bg-gray-300 text-white font-semibold py-4 px-6 rounded-lg transition-colors"
                   >
                     {loading ? 'Submitting...' : 'Submit My Review'}
                   </button>
                 </div>
 
-                <p className="text-xs text-gray-500 text-center">
-                  By submitting, you agree to our <Link href="/review-guidelines" className="text-indigo-600 hover:underline">review guidelines</Link>.
+                <p className="text-xs text-slate text-center">
+                  By submitting, you agree to our <Link href="/review-guidelines" className="text-teal-500 hover:underline">review guidelines</Link>.
                 </p>
               </div>
             )}
@@ -698,7 +698,7 @@ function ReviewInsuranceAgentContent() {
 
 export default function ReviewInsuranceAgentPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-offwhite flex items-center justify-center text-charcoal">Loading...</div>}>
       <ReviewInsuranceAgentContent />
     </Suspense>
   )

@@ -373,13 +373,13 @@ function ReviewContent() {
             onClick={() => setRating(star)}
             onMouseEnter={() => setHover(star)}
             onMouseLeave={() => setHover(0)}
-            className="focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+            className="focus:outline-none focus:ring-2 focus:ring-teal-500 rounded"
           >
-            <Star className={`w-10 h-10 transition-colors ${star <= displayRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
+            <Star className={`w-10 h-10 transition-colors ${star <= displayRating ? 'text-warm-500 fill-warm-500' : 'text-gray-300'}`} />
           </button>
         ))}
         {rating > 0 && (
-          <span className="ml-3 text-gray-600 self-center">
+          <span className="ml-3 text-slate self-center">
             {['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'][rating]}
           </span>
         )}
@@ -389,16 +389,16 @@ function ReviewContent() {
 
   if (success) {
     return (
-      <main className="min-h-screen bg-gray-50 py-12">
+      <main className="min-h-screen bg-offwhite py-12">
         <div className="max-w-2xl mx-auto px-4">
           <div className="bg-white rounded-2xl shadow-sm p-8 text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-8 h-8 text-green-600" />
+            <div className="w-16 h-16 bg-success-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-success-500" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Thank You!</h1>
-            <p className="text-gray-600 mb-6">Your review has been submitted successfully. You're helping thousands of homeowners make better decisions.</p>
+            <h1 className="text-2xl font-bold text-navy-500 mb-2">Thank You!</h1>
+            <p className="text-slate mb-6">Your review has been submitted successfully. You're helping thousands of homeowners make better decisions.</p>
             <div className="flex gap-4 justify-center">
-              <button onClick={() => router.push('/')} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg">Back to Home</button>
+              <button onClick={() => router.push('/')} className="bg-warm-500 hover:bg-warm-600 text-white font-semibold py-2 px-6 rounded-lg">Back to Home</button>
             </div>
           </div>
         </div>
@@ -414,30 +414,30 @@ function ReviewContent() {
       <div className="bg-white border-b">
         <div className="max-w-3xl mx-auto px-4 py-3">
           <nav className="flex items-center gap-2 text-sm">
-            <Link href="/" className="text-gray-500 hover:text-gray-700">Home</Link>
-            <ChevronRight className="w-4 h-4 text-gray-400" />
-            <span className="text-gray-900 font-medium">Leave a Review</span>
+            <Link href="/" className="text-slate hover:text-charcoal">Home</Link>
+            <ChevronRight className="w-4 h-4 text-slate" />
+            <span className="text-charcoal font-medium">Leave a Review</span>
           </nav>
         </div>
       </div>
 
-      <main className="min-h-screen bg-gray-50 py-8">
+      <main className="min-h-screen bg-offwhite py-8">
         <div className="max-w-2xl mx-auto px-4">
           {/* Progress Bar */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">Step {step} of 4</span>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm font-medium text-charcoal">Step {step} of 4</span>
+              <span className="text-sm text-slate">
                 {step === 1 && 'Tell us about the claim'}
                 {step === 2 && 'Claim details'}
                 {step === 3 && 'How it turned out'}
                 {step === 4 && 'Almost done'}
               </span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-lightgray rounded-full h-2">
               <div
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${progressPercent + 25}%` }}
+                className="h-2 rounded-full transition-all duration-300"
+                style={{ width: `${progressPercent + 25}%`, background: `linear-gradient(to right, #0A3D62, ${step >= 3 ? '#4CAF50' : '#20A39E'})` }}
               />
             </div>
           </div>
@@ -460,37 +460,37 @@ function ReviewContent() {
             {step === 1 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-1">Tell us about the claim</h2>
-                  <p className="text-gray-600 text-sm">We're building the most complete review platform for insurance adjusters. Share your honest experience—it helps thousands of homeowners and contractors make better decisions.</p>
+                  <h2 className="text-xl font-bold text-navy-500 mb-1">Tell us about the claim</h2>
+                  <p className="text-slate text-sm">We're building the most complete review platform for insurance adjusters. Share your honest experience—it helps thousands of homeowners and contractors make better decisions.</p>
                 </div>
 
                 {/* Adjuster Name */}
                 <div className="relative">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Adjuster Name <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-1">Adjuster Name <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     value={adjusterName}
                     onChange={(e) => handleAdjusterNameChange(e.target.value)}
                     onFocus={() => adjusterResults.length > 0 && setShowAdjusterDropdown(true)}
                     placeholder="e.g. John Smith"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                    className="w-full px-4 py-3 border border-lightgray rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-charcoal"
                   />
-                  {searchLoading && <p className="text-gray-500 text-xs mt-1">Searching...</p>}
+                  {searchLoading && <p className="text-slate text-xs mt-1">Searching...</p>}
                   {showAdjusterDropdown && adjusterResults.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto">
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-lightgray rounded-lg shadow-lg max-h-60 overflow-auto">
                       {adjusterResults.map((adj) => (
                         <button
                           key={adj.id}
                           type="button"
                           onClick={() => selectAdjuster(adj)}
-                          className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 border-b border-gray-100 last:border-0"
+                          className="w-full px-4 py-3 text-left hover:bg-offwhite flex items-center gap-3 border-b border-lightgray last:border-0"
                         >
-                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                            <span className="text-blue-600 font-semibold text-xs">{adj.first_name?.[0]}{adj.last_name?.[0]}</span>
+                          <div className="w-8 h-8 bg-navy-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-teal-500 font-semibold text-xs">{adj.first_name?.[0]}{adj.last_name?.[0]}</span>
                           </div>
                           <div>
-                            <p className="font-medium text-gray-900 text-sm">{adj.first_name} {adj.last_name}</p>
-                            <p className="text-xs text-gray-500">{adj.state}</p>
+                            <p className="font-medium text-charcoal text-sm">{adj.first_name} {adj.last_name}</p>
+                            <p className="text-xs text-slate">{adj.state}</p>
                           </div>
                         </button>
                       ))}
@@ -504,7 +504,7 @@ function ReviewContent() {
                     </div>
                   )}
                   {selectedAdjuster && (
-                    <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                    <p className="text-xs text-success-500 mt-1 flex items-center gap-1">
                       <CheckCircle className="w-3 h-3" /> Matched to existing profile
                     </p>
                   )}
@@ -512,11 +512,11 @@ function ReviewContent() {
 
                 {/* Carrier */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Insurance Carrier <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-1">Insurance Carrier <span className="text-red-500">*</span></label>
                   <select
                     value={carrierName}
                     onChange={(e) => setCarrierName(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-lightgray rounded-lg bg-white text-charcoal focus:ring-2 focus:ring-teal-500"
                   >
                     <option value="">Select carrier...</option>
                     {carriers.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -527,49 +527,49 @@ function ReviewContent() {
                       value={carrierOther}
                       onChange={(e) => setCarrierOther(e.target.value)}
                       placeholder="Enter carrier name"
-                      className="w-full mt-2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                      className="w-full mt-2 px-4 py-3 border border-lightgray rounded-lg focus:ring-2 focus:ring-teal-500 text-charcoal"
                     />
                   )}
                 </div>
 
                 {/* What Happened */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">What happened? <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-1">What happened? <span className="text-red-500">*</span></label>
                   <textarea
                     value={whatHappened}
                     onChange={(e) => setWhatHappened(e.target.value.slice(0, 500))}
                     placeholder="Example: Water damage from burst pipe, adjuster approved initial $8K estimate but then cut it to $4.5K saying some wasn't covered. Felt rushed and not heard."
                     rows={4}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    className="w-full px-4 py-3 border border-lightgray rounded-lg focus:ring-2 focus:ring-teal-500 text-charcoal"
                   />
-                  <p className={`text-xs mt-1 ${whatHappened.length < 20 ? 'text-amber-600' : 'text-gray-500'}`}>
+                  <p className={`text-xs mt-1 ${whatHappened.length < 20 ? 'text-amber-600' : 'text-slate'}`}>
                     {whatHappened.length}/500 {whatHappened.length < 20 && '(minimum 20 characters)'}
                   </p>
                 </div>
 
                 {/* Star Rating */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Overall, how would you rate this adjuster? <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-2">Overall, how would you rate this adjuster? <span className="text-red-500">*</span></label>
                   <StarRatingInput rating={overallRating} setRating={setOverallRating} hover={hoverRating} setHover={setHoverRating} />
                 </div>
 
                 {/* What went well/poorly (optional) */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Briefly, what went well or poorly? <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-1">Briefly, what went well or poorly? <span className="text-slate font-normal">(optional)</span></label>
                   <textarea
                     value={whatWentWellPoorly}
                     onChange={(e) => setWhatWentWellPoorly(e.target.value.slice(0, 300))}
                     placeholder="Example: Responsive but didn't explain his reasoning. Never got a copy of his report."
                     rows={2}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    className="w-full px-4 py-3 border border-lightgray rounded-lg focus:ring-2 focus:ring-teal-500 text-charcoal"
                   />
-                  <p className="text-xs text-gray-500 mt-1">{whatWentWellPoorly.length}/300</p>
+                  <p className="text-xs text-slate mt-1">{whatWentWellPoorly.length}/300</p>
                 </div>
 
                 <button
                   type="button"
                   onClick={nextStep}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg transition-colors"
+                  className="w-full bg-warm-500 hover:bg-warm-600 text-white font-semibold py-4 px-6 rounded-lg transition-colors"
                 >
                   Continue
                 </button>
@@ -580,18 +580,18 @@ function ReviewContent() {
             {step === 2 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-1">Claim details</h2>
-                  <p className="text-gray-600 text-sm">Just a bit more context about your claim. This helps us identify patterns.</p>
+                  <h2 className="text-xl font-bold text-navy-500 mb-1">Claim details</h2>
+                  <p className="text-slate text-sm">Just a bit more context about your claim. This helps us identify patterns.</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   {/* State */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">State <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-medium text-charcoal mb-1">State <span className="text-red-500">*</span></label>
                     <select
                       value={claimState}
                       onChange={(e) => setClaimState(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-3 border border-lightgray rounded-lg bg-white text-charcoal focus:ring-2 focus:ring-teal-500"
                     >
                       <option value="">Select...</option>
                       {states.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -600,25 +600,25 @@ function ReviewContent() {
 
                   {/* ZIP (optional) */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">ZIP Code <span className="text-gray-400 font-normal">(optional)</span></label>
+                    <label className="block text-sm font-medium text-charcoal mb-1">ZIP Code <span className="text-slate font-normal">(optional)</span></label>
                     <input
                       type="text"
                       value={zipCode}
                       onChange={(e) => setZipCode(e.target.value.slice(0, 5))}
                       placeholder="12345"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                      className="w-full px-4 py-3 border border-lightgray rounded-lg focus:ring-2 focus:ring-teal-500 text-charcoal"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Helps us see regional patterns</p>
+                    <p className="text-xs text-slate mt-1">Helps us see regional patterns</p>
                   </div>
                 </div>
 
                 {/* Property Type */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Property Type <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-1">Property Type <span className="text-red-500">*</span></label>
                   <select
                     value={propertyType}
                     onChange={(e) => setPropertyType(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-lightgray rounded-lg bg-white text-charcoal focus:ring-2 focus:ring-teal-500"
                   >
                     <option value="">Select...</option>
                     {propertyTypes.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
@@ -627,11 +627,11 @@ function ReviewContent() {
 
                 {/* Peril */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Type of Loss / Peril <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-1">Type of Loss / Peril <span className="text-red-500">*</span></label>
                   <select
                     value={peril}
                     onChange={(e) => setPeril(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-lightgray rounded-lg bg-white text-charcoal focus:ring-2 focus:ring-teal-500"
                   >
                     <option value="">Select...</option>
                     {perils.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
@@ -640,26 +640,26 @@ function ReviewContent() {
 
                 {/* Claim Amount */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Claim Amount (approximate) <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-1">Claim Amount (approximate) <span className="text-red-500">*</span></label>
                   <select
                     value={claimAmount}
                     onChange={(e) => setClaimAmount(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-lightgray rounded-lg bg-white text-charcoal focus:ring-2 focus:ring-teal-500"
                   >
                     <option value="">Select...</option>
                     {claimAmounts.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}
                   </select>
-                  <p className="text-xs text-gray-500 mt-1">We don't need exact amounts</p>
+                  <p className="text-xs text-slate mt-1">We don't need exact amounts</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   {/* Loss Date */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">When did loss occur? <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-medium text-charcoal mb-1">When did loss occur? <span className="text-red-500">*</span></label>
                     <select
                       value={lossDate}
                       onChange={(e) => setLossDate(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-3 border border-lightgray rounded-lg bg-white text-charcoal focus:ring-2 focus:ring-teal-500"
                     >
                       <option value="">Select...</option>
                       {monthOptions.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
@@ -668,11 +668,11 @@ function ReviewContent() {
 
                   {/* Report Timing */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">When did you report? <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-medium text-charcoal mb-1">When did you report? <span className="text-red-500">*</span></label>
                     <select
                       value={reportDate}
                       onChange={(e) => setReportDate(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-3 border border-lightgray rounded-lg bg-white text-charcoal focus:ring-2 focus:ring-teal-500"
                     >
                       <option value="">Select...</option>
                       {reportTiming.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
@@ -681,10 +681,10 @@ function ReviewContent() {
                 </div>
 
                 <div className="flex gap-3">
-                  <button type="button" onClick={prevStep} className="flex-1 border border-gray-300 text-gray-700 font-semibold py-4 px-6 rounded-lg hover:bg-gray-50 transition-colors">
+                  <button type="button" onClick={prevStep} className="flex-1 border border-lightgray text-charcoal font-semibold py-4 px-6 rounded-lg hover:bg-offwhite transition-colors">
                     Back
                   </button>
-                  <button type="button" onClick={nextStep} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg transition-colors">
+                  <button type="button" onClick={nextStep} className="flex-1 bg-warm-500 hover:bg-warm-600 text-white font-semibold py-4 px-6 rounded-lg transition-colors">
                     Continue
                   </button>
                 </div>
@@ -695,17 +695,17 @@ function ReviewContent() {
             {step === 3 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-1">How did the claim turn out?</h2>
-                  <p className="text-gray-600 text-sm">Finally, how things ended. This is where we spot trends in carrier behavior.</p>
+                  <h2 className="text-xl font-bold text-navy-500 mb-1">How did the claim turn out?</h2>
+                  <p className="text-slate text-sm">Finally, how things ended. This is where we spot trends in carrier behavior.</p>
                 </div>
 
                 {/* Final Status */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">What was the final status? <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-1">What was the final status? <span className="text-red-500">*</span></label>
                   <select
                     value={finalStatus}
                     onChange={(e) => setFinalStatus(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-lightgray rounded-lg bg-white text-charcoal focus:ring-2 focus:ring-teal-500"
                   >
                     <option value="">Select...</option>
                     {finalStatuses.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
@@ -714,11 +714,11 @@ function ReviewContent() {
 
                 {/* Payout vs Estimate */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Did payout match your/contractor's estimate? <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-1">Did payout match your/contractor's estimate? <span className="text-red-500">*</span></label>
                   <select
                     value={payoutComparison}
                     onChange={(e) => setPayoutComparison(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-lightgray rounded-lg bg-white text-charcoal focus:ring-2 focus:ring-teal-500"
                   >
                     <option value="">Select...</option>
                     {payoutComparisons.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
@@ -727,11 +727,11 @@ function ReviewContent() {
 
                 {/* Escalation */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Did you escalate this claim? <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-1">Did you escalate this claim? <span className="text-red-500">*</span></label>
                   <select
                     value={escalation}
                     onChange={(e) => setEscalation(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-lightgray rounded-lg bg-white text-charcoal focus:ring-2 focus:ring-teal-500"
                   >
                     <option value="">Select...</option>
                     {escalationOptions.map((e) => <option key={e.value} value={e.value}>{e.label}</option>)}
@@ -740,11 +740,11 @@ function ReviewContent() {
 
                 {/* Time to Decision */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">How long from loss to final decision? <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-1">How long from loss to final decision? <span className="text-red-500">*</span></label>
                   <select
                     value={decisionTime}
                     onChange={(e) => setDecisionTime(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-lightgray rounded-lg bg-white text-charcoal focus:ring-2 focus:ring-teal-500"
                   >
                     <option value="">Select...</option>
                     {timeToDecision.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
@@ -753,17 +753,17 @@ function ReviewContent() {
 
                 {/* Frustrations/Impressions (checkboxes) */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">What frustrated or impressed you? <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-2">What frustrated or impressed you? <span className="text-slate font-normal">(optional)</span></label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {frustrationOptions.map((f) => (
-                      <label key={f.value} className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${frustrations.includes(f.value) ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                      <label key={f.value} className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${frustrations.includes(f.value) ? 'border-teal-500 bg-teal-50' : 'border-lightgray hover:border-lightgray'}`}>
                         <input
                           type="checkbox"
                           checked={frustrations.includes(f.value)}
                           onChange={() => toggleFrustration(f.value)}
-                          className="w-4 h-4 text-blue-600 rounded"
+                          className="w-4 h-4 text-teal-500 rounded"
                         />
-                        <span className="text-sm text-gray-700">{f.label}</span>
+                        <span className="text-sm text-charcoal">{f.label}</span>
                       </label>
                     ))}
                   </div>
@@ -772,17 +772,17 @@ function ReviewContent() {
                     value={frustrationOther}
                     onChange={(e) => setFrustrationOther(e.target.value)}
                     placeholder="Other (optional)"
-                    className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 text-sm"
+                    className="w-full mt-2 px-4 py-2 border border-lightgray rounded-lg focus:ring-2 focus:ring-teal-500 text-charcoal text-sm"
                   />
                 </div>
 
                 {/* Premium Impact (optional) */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Has your premium gone up or non-renewal? <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-1">Has your premium gone up or non-renewal? <span className="text-slate font-normal">(optional)</span></label>
                   <select
                     value={premiumImpact}
                     onChange={(e) => setPremiumImpact(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-lightgray rounded-lg bg-white text-charcoal focus:ring-2 focus:ring-teal-500"
                   >
                     <option value="">Select...</option>
                     {premiumImpacts.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
@@ -790,10 +790,10 @@ function ReviewContent() {
                 </div>
 
                 <div className="flex gap-3">
-                  <button type="button" onClick={prevStep} className="flex-1 border border-gray-300 text-gray-700 font-semibold py-4 px-6 rounded-lg hover:bg-gray-50 transition-colors">
+                  <button type="button" onClick={prevStep} className="flex-1 border border-lightgray text-charcoal font-semibold py-4 px-6 rounded-lg hover:bg-offwhite transition-colors">
                     Back
                   </button>
-                  <button type="button" onClick={nextStep} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg transition-colors">
+                  <button type="button" onClick={nextStep} className="flex-1 bg-warm-500 hover:bg-warm-600 text-white font-semibold py-4 px-6 rounded-lg transition-colors">
                     Continue
                   </button>
                 </div>
@@ -804,35 +804,35 @@ function ReviewContent() {
             {step === 4 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-1">Last step</h2>
-                  <p className="text-gray-600 text-sm">Your email is optional—but if you share it, we'll:</p>
-                  <ul className="text-sm text-gray-600 mt-2 space-y-1">
-                    <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" /> Show you how your claim compares to others in your area (is it fair?)</li>
-                    <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" /> Connect you with verified professionals (PAs, attorneys, contractors) who can help if needed</li>
-                    <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" /> Keep you updated on carrier behavior trends that affect you</li>
+                  <h2 className="text-xl font-bold text-navy-500 mb-1">Last step</h2>
+                  <p className="text-slate text-sm">Your email is optional—but if you share it, we'll:</p>
+                  <ul className="text-sm text-slate mt-2 space-y-1">
+                    <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-success-500 mt-0.5 flex-shrink-0" /> Show you how your claim compares to others in your area (is it fair?)</li>
+                    <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-success-500 mt-0.5 flex-shrink-0" /> Connect you with verified professionals (PAs, attorneys, contractors) who can help if needed</li>
+                    <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-success-500 mt-0.5 flex-shrink-0" /> Keep you updated on carrier behavior trends that affect you</li>
                   </ul>
-                  <p className="text-xs text-gray-500 mt-2">We don't spam. Promise.</p>
+                  <p className="text-xs text-slate mt-2">We don't spam. Promise.</p>
                 </div>
 
                 {/* Email */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-1">Email <span className="text-slate font-normal">(optional)</span></label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="yourname@email.com"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    className="w-full px-4 py-3 border border-lightgray rounded-lg focus:ring-2 focus:ring-teal-500 text-charcoal"
                   />
                 </div>
 
                 {/* Role (conditional on email) */}
                 {email && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">I am a...</label>
+                    <label className="block text-sm font-medium text-charcoal mb-2">I am a...</label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                       {roleOptions.map((r) => (
-                        <label key={r.value} className={`flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors text-center ${role === r.value ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-700 hover:border-gray-300'}`}>
+                        <label key={r.value} className={`flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors text-center ${role === r.value ? 'border-teal-500 bg-teal-50 text-teal-700' : 'border-lightgray text-charcoal hover:border-lightgray'}`}>
                           <input
                             type="radio"
                             name="role"
@@ -855,40 +855,40 @@ function ReviewContent() {
                       type="checkbox"
                       checked={optIn}
                       onChange={(e) => setOptIn(e.target.checked)}
-                      className="w-5 h-5 text-blue-600 rounded mt-0.5"
+                      className="w-5 h-5 text-teal-500 rounded mt-0.5"
                     />
-                    <span className="text-sm text-gray-700">Yes, I want to hear about PAs, attorneys, or contractors in my area.</span>
+                    <span className="text-sm text-charcoal">Yes, I want to hear about PAs, attorneys, or contractors in my area.</span>
                   </label>
                 )}
 
                 {/* First Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">First Name <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <label className="block text-sm font-medium text-charcoal mb-1">First Name <span className="text-slate font-normal">(optional)</span></label>
                   <input
                     type="text"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     placeholder="First name only is fine"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    className="w-full px-4 py-3 border border-lightgray rounded-lg focus:ring-2 focus:ring-teal-500 text-charcoal"
                   />
                 </div>
 
                 <div className="flex gap-3">
-                  <button type="button" onClick={prevStep} className="flex-1 border border-gray-300 text-gray-700 font-semibold py-4 px-6 rounded-lg hover:bg-gray-50 transition-colors">
+                  <button type="button" onClick={prevStep} className="flex-1 border border-lightgray text-charcoal font-semibold py-4 px-6 rounded-lg hover:bg-offwhite transition-colors">
                     Back
                   </button>
                   <button
                     type="button"
                     onClick={handleSubmit}
                     disabled={loading}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white font-semibold py-4 px-6 rounded-lg transition-colors"
+                    className="flex-1 bg-warm-500 hover:bg-warm-600 disabled:bg-gray-300 text-white font-semibold py-4 px-6 rounded-lg transition-colors"
                   >
                     {loading ? 'Submitting...' : 'Submit My Review'}
                   </button>
                 </div>
 
-                <p className="text-xs text-gray-500 text-center">
-                  By submitting, you agree to our <Link href="/review-guidelines" className="text-blue-600 hover:underline">review guidelines</Link>.
+                <p className="text-xs text-slate text-center">
+                  By submitting, you agree to our <Link href="/review-guidelines" className="text-teal-500 hover:underline">review guidelines</Link>.
                 </p>
               </div>
             )}
@@ -901,7 +901,7 @@ function ReviewContent() {
 
 export default function ReviewPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-offwhite flex items-center justify-center">Loading...</div>}>
       <ReviewContent />
     </Suspense>
   )
