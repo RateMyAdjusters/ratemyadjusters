@@ -13,7 +13,6 @@ interface Adjuster {
   state: string
   avg_rating: number | null
   total_reviews: number
-  company_name?: string
 }
 
 interface SearchBarProps {
@@ -106,41 +105,38 @@ export default function SearchBar({
 
     try {
       const parts = q.split(/\s+/).filter(Boolean)
+
+      // Fast query - minimal fields, small limit
       let queryBuilder = supabase
         .from("adjusters")
-        .select("id, slug, first_name, last_name, state, avg_rating, total_reviews, companies(name)")
+        .select("id, slug, first_name, last_name, state, avg_rating, total_reviews")
 
       if (parts.length >= 2) {
-        // Two+ word search: first_name starts with first word, last_name starts with second
         queryBuilder = queryBuilder
           .ilike('first_name', `${parts[0]}%`)
           .ilike('last_name', `${parts.slice(1).join(' ')}%`)
       } else {
-        // Single word: search first_name OR last_name
         queryBuilder = queryBuilder
           .or(`first_name.ilike.${q}%,last_name.ilike.${q}%`)
       }
 
       const { data, error } = await queryBuilder
-        .order('total_reviews', { ascending: false })
-        .limit(50)
+        .order('total_reviews', { ascending: false, nullsFirst: false })
+        .limit(20)
 
       if (error) throw error
 
       // Check if request was aborted
       if (abortControllerRef.current?.signal.aborted) return
 
-      // Process results
+      // Process results - fast dedup
       const seen = new Set<string>()
       const uniqueResults: Adjuster[] = []
 
       for (const adj of (data || [])) {
-        const key = `${adj.first_name.toLowerCase()}-${adj.last_name.toLowerCase()}-${adj.state}`
+        const key = `${adj.first_name}-${adj.last_name}-${adj.state}`.toLowerCase()
         if (seen.has(key)) continue
         seen.add(key)
-
-        const companyData = adj.companies as { name: string } | { name: string }[] | null
-        const companyName = Array.isArray(companyData) ? companyData[0]?.name : companyData?.name
 
         uniqueResults.push({
           id: adj.id,
@@ -149,23 +145,14 @@ export default function SearchBar({
           last_name: adj.last_name,
           state: adj.state,
           avg_rating: adj.avg_rating,
-          total_reviews: adj.total_reviews || 0,
-          company_name: companyName || undefined
+          total_reviews: adj.total_reviews || 0
         })
+
+        if (uniqueResults.length >= 6) break // Stop early
       }
 
-      // Sort: exact matches first, then by reviews
-      const qLower = q.toLowerCase()
-      uniqueResults.sort((a, b) => {
-        const aExact = a.first_name.toLowerCase() === qLower || a.last_name.toLowerCase() === qLower
-        const bExact = b.first_name.toLowerCase() === qLower || b.last_name.toLowerCase() === qLower
-        if (aExact && !bExact) return -1
-        if (!aExact && bExact) return 1
-        return (b.total_reviews || 0) - (a.total_reviews || 0)
-      })
-
-      setTotalCount(uniqueResults.length)
-      setResults(uniqueResults.slice(0, 6))
+      setTotalCount(data?.length || 0)
+      setResults(uniqueResults)
       setOpen(true)
       setSelectedIndex(-1)
     } catch (error: any) {
@@ -179,11 +166,17 @@ export default function SearchBar({
     }
   }, [])
 
-  // Debounced search
+  // Debounced search - fast 100ms delay
   useEffect(() => {
+    const q = query.trim()
+
+    if (q.length >= 2) {
+      setLoading(true) // Show loading immediately
+    }
+
     const timer = setTimeout(() => {
       searchAdjusters(query)
-    }, 250)
+    }, 100)
 
     return () => clearTimeout(timer)
   }, [query, searchAdjusters])
@@ -328,18 +321,10 @@ export default function SearchBar({
                       <p className="font-semibold text-[#333333] truncate text-base">
                         {adjuster.first_name} {adjuster.last_name}
                       </p>
-                      <div className="flex items-center gap-2 text-sm text-[#666666]">
-                        <span className="flex items-center gap-1">
-                          <MapPin className="w-3.5 h-3.5" />
-                          {adjuster.state}
-                        </span>
-                        {adjuster.company_name && (
-                          <>
-                            <span className="text-[#CCCCCC]">•</span>
-                            <span className="truncate">{adjuster.company_name}</span>
-                          </>
-                        )}
-                      </div>
+                      <p className="flex items-center gap-1 text-sm text-[#666666]">
+                        <MapPin className="w-3.5 h-3.5" />
+                        {adjuster.state}
+                      </p>
                     </div>
 
                     {/* Rating Badge */}
