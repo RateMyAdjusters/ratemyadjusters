@@ -198,8 +198,8 @@ function calculateTrustScore(adjuster: any, totalReviews: number): { score: numb
 }
 
 function getTrustScoreLabel(score: number): { label: string; color: string; bgColor: string; borderColor: string } {
-  if (score >= 75) return { label: 'Trusted Pro', color: 'text-yellow-700', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200' }
-  if (score >= 50) return { label: 'Verified', color: 'text-blue-700', bgColor: 'bg-blue-50', borderColor: 'border-blue-200' }
+  if (score >= 75) return { label: 'Trusted Pro', color: 'text-warm-700', bgColor: 'bg-warm-50', borderColor: 'border-warm-200' }
+  if (score >= 50) return { label: 'Verified', color: 'text-teal-700', bgColor: 'bg-teal-50', borderColor: 'border-teal-200' }
   if (score >= 26) return { label: 'Basic', color: 'text-gray-700', bgColor: 'bg-gray-50', borderColor: 'border-gray-200' }
   return { label: 'Incomplete', color: 'text-orange-700', bgColor: 'bg-orange-50', borderColor: 'border-orange-200' }
 }
@@ -534,7 +534,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
         <script key={index} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
       ))}
 
-      <main className="min-h-screen bg-gray-50">
+      <main className="min-h-screen bg-offwhite">
         
         {/* SECTION 1: Top Banner for Unclaimed Profiles */}
         {!isProfileClaimed && (
@@ -560,22 +560,22 @@ export default async function AdjusterProfile({ params }: PageProps) {
                 <div className="flex flex-col items-start md:items-end gap-2">
                   <Link 
                     href="#claim-profile"
-                    className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-5 rounded-lg transition-colors shadow-sm"
+                    className="inline-flex items-center gap-2 bg-warm-500 hover:bg-warm-600 text-white font-semibold py-2.5 px-5 rounded-lg transition-colors shadow-sm"
                   >
                     Claim My Profile – Free
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
                     <span className="flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3 text-green-600" />
+                      <CheckCircle2 className="w-3 h-3 text-success-600" />
                       Takes 60 seconds
                     </span>
                     <span className="flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3 text-green-600" />
+                      <CheckCircle2 className="w-3 h-3 text-success-600" />
                       Add credentials & bio
                     </span>
                     <span className="flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3 text-green-600" />
+                      <CheckCircle2 className="w-3 h-3 text-success-600" />
                       Control what's shown
                     </span>
                   </div>
@@ -612,7 +612,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
         </div>
 
         {/* Hero Rating Bar */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+        <div className="bg-gradient-to-r from-navy-500 to-navy-600 text-white">
           <div className="max-w-6xl mx-auto px-4 py-4">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-4">
@@ -621,30 +621,30 @@ export default async function AdjusterProfile({ params }: PageProps) {
                     {[1, 2, 3, 4, 5].map((star) => (
                       <Star
                         key={star}
-                        className={`w-6 h-6 ${star <= Math.round(avgRating) ? 'text-yellow-400 fill-yellow-400' : 'text-blue-400'}`}
+                        className={`w-6 h-6 ${star <= Math.round(avgRating) ? 'text-warm-500 fill-warm-500' : 'text-navy-300'}`}
                       />
                     ))}
                   </div>
                   <span className="text-2xl font-bold">{avgRating.toFixed(1)}</span>
                 </div>
-                <div className="h-8 w-px bg-blue-400" />
+                <div className="h-8 w-px bg-navy-400" />
                 <div>
                   <span className="text-xl font-semibold">{totalReviews}</span>
-                  <span className="text-blue-200 ml-1">Reviews</span>
+                  <span className="text-white/70 ml-1">Reviews</span>
                 </div>
                 {hasMetrics && metrics.experienceIndex && (
                   <>
-                    <div className="h-8 w-px bg-blue-400 hidden sm:block" />
+                    <div className="h-8 w-px bg-navy-400 hidden sm:block" />
                     <div className="hidden sm:block">
                       <span className="text-xl font-semibold">{metrics.experienceIndex}/10</span>
-                      <span className="text-blue-200 ml-1">Experience</span>
+                      <span className="text-white/70 ml-1">Experience</span>
                     </div>
                   </>
                 )}
               </div>
               <Link 
                 href={'/review?adjuster=' + adjuster.id} 
-                className="inline-flex items-center gap-2 bg-white text-blue-600 hover:bg-blue-50 font-semibold py-2 px-4 rounded-lg transition-colors"
+                className="inline-flex items-center gap-2 bg-white text-navy-500 hover:bg-navy-50 font-semibold py-2 px-4 rounded-lg transition-colors"
               >
                 <Star className="w-4 h-4" />
                 Write a Review
@@ -659,7 +659,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
             <div className="flex flex-col md:flex-row gap-6">
               {/* Avatar */}
               <div className="flex-shrink-0">
-                <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-teal-500 rounded-full flex items-center justify-center">
+                <div className="w-24 h-24 bg-gradient-to-br from-navy-500 to-teal-500 rounded-full flex items-center justify-center">
                   <span className="text-white font-bold text-3xl">{adjuster.first_name?.[0]}{adjuster.last_name?.[0]}</span>
                 </div>
               </div>
@@ -675,7 +675,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
                     </span>
                   )}
                   {isProfileClaimed && (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border border-green-300 text-green-700 bg-green-50">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border border-success-300 text-success-700 bg-success-50">
                       <CheckCircle2 className="w-3 h-3" />
                       Claimed Profile
                     </span>
@@ -697,7 +697,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
                 <div className="flex flex-wrap items-center gap-4 text-gray-600 mb-4">
                   {adjuster.company_name && (
                     <span className="flex items-center gap-1.5 font-medium text-gray-900">
-                      <Building className="w-4 h-4 text-blue-600" />
+                      <Building className="w-4 h-4 text-teal-600" />
                       {adjuster.company_name}
                     </span>
                   )}
@@ -727,22 +727,22 @@ export default async function AdjusterProfile({ params }: PageProps) {
                     <span className="text-xs opacity-75">({trustLabel.label})</span>
                   </div>
                   
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-50 text-yellow-800 rounded-full border border-yellow-200">
-                    <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-warm-50 text-warm-800 rounded-full border border-warm-200">
+                    <Star className="w-4 h-4 fill-warm-500 text-warm-500" />
                     <span className="font-semibold">{avgRating > 0 ? `${avgRating.toFixed(1)} Rating` : 'Not Rated'}</span>
                   </div>
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-800 rounded-full border border-blue-200">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-50 text-teal-800 rounded-full border border-teal-200">
                     <MessageSquare className="w-4 h-4" />
                     <span className="font-semibold">{totalReviews} {totalReviews === 1 ? 'Review' : 'Reviews'}</span>
                   </div>
                   {hasMetrics && metrics.careerStage && (
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-800 rounded-full border border-purple-200">
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-navy-50 text-navy-700 rounded-full border border-navy-200">
                       <Award className="w-4 h-4" />
                       <span className="font-semibold">{metrics.careerStage}</span>
                     </div>
                   )}
                   {adjuster.license_status === 'active' && (
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-800 rounded-full border border-green-200">
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-success-50 text-success-700 rounded-full border border-success-200">
                       <Shield className="w-4 h-4" />
                       <span className="font-semibold">Active License</span>
                     </div>
@@ -757,7 +757,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
 
               {/* Actions */}
               <div className="flex flex-col gap-3">
-                <Link href={'/review?adjuster=' + adjuster.id} className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+                <Link href={'/review?adjuster=' + adjuster.id} className="inline-flex items-center justify-center gap-2 bg-warm-500 hover:bg-warm-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
                   <Star className="w-5 h-5" />
                   Leave a Review
                 </Link>
@@ -795,8 +795,8 @@ export default async function AdjusterProfile({ params }: PageProps) {
                 <div className="w-full bg-gray-200 rounded-full h-3 mb-6">
                   <div 
                     className={`h-3 rounded-full transition-all ${
-                      trustScore >= 75 ? 'bg-yellow-500' : 
-                      trustScore >= 50 ? 'bg-blue-500' : 
+                      trustScore >= 75 ? 'bg-warm-500' : 
+                      trustScore >= 50 ? 'bg-teal-500' : 
                       trustScore >= 26 ? 'bg-gray-500' : 'bg-orange-500'
                     }`}
                     style={{ width: `${trustScore}%` }}
@@ -808,14 +808,14 @@ export default async function AdjusterProfile({ params }: PageProps) {
                   {trustBreakdown.map((item, index) => (
                     <div key={index} className="flex items-center gap-3">
                       {item.earned ? (
-                        <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+                        <CheckCircle2 className="w-5 h-5 text-success-600 flex-shrink-0" />
                       ) : (
                         <Circle className="w-5 h-5 text-gray-300 flex-shrink-0" />
                       )}
                       <span className={`text-sm ${item.earned ? 'text-gray-900' : 'text-gray-500'}`}>
                         {item.label}
                       </span>
-                      <span className={`text-xs font-medium ml-auto ${item.earned ? 'text-green-600' : 'text-gray-400'}`}>
+                      <span className={`text-xs font-medium ml-auto ${item.earned ? 'text-success-600' : 'text-gray-400'}`}>
                         +{item.points}
                       </span>
                     </div>
@@ -824,12 +824,12 @@ export default async function AdjusterProfile({ params }: PageProps) {
 
                 <div className="mt-6 pt-4 border-t border-gray-100">
                   <p className="text-sm text-gray-600 mb-3">
-                    🎯 Profiles above 75 are marked <strong className="text-yellow-700">⭐ Trusted Pro</strong>
+                    🎯 Profiles above 75 are marked <strong className="text-warm-700">⭐ Trusted Pro</strong>
                   </p>
                   {!isProfileClaimed && (
                     <Link 
                       href="#claim-profile"
-                      className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm"
+                      className="inline-flex items-center gap-2 text-teal-600 hover:text-teal-700 font-medium text-sm"
                     >
                       How do I raise my score?
                       <ArrowRight className="w-4 h-4" />
@@ -909,19 +909,19 @@ export default async function AdjusterProfile({ params }: PageProps) {
                 </p>
                 
                 <p className="text-gray-600 text-sm">
-                  <Link href={`/adjusters/${stateSlug}`} className="text-blue-600 hover:text-blue-700 underline">
+                  <Link href={`/adjusters/${stateSlug}`} className="text-teal-600 hover:text-teal-700 underline">
                     View all {stateName} insurance adjusters
                   </Link>
                   {adjuster.company_name && (
                     <>
                       {' '} • {' '}
-                      <Link href={`/search?q=${encodeURIComponent(adjuster.company_name)}`} className="text-blue-600 hover:text-blue-700 underline">
+                      <Link href={`/search?q=${encodeURIComponent(adjuster.company_name)}`} className="text-teal-600 hover:text-teal-700 underline">
                         More {adjuster.company_name} adjusters
                       </Link>
                     </>
                   )}
                   {' '} • {' '}
-                  <Link href="/guides" className="text-blue-600 hover:text-blue-700 underline">
+                  <Link href="/guides" className="text-teal-600 hover:text-teal-700 underline">
                     Insurance claim guides
                   </Link>
                 </p>
@@ -932,7 +932,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
                 <div className="bg-white rounded-xl shadow-sm p-6">
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-2">
-                      <BarChart3 className="w-6 h-6 text-blue-600" />
+                      <BarChart3 className="w-6 h-6 text-teal-600" />
                       <h2 className="text-xl font-bold text-gray-900">Adjuster Intelligence Profile</h2>
                     </div>
                     {metrics.confidenceLevel && (
@@ -946,9 +946,9 @@ export default async function AdjusterProfile({ params }: PageProps) {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                     {/* Experience Index */}
                     {metrics.experienceIndex && (
-                      <div className="bg-blue-50 rounded-lg p-4 text-center">
-                        <div className="text-3xl font-bold text-blue-700">{metrics.experienceIndex}</div>
-                        <div className="text-xs text-blue-600 font-medium">/ 10</div>
+                      <div className="bg-teal-50 rounded-lg p-4 text-center">
+                        <div className="text-3xl font-bold text-teal-700">{metrics.experienceIndex}</div>
+                        <div className="text-xs text-teal-600 font-medium">/ 10</div>
                         <div className="text-sm text-gray-700 mt-1">{metrics.experienceLabel}</div>
                         <div className="text-xs text-gray-500">Experience Index</div>
                       </div>
@@ -956,9 +956,9 @@ export default async function AdjusterProfile({ params }: PageProps) {
 
                     {/* Annual Claims */}
                     {metrics.annualLow && metrics.annualHigh && (
-                      <div className="bg-green-50 rounded-lg p-4 text-center">
-                        <div className="text-2xl font-bold text-green-700">{metrics.annualLow}–{metrics.annualHigh}</div>
-                        <div className="text-sm text-green-600">claims/year</div>
+                      <div className="bg-success-50 rounded-lg p-4 text-center">
+                        <div className="text-2xl font-bold text-success-700">{metrics.annualLow}–{metrics.annualHigh}</div>
+                        <div className="text-sm text-success-600">claims/year</div>
                         <div className="text-xs text-gray-500 mt-1">Estimated Volume</div>
                       </div>
                     )}
@@ -975,9 +975,9 @@ export default async function AdjusterProfile({ params }: PageProps) {
 
                     {/* Market Impact */}
                     {metrics.marketImpactScore && (
-                      <div className="bg-purple-50 rounded-lg p-4 text-center">
-                        <div className="text-3xl font-bold text-purple-700">{metrics.marketImpactScore}</div>
-                        <div className="text-xs text-purple-600 font-medium">/ 100</div>
+                      <div className="bg-navy-50 rounded-lg p-4 text-center">
+                        <div className="text-3xl font-bold text-navy-700">{metrics.marketImpactScore}</div>
+                        <div className="text-xs text-navy-500 font-medium">/ 100</div>
                         <div className="text-sm text-gray-700 mt-1">{metrics.marketImpactLabel}</div>
                         <div className="text-xs text-gray-500">Market Impact</div>
                       </div>
@@ -1136,7 +1136,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
                     <p className="text-gray-500 text-sm">{totalReviews} reviews from homeowners and contractors</p>
                   </div>
                   <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg">
-                    <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                    <Star className="w-5 h-5 text-warm-500 fill-warm-500" />
                     <span className="text-xl font-bold text-gray-900">{avgRating.toFixed(1)}</span>
                   </div>
                 </div>
@@ -1144,8 +1144,8 @@ export default async function AdjusterProfile({ params }: PageProps) {
                 {reviews.length === 0 ? (
                   <div className="p-8 bg-gradient-to-b from-blue-50 to-white">
                     <div className="text-center mb-6">
-                      <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <MessageSquare className="w-10 h-10 text-blue-500" />
+                      <div className="w-20 h-20 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <MessageSquare className="w-10 h-10 text-teal-500" />
                       </div>
                       <h3 className="text-xl font-bold text-gray-900 mb-2">📭 No Reviews Yet</h3>
                       <p className="text-gray-600 max-w-md mx-auto mb-4">
@@ -1169,7 +1169,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                       <Link 
                         href={'/review?adjuster=' + adjuster.id} 
-                        className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all"
+                        className="inline-flex items-center gap-2 bg-warm-500 hover:bg-warm-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all"
                       >
                         <Star className="w-5 h-5" />
                         Write the First Review
@@ -1212,9 +1212,9 @@ export default async function AdjusterProfile({ params }: PageProps) {
                                   <span className="inline-block px-2 py-1 bg-gray-100 rounded text-xs text-gray-600 capitalize">{review.claim_type} Claim</span>
                                   {review.claim_outcome && (
                                     <span className={`inline-block px-2 py-1 rounded text-xs ${
-                                      review.claim_outcome === 'approved' ? 'bg-green-100 text-green-700' :
+                                      review.claim_outcome === 'approved' ? 'bg-success-100 text-success-700' :
                                       review.claim_outcome === 'denied' ? 'bg-red-100 text-red-700' :
-                                      review.claim_outcome === 'partial' ? 'bg-yellow-100 text-yellow-700' :
+                                      review.claim_outcome === 'partial' ? 'bg-yellow-100 text-warm-700' :
                                       'bg-gray-100 text-gray-600'
                                     } capitalize`}>
                                       {review.claim_outcome}
@@ -1232,8 +1232,8 @@ export default async function AdjusterProfile({ params }: PageProps) {
                     
                     {/* Response CTA for adjusters */}
                     {!isProfileClaimed && (
-                      <div className="p-4 bg-blue-50 border-t border-blue-100">
-                        <p className="text-blue-800 text-sm text-center">
+                      <div className="p-4 bg-teal-50 border-t border-teal-100">
+                        <p className="text-teal-800 text-sm text-center">
                           ✅ Claimed adjusters can respond to reviews — responses appear directly below each review.
                           <Link href="#claim-profile" className="font-semibold ml-2 underline">Claim to Respond →</Link>
                         </p>
@@ -1245,7 +1245,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
                 {/* CTA after reviews */}
                 <div className="p-6 bg-gray-50 border-t text-center">
                   <p className="text-gray-600 mb-3">Worked with {adjuster.first_name}? Share your experience.</p>
-                  <Link href={'/review?adjuster=' + adjuster.id} className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg">
+                  <Link href={'/review?adjuster=' + adjuster.id} className="inline-flex items-center gap-2 bg-warm-500 hover:bg-warm-600 text-white font-semibold py-2 px-6 rounded-lg">
                     <Star className="w-4 h-4" />
                     Write a Review
                   </Link>
@@ -1258,7 +1258,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
                   ======================================== */}
               <div className="bg-white rounded-xl shadow-sm p-6" id="faq">
                 <div className="flex items-center gap-2 mb-6">
-                  <HelpCircle className="w-5 h-5 text-purple-600" />
+                  <HelpCircle className="w-5 h-5 text-navy-500" />
                   <h2 className="text-xl font-bold text-gray-900">Frequently Asked Questions</h2>
                 </div>
                 <div className="space-y-6">
@@ -1267,7 +1267,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
                       <h3 className="font-semibold text-gray-900 mb-2">{faq.question}</h3>
                       <p className="text-gray-600 text-sm leading-relaxed">{faq.answer}</p>
                       {faq.question.includes('inaccurate') && (
-                        <Link href="/contact" className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium text-sm mt-2">
+                        <Link href="/contact" className="inline-flex items-center gap-1 text-teal-600 hover:text-teal-700 font-medium text-sm mt-2">
                           Submit a Correction
                           <ExternalLink className="w-3 h-3" />
                         </Link>
@@ -1278,9 +1278,9 @@ export default async function AdjusterProfile({ params }: PageProps) {
               </div>
 
               {/* Verify License Link */}
-              <div className="bg-blue-50 border border-blue-100 rounded-xl p-6">
+              <div className="bg-teal-50 border border-teal-100 rounded-xl p-6">
                 <div className="flex items-start gap-3">
-                  <Shield className="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <Shield className="w-6 h-6 text-teal-600 flex-shrink-0 mt-0.5" />
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-2">Verify This License</h3>
                     <p className="text-gray-700 text-sm leading-relaxed mb-3">
@@ -1290,7 +1290,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
                       href={verifyLink.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium text-sm"
+                      className="inline-flex items-center gap-1 text-teal-600 hover:text-teal-700 font-medium text-sm"
                     >
                       Verify at {verifyLink.name}
                       <ArrowRight className="w-4 h-4" />
@@ -1306,7 +1306,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
               {/* Rating Summary Card */}
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-blue-600" />
+                  <TrendingUp className="w-5 h-5 text-teal-600" />
                   Rating Summary
                 </h3>
                 {totalReviews === 0 ? (
@@ -1316,7 +1316,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
                     <p className="text-sm text-gray-500 mb-4">Be the first to rate this adjuster</p>
                     <Link 
                       href={'/review?adjuster=' + adjuster.id}
-                      className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+                      className="block w-full text-center bg-warm-500 hover:bg-warm-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
                     >
                       Write First Review
                     </Link>
@@ -1329,7 +1329,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
                         {[1, 2, 3, 4, 5].map((star) => (
                           <Star
                             key={star}
-                            className={`w-6 h-6 ${star <= Math.round(avgRating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+                            className={`w-6 h-6 ${star <= Math.round(avgRating) ? 'text-warm-500 fill-warm-500' : 'text-gray-300'}`}
                           />
                         ))}
                       </div>
@@ -1337,7 +1337,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
                     </div>
                     <Link 
                       href={'/review?adjuster=' + adjuster.id}
-                      className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+                      className="block w-full text-center bg-warm-500 hover:bg-warm-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
                     >
                       Rate This Adjuster
                     </Link>
@@ -1349,7 +1349,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
               {hasMetrics && (
                 <div className="bg-white rounded-xl shadow-sm p-6">
                   <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5 text-blue-600" />
+                    <BarChart3 className="w-5 h-5 text-teal-600" />
                     Quick Stats
                   </h3>
                   <dl className="space-y-3 text-sm">
@@ -1406,11 +1406,11 @@ export default async function AdjusterProfile({ params }: PageProps) {
               {/* License Info */}
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-blue-600" />
+                  <Shield className="w-5 h-5 text-teal-600" />
                   License Information
                 </h3>
                 <div className="flex items-center gap-2 mb-4">
-                  <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 px-2 py-1 rounded-full">
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-success-700 bg-success-50 px-2 py-1 rounded-full">
                     <CheckCircle2 className="w-3 h-3" />
                     Verified
                   </span>
@@ -1467,7 +1467,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
                   <div className="flex justify-between">
                     <dt className="text-gray-500">Status</dt>
                     <dd className={`font-medium ${
-                      adjuster.license_status === 'active' ? 'text-green-600' : 
+                      adjuster.license_status === 'active' ? 'text-success-600' : 
                       adjuster.license_status === 'expired' ? 'text-red-600' : 
                       'text-gray-600'
                     }`}>
@@ -1543,7 +1543,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
               </div>
 
               {/* SECTION 12: Claim Profile Box - Enhanced */}
-              <div id="claim-profile" className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl shadow-sm p-6 border border-blue-100">
+              <div id="claim-profile" className="bg-gradient-to-br from-teal-50 to-offwhite rounded-xl shadow-sm p-6 border border-teal-100">
                 <h3 className="font-bold text-gray-900 mb-3 text-lg">
                   {isProfileClaimed ? '✅ Profile Claimed' : 'Is this your profile?'}
                 </h3>
@@ -1555,30 +1555,30 @@ export default async function AdjusterProfile({ params }: PageProps) {
                     </p>
                     <ul className="space-y-2 mb-4">
                       <li className="flex items-start gap-2 text-sm text-gray-700">
-                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                        <CheckCircle2 className="w-4 h-4 text-success-600 flex-shrink-0 mt-0.5" />
                         Update your information
                       </li>
                       <li className="flex items-start gap-2 text-sm text-gray-700">
-                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                        <CheckCircle2 className="w-4 h-4 text-success-600 flex-shrink-0 mt-0.5" />
                         Add credentials & certifications
                       </li>
                       <li className="flex items-start gap-2 text-sm text-gray-700">
-                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                        <CheckCircle2 className="w-4 h-4 text-success-600 flex-shrink-0 mt-0.5" />
                         Respond to reviews professionally
                       </li>
                       <li className="flex items-start gap-2 text-sm text-gray-700">
-                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                        <CheckCircle2 className="w-4 h-4 text-success-600 flex-shrink-0 mt-0.5" />
                         Show your side of the story
                       </li>
                       <li className="flex items-start gap-2 text-sm text-gray-700">
-                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                        <CheckCircle2 className="w-4 h-4 text-success-600 flex-shrink-0 mt-0.5" />
                         Control what homeowners and carriers see
                       </li>
                     </ul>
                     
                     <ClaimProfileForm adjusterId={adjuster.id} adjusterName={fullName} isClaimed={isProfileClaimed} />
                     
-                    <div className="mt-4 pt-4 border-t border-blue-200">
+                    <div className="mt-4 pt-4 border-t border-teal-200">
                       <p className="text-xs text-gray-600 flex items-center gap-1.5 mb-3">
                         <Lock className="w-3 h-3" />
                         Private. No marketing. Just control.
@@ -1622,7 +1622,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
                         {adj.total_reviews > 0 ? (
                           <div className="text-right">
                             <div className="flex items-center gap-1">
-                              <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                              <Star className="w-3 h-3 text-warm-500 fill-warm-500" />
                               <span className="text-sm font-medium text-gray-900">{adj.avg_rating?.toFixed(1)}</span>
                             </div>
                             <div className="text-xs text-gray-500">{adj.total_reviews} reviews</div>
@@ -1635,7 +1635,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
                   </div>
                   <Link 
                     href={`/adjusters/${stateSlug}`}
-                    className="mt-4 inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium text-sm"
+                    className="mt-4 inline-flex items-center gap-1 text-teal-600 hover:text-teal-700 font-medium text-sm"
                   >
                     View all {stateName} adjusters
                     <ArrowRight className="w-4 h-4" />
@@ -1647,24 +1647,24 @@ export default async function AdjusterProfile({ params }: PageProps) {
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <h3 className="font-semibold text-gray-900 mb-4">Explore More</h3>
                 <div className="space-y-2">
-                  <Link href={`/adjusters/${stateSlug}`} className="block text-sm text-gray-600 hover:text-blue-600 py-1">
+                  <Link href={`/adjusters/${stateSlug}`} className="block text-sm text-gray-600 hover:text-teal-600 py-1">
                     → All {stateName} insurance adjusters
                   </Link>
                   {adjuster.city && (
-                    <Link href={`/search?q=${encodeURIComponent(adjuster.city)}`} className="block text-sm text-gray-600 hover:text-blue-600 py-1">
+                    <Link href={`/search?q=${encodeURIComponent(adjuster.city)}`} className="block text-sm text-gray-600 hover:text-teal-600 py-1">
                       → Adjusters in {adjuster.city}
                     </Link>
                   )}
-                  <Link href="/adjusters" className="block text-sm text-gray-600 hover:text-blue-600 py-1">
+                  <Link href="/adjusters" className="block text-sm text-gray-600 hover:text-teal-600 py-1">
                     → Browse adjusters by state
                   </Link>
-                  <Link href="/companies" className="block text-sm text-gray-600 hover:text-blue-600 py-1">
+                  <Link href="/companies" className="block text-sm text-gray-600 hover:text-teal-600 py-1">
                     → Browse adjusters by company
                   </Link>
-                  <Link href="/guides" className="block text-sm text-gray-600 hover:text-blue-600 py-1">
+                  <Link href="/guides" className="block text-sm text-gray-600 hover:text-teal-600 py-1">
                     → Insurance claim guides
                   </Link>
-                  <Link href="/guides/what-is-an-insurance-adjuster" className="block text-sm text-gray-600 hover:text-blue-600 py-1">
+                  <Link href="/guides/what-is-an-insurance-adjuster" className="block text-sm text-gray-600 hover:text-teal-600 py-1">
                     → What is an insurance adjuster?
                   </Link>
                 </div>
@@ -1690,7 +1690,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
           <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 md:hidden shadow-lg z-50">
             <Link 
               href={'/review?adjuster=' + adjuster.id}
-              className="flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg"
+              className="flex items-center justify-center gap-2 w-full bg-warm-500 hover:bg-warm-600 text-white font-semibold py-3 px-6 rounded-lg"
             >
               <Star className="w-5 h-5" />
               {totalReviews === 0 ? 'Write First Review' : 'Leave a Review'}
@@ -1705,7 +1705,7 @@ export default async function AdjusterProfile({ params }: PageProps) {
               <p className="text-xs text-gray-600 text-center mb-2">📋 This profile is public</p>
               <Link 
                 href="#claim-profile"
-                className="flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg"
+                className="flex items-center justify-center gap-2 w-full bg-warm-500 hover:bg-warm-600 text-white font-semibold py-3 px-6 rounded-lg"
               >
                 Claim My Profile – Free
               </Link>
