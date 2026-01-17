@@ -82,32 +82,32 @@ export default async function AdjustersIndexPage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }} />
 
-      <main className="min-h-screen bg-gray-50">
+      <main className="min-h-screen bg-offwhite">
         <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Adjusters' }]} />
 
         {/* Hero */}
-        <div className="bg-gradient-to-b from-slate-900 to-slate-800 text-white">
+        <div className="bg-gradient-to-b from-navy-500 to-navy-600 text-white">
           <div className="max-w-6xl mx-auto px-4 py-12">
             <div className="flex items-center gap-3 mb-4">
               <Users className="w-8 h-8 text-teal-400" />
               <h1 className="text-3xl md:text-4xl font-bold">Browse Adjusters by State</h1>
             </div>
-            <p className="text-slate-300 text-lg mb-6 max-w-2xl">
+            <p className="text-white/80 text-lg mb-6 max-w-2xl">
               Find insurance adjuster ratings and reviews across all 50 US states. 
               Select your state to see local adjusters.
             </p>
             <div className="flex flex-wrap gap-4">
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg px-6 py-4">
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg px-6 py-4">
                 <div className="text-2xl font-bold">Nationwide</div>
-                <div className="text-slate-400 text-sm">Coverage</div>
+                <div className="text-white/70 text-sm">Coverage</div>
               </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg px-6 py-4">
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg px-6 py-4">
                 <div className="text-2xl font-bold">50</div>
-                <div className="text-slate-400 text-sm">States</div>
+                <div className="text-white/70 text-sm">States</div>
               </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg px-6 py-4">
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg px-6 py-4">
                 <div className="text-2xl font-bold">100%</div>
-                <div className="text-slate-400 text-sm">Free</div>
+                <div className="text-white/70 text-sm">Free</div>
               </div>
             </div>
           </div>
@@ -120,19 +120,19 @@ export default async function AdjustersIndexPage() {
               <Link
                 key={state.slug}
                 href={`/adjusters/${state.slug}`}
-                className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:border-blue-300 hover:shadow-md transition-all group"
+                className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:border-teal-300 hover:shadow-md transition-all group"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                    <div className="font-semibold text-gray-900 group-hover:text-teal-600 transition-colors">
                       {state.name}
                     </div>
                     <div className="text-sm text-gray-500">
                       Browse adjusters
                     </div>
                   </div>
-                  <div className="w-10 h-10 bg-gray-100 group-hover:bg-blue-100 rounded-full flex items-center justify-center transition-colors">
-                    <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                  <div className="w-10 h-10 bg-gray-100 group-hover:bg-teal-100 rounded-full flex items-center justify-center transition-colors">
+                    <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-teal-600 transition-colors" />
                   </div>
                 </div>
               </Link>
