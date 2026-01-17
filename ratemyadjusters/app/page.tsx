@@ -232,11 +232,7 @@ export default function Home() {
                 RateMyAdjusters.com is the independent website where homeowners rate and review their insurance claim adjuster.
               </p>
 
-              <p className="text-base text-white/60 mb-8 max-w-xl mx-auto">
-                Search licensed adjusters by name, company, or state. Read real reviews. Share your experience.
-              </p>
-
-              <div className="max-w-2xl mx-auto mb-3">
+              <div className="max-w-2xl mx-auto mb-3 mt-8">
                 <SearchBar size="large" showFilters={true} autoFocus={false} />
               </div>
               <p className="text-white/50 text-sm mb-8">Try: "John Smith" or "Texas" or "State Farm"</p>
